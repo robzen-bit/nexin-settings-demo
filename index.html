@@ -4855,21 +4855,65 @@
     };
 
     // ── Fake contact list for the "Add from Contacts" modal ──────────────────
-    const FAKE_CONTACTS = (() => {
-      const firsts = ['Aaron','Abby','Adam','Alice','Amanda','Andrew','Anna','Barbara','Beth','Brian','Carlos','Carol','Chris','Dana','David','Diana','Edward','Elena','Emily','Eric','Fiona','Frank','Grace','Hannah','Henry','Isabel','Jack','Jane','Jennifer','John','Julia','Karen','Kevin','Laura','Lisa','Mark','Mary','Michael','Nancy','Nick','Olivia','Paul','Peter','Rachel','Rebecca','Robert','Sandra','Sarah','Scott','Sophie','Stephanie','Steve','Susan','Thomas','Tina','Tom','Victoria','Will','Zoe'];
-      const lasts = ['Anderson','Bennett','Campbell','Carter','Clark','Collins','Davis','Evans','Fisher','Garcia','Green','Hall','Harris','Jackson','Johnson','Jones','King','Lee','Lewis','Martin','Martinez','Miller','Mitchell','Moore','Nelson','Parker','Perez','Roberts','Robinson','Rodriguez','Scott','Smith','Taylor','Thomas','Thompson','Turner','Walker','White','Williams','Wilson','Wood','Wright','Young'];
-      const domains = ['gmail.com','yahoo.com','outlook.com','icloud.com','yopmail.com','hotmail.com'];
-      const out = [];
-      let seed = 42;
-      const rand = (n) => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return Math.abs(seed) % n; };
-      for (let i = 0; i < 120; i++) {
-        const f = firsts[rand(firsts.length)];
-        const l = lasts[rand(lasts.length)];
-        const n = rand(90) + 10;
-        out.push({ id: `fc-${i}`, first: f, last: l, email: `${f.toLowerCase()}.${l.toLowerCase()}${n}@${domains[rand(domains.length)]}` });
-      }
-      return out.sort((a, b) => a.first.localeCompare(b.first) || a.last.localeCompare(b.last));
-    })();
+    const FAKE_CONTACTS = [
+      { id: 'fc-0',  first: 'Alaric',    last: 'Saltzman',   email: 'alaric.saltzman@yopmail.com'   },
+      { id: 'fc-1',  first: 'Anna',       last: 'Zhu',        email: 'anna.zhu@yopmail.com'          },
+      { id: 'fc-2',  first: 'Aurora',     last: 'de Martel',  email: 'aurora.demartel@yopmail.com'   },
+      { id: 'fc-3',  first: 'Bonnie',     last: 'Bennett',    email: 'bonnie.bennett@yopmail.com'    },
+      { id: 'fc-4',  first: 'Camille',    last: "O'Connell",  email: 'camille.oconnell@yopmail.com'  },
+      { id: 'fc-5',  first: 'Caroline',   last: 'Forbes',     email: 'caroline.forbes@yopmail.com'   },
+      { id: 'fc-6',  first: 'Cleo',       last: 'Sowande',    email: 'cleo.sowande@yopmail.com'      },
+      { id: 'fc-7',  first: 'Damon',      last: 'Salvatore',  email: 'damon.salvatore@yopmail.com'   },
+      { id: 'fc-8',  first: 'Davina',     last: 'Claire',     email: 'davina.claire@yopmail.com'     },
+      { id: 'fc-9',  first: 'Dorian',     last: 'Williams',   email: 'dorian.williams@yopmail.com'   },
+      { id: 'fc-10', first: 'Elena',      last: 'Gilbert',    email: 'elena.gilbert@yopmail.com'     },
+      { id: 'fc-11', first: 'Elijah',     last: 'Mikaelson',  email: 'elijah.mikaelson@yopmail.com'  },
+      { id: 'fc-12', first: 'Enzo',       last: 'St. John',   email: 'enzo.stjohn@yopmail.com'       },
+      { id: 'fc-13', first: 'Ethan',      last: 'Machado',    email: 'ethan.machado@yopmail.com'     },
+      { id: 'fc-14', first: 'Finch',      last: 'Tarrayo',    email: 'finch.tarrayo@yopmail.com'     },
+      { id: 'fc-15', first: 'Finn',       last: 'Mikaelson',  email: 'finn.mikaelson@yopmail.com'    },
+      { id: 'fc-16', first: 'Freya',      last: 'Mikaelson',  email: 'freya.mikaelson@yopmail.com'   },
+      { id: 'fc-17', first: 'Hayley',     last: 'Marshall',   email: 'hayley.marshall@yopmail.com'   },
+      { id: 'fc-18', first: 'Henry',      last: 'Benoit',     email: 'henry.benoit@yopmail.com'      },
+      { id: 'fc-19', first: 'Hope',       last: 'Mikaelson',  email: 'hope.mikaelson@yopmail.com'    },
+      { id: 'fc-20', first: 'Isobel',     last: 'Flemming',   email: 'isobel.flemming@yopmail.com'   },
+      { id: 'fc-21', first: 'Jed',        last: 'Tien',       email: 'jed.tien@yopmail.com'          },
+      { id: 'fc-22', first: 'Jenna',      last: 'Sommers',    email: 'jenna.sommers@yopmail.com'     },
+      { id: 'fc-23', first: 'Jeremy',     last: 'Gilbert',    email: 'jeremy.gilbert@yopmail.com'    },
+      { id: 'fc-24', first: 'Jo',         last: 'Laughlin',   email: 'jo.laughlin@yopmail.com'       },
+      { id: 'fc-25', first: 'Josh',       last: 'Rosza',      email: 'josh.rosza@yopmail.com'        },
+      { id: 'fc-26', first: 'Josie',      last: 'Saltzman',   email: 'josie.saltzman@yopmail.com'    },
+      { id: 'fc-27', first: 'Kai',        last: 'Parker',     email: 'kai.parker@yopmail.com'        },
+      { id: 'fc-28', first: 'Kaleb',      last: 'Hawkins',    email: 'kaleb.hawkins@yopmail.com'     },
+      { id: 'fc-29', first: 'Katherine',  last: 'Pierce',     email: 'katherine.pierce@yopmail.com'  },
+      { id: 'fc-30', first: 'Keelin',     last: 'Malraux',    email: 'keelin.malraux@yopmail.com'    },
+      { id: 'fc-31', first: 'Klaus',      last: 'Mikaelson',  email: 'klaus.mikaelson@yopmail.com'   },
+      { id: 'fc-32', first: 'Kol',        last: 'Mikaelson',  email: 'kol.mikaelson@yopmail.com'     },
+      { id: 'fc-33', first: 'Landon',     last: 'Kirby',      email: 'landon.kirby@yopmail.com'      },
+      { id: 'fc-34', first: 'Lexi',       last: 'Branson',    email: 'lexi.branson@yopmail.com'      },
+      { id: 'fc-35', first: 'Lily',       last: 'Salvatore',  email: 'lily.salvatore@yopmail.com'    },
+      { id: 'fc-36', first: 'Lizzie',     last: 'Saltzman',   email: 'lizzie.saltzman@yopmail.com'   },
+      { id: 'fc-37', first: 'Liv',        last: 'Parker',     email: 'liv.parker@yopmail.com'        },
+      { id: 'fc-38', first: 'Luke',       last: 'Parker',     email: 'luke.parker@yopmail.com'       },
+      { id: 'fc-39', first: 'Marcel',     last: 'Gerard',     email: 'marcel.gerard@yopmail.com'     },
+      { id: 'fc-40', first: 'Matt',       last: 'Donovan',    email: 'matt.donovan@yopmail.com'      },
+      { id: 'fc-41', first: 'MG',         last: 'Greasley',   email: 'mg.greasley@yopmail.com'       },
+      { id: 'fc-42', first: 'Nadia',      last: 'Petrova',    email: 'nadia.petrova@yopmail.com'     },
+      { id: 'fc-43', first: 'Nora',       last: 'Hildegard',  email: 'nora.hildegard@yopmail.com'    },
+      { id: 'fc-44', first: 'Pearl',      last: 'Zhu',        email: 'pearl.zhu@yopmail.com'         },
+      { id: 'fc-45', first: 'Penelope',   last: 'Park',       email: 'penelope.park@yopmail.com'     },
+      { id: 'fc-46', first: 'Rafael',     last: 'Waithe',     email: 'rafael.waithe@yopmail.com'     },
+      { id: 'fc-47', first: 'Rebekah',    last: 'Mikaelson',  email: 'rebekah.mikaelson@yopmail.com' },
+      { id: 'fc-48', first: 'Rose',       last: 'Marie',      email: 'rose.marie@yopmail.com'        },
+      { id: 'fc-49', first: 'Sofya',      last: 'Voronova',   email: 'sofya.voronova@yopmail.com'    },
+      { id: 'fc-50', first: 'Stefan',     last: 'Salvatore',  email: 'stefan.salvatore@yopmail.com'  },
+      { id: 'fc-51', first: 'Tyler',      last: 'Lockwood',   email: 'tyler.lockwood@yopmail.com'    },
+      { id: 'fc-52', first: 'Valerie',    last: 'Tulle',      email: 'valerie.tulle@yopmail.com'     },
+      { id: 'fc-53', first: 'Vicki',      last: 'Donovan',    email: 'vicki.donovan@yopmail.com'     },
+      { id: 'fc-54', first: 'Vincent',    last: 'Griffith',   email: 'vincent.griffith@yopmail.com'  },
+      { id: 'fc-55', first: 'Wade',       last: 'Mallory',    email: 'wade.mallory@yopmail.com'      },
+      { id: 'fc-56', first: 'Wes',        last: 'Maxfield',   email: 'wes.maxfield@yopmail.com'      },
+    ];
 
     const AddFromContactsModal = ({ roles, onClose, onAdd }) => {
       const [search, setSearch] = useState('');
@@ -5104,192 +5148,6 @@
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        </div>,
-        document.body
-      );
-    };
-
-    // ── Fake gallery data for Add from Gallery modal ─────────────────────────
-    const FAKE_IMPORT_GALLERIES = [
-      { id: 'fg1', name: 'Spring Soccer League 2025',        photoCount: 142, contactCount: 28, thumb: '#4CAF50', imgSrc: 'thumbs/fg1-soccer.jpg',
-        contacts: [
-          { first: 'Marcus',  last: 'Johnson',  email: 'marcus.j@soccerleague.com',    role: 'client'  },
-          { first: 'Sofia',   last: 'Rivera',   email: 'sofia.r@soccerleague.com',     role: 'general' },
-          { first: 'Tyler',   last: 'Chen',     email: 't.chen@soccerleague.com',      role: 'client'  },
-          { first: 'Amara',   last: 'Okafor',   email: 'a.okafor@soccerleague.com',    role: 'general' },
-          { first: 'Devon',   last: 'Park',     email: 'd.park@soccerleague.com',      role: 'client'  },
-        ]},
-      { id: 'fg2', name: 'Fall Football Action & Team Photos', photoCount: 87, contactCount: 15, thumb: '#FF5722', imgSrc: 'thumbs/fg2-football.jpg',
-        contacts: [
-          { first: 'Jordan',  last: 'Williams', email: 'jwilliams@teamphoto.com',      role: 'client'  },
-          { first: 'Kayla',   last: 'Thompson', email: 'kthompson@teamphoto.com',      role: 'general' },
-          { first: 'Andre',   last: 'Mitchell', email: 'a.mitchell@teamphoto.com',     role: 'client'  },
-        ]},
-      { id: 'fg3', name: 'Girls Basketball Tournament',       photoCount: 63,  contactCount: 12, thumb: '#9C27B0', imgSrc: 'thumbs/fg3-basketball.jpg',
-        contacts: [
-          { first: 'Zoe',     last: 'Davis',    email: 'zoe.davis@bball.org',          role: 'client'  },
-          { first: 'Priya',   last: 'Patel',    email: 'p.patel@bball.org',            role: 'general' },
-          { first: 'Aaliyah', last: 'Brown',    email: 'a.brown@bball.org',            role: 'client'  },
-          { first: 'Camille', last: 'Nguyen',   email: 'c.nguyen@bball.org',           role: 'general' },
-        ]},
-      { id: 'fg4', name: 'Summer Camp Portraits 2024',        photoCount: 204, contactCount: 34, thumb: '#FF9800', imgSrc: 'thumbs/fg4-camp.jpg',
-        contacts: [
-          { first: 'Eli',     last: 'Goldberg', email: 'e.goldberg@summercamp.com',    role: 'client'  },
-          { first: 'Nadia',   last: 'Kowalski', email: 'n.kowalski@summercamp.com',    role: 'general' },
-          { first: 'Sam',     last: 'Osei',     email: 's.osei@summercamp.com',        role: 'client'  },
-          { first: 'Luna',    last: 'Garcia',   email: 'l.garcia@summercamp.com',      role: 'general' },
-          { first: 'Finn',    last: 'Murphy',   email: 'f.murphy@summercamp.com',      role: 'client'  },
-        ]},
-      { id: 'fg5', name: 'Track & Field Championships',       photoCount: 51,  contactCount: 19, thumb: '#2196F3', imgSrc: 'thumbs/fg5-track.jpg',
-        contacts: [
-          { first: 'Layla',   last: 'Robinson', email: 'l.robinson@trackclub.com',     role: 'client'  },
-          { first: 'Omar',    last: 'Hassan',   email: 'o.hassan@trackclub.com',       role: 'general' },
-          { first: 'Ivy',     last: 'Zhang',    email: 'i.zhang@trackclub.com',        role: 'client'  },
-        ]},
-      { id: 'fg6', name: 'Wedding — Johnson & Smith',         photoCount: 389, contactCount: 8,  thumb: '#E91E63', imgSrc: 'thumbs/fg6-wedding.jpg',
-        contacts: [
-          { first: 'Claire',  last: 'Johnson',  email: 'claire.j@gmail.com',           role: 'client'  },
-          { first: 'Thomas',  last: 'Smith',    email: 't.smith@gmail.com',            role: 'client'  },
-          { first: 'Helen',   last: 'Johnson',  email: 'helen.j@gmail.com',            role: 'general' },
-        ]},
-      { id: 'fg7', name: 'Family Portraits — Martinez',       photoCount: 47,  contactCount: 5,  thumb: '#009688', imgSrc: 'thumbs/fg7-family.jpg',
-        contacts: [
-          { first: 'Rosa',    last: 'Martinez', email: 'rosa.m@family.com',            role: 'client'  },
-          { first: 'Carlos',  last: 'Martinez', email: 'carlos.m@family.com',          role: 'general' },
-        ]},
-    ];
-
-    const AddFromGalleryModal = ({ roles, onClose, onAdd, onOverwrite }) => {
-      const [selectedId, setSelectedId] = useState(null);
-      const [search, setSearch] = useState('');
-      const [importMode, setImportMode] = useState('append');
-      const [copying, setCopying] = useState(false);
-      const [copyDone, setCopyDone] = useState(false);
-
-      const everyone = roles.find(r => r.id === 'everyone');
-      const resolveRoleId = (roleHint) => {
-        if (roleHint === 'general' || roleHint === 'everyone') return everyone?.id || roles[0]?.id;
-        const named = roles.find(r => r.name.toLowerCase() === roleHint);
-        return named?.id || everyone?.id || roles[0]?.id;
-      };
-
-      const filtered = FAKE_IMPORT_GALLERIES.filter(g =>
-        !search || g.name.toLowerCase().includes(search.toLowerCase())
-      );
-      const selected = FAKE_IMPORT_GALLERIES.find(g => g.id === selectedId);
-      const canCopy = !!selected && !copying && !copyDone;
-
-      const handleCopy = () => {
-        if (!canCopy) return;
-        setCopying(true);
-        if (importMode === 'overwrite') onOverwrite();
-        setTimeout(() => {
-          selected.contacts.forEach(c => {
-            onAdd({ first: c.first, last: c.last, email: c.email, mobile: '', roleId: resolveRoleId(c.role) });
-          });
-          setCopying(false);
-          setCopyDone(true);
-          setTimeout(() => onClose(), 900);
-        }, 1400);
-      };
-
-      return ReactDOM.createPortal(
-        <div className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ background: 'rgba(27,28,31,0.55)', zIndex: 8000 }}
-          onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full flex flex-col"
-            style={{ maxWidth: 580, maxHeight: 'calc(100vh - 80px)' }} onClick={e => e.stopPropagation()}>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: 'var(--card-border)' }}>
-              <div style={{ width: 28 }} />
-              <h2 className="text-[14px] font-bold tracking-wider" style={{ color: 'var(--text-primary)' }}>COPY CONTACTS FROM GALLERY</h2>
-              <button onClick={onClose} className="p-1 rounded hover:bg-black/5" style={{ color: 'var(--text-tertiary)' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="px-6 pt-5 pb-3">
-                <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Choose a gallery:</p>
-                <p className="text-[13px] mb-4" style={{ color: 'var(--text-secondary)' }}>
-                  Copy contacts from an existing gallery into this one.
-                </p>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg border"
-                  style={{ borderColor: 'var(--card-border)', background: '#fafafa' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search galleries..."
-                    className="flex-1 text-[13px] outline-none bg-transparent"
-                    style={{ color: 'var(--text-primary)' }} />
-                </div>
-              </div>
-
-              {/* Gallery list */}
-              <div className="border-t" style={{ borderColor: 'var(--card-border)' }}>
-                <div className="flex items-center gap-2 px-6 py-2.5 border-b" style={{ borderColor: 'var(--card-border)', background: '#fafafa' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                  <span className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>My Galleries</span>
-                  <span className="text-[12px] ml-1" style={{ color: 'var(--text-tertiary)' }}>{filtered.length} galleries</span>
-                </div>
-                {filtered.map(g => (
-                  <div key={g.id} onClick={() => setSelectedId(g.id)}
-                    className="flex items-center gap-3 px-6 py-3 border-b cursor-pointer transition-colors"
-                    style={{ borderColor: 'var(--card-border)', background: selectedId === g.id ? 'var(--brand-cream)' : '#fff' }}>
-                    <span className="flex items-center justify-center rounded-full border-2 shrink-0"
-                      style={{ width: 18, height: 18, borderColor: selectedId === g.id ? 'var(--brand)' : 'var(--line)', background: '#fff' }}>
-                      {selectedId === g.id && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand)', display: 'block' }} />}
-                    </span>
-                    <div className="rounded overflow-hidden shrink-0" style={{ width: 56, height: 42, background: g.thumb }}>
-                      <img
-                        src={g.imgSrc}
-                        alt={g.name}
-                        style={{ width: 56, height: 42, objectFit: 'cover', display: 'block' }}
-                        onError={e => { e.target.style.display = 'none'; }}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{g.name}</p>
-                      <p className="text-[12px]" style={{ color: 'var(--text-tertiary)' }}>{g.contactCount} contacts · {g.photoCount} photos</p>
-                    </div>
-                  </div>
-                ))}
-                {filtered.length === 0 && (
-                  <div className="px-6 py-10 text-center text-[13px]" style={{ color: 'var(--text-tertiary)' }}>
-                    No galleries match your search.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center gap-4 px-6 py-4 border-t shrink-0" style={{ borderColor: 'var(--card-border)', background: '#1a1a1a' }}>
-              <div className="flex items-center gap-5 mr-auto flex-wrap">
-                {[
-                  { val: 'append',    label: 'Append with existing contacts' },
-                  { val: 'overwrite', label: 'Overwrite existing contacts'   },
-                ].map(opt => (
-                  <label key={opt.val} className="flex items-center gap-2 cursor-pointer text-[13px]" style={{ color: '#fff' }}>
-                    <span onClick={() => setImportMode(opt.val)}
-                      className="flex items-center justify-center rounded-full border-2 shrink-0"
-                      style={{ width: 16, height: 16, borderColor: importMode === opt.val ? 'var(--brand)' : '#666', background: 'transparent' }}>
-                      {importMode === opt.val && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--brand)', display: 'block' }} />}
-                    </span>
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-              <button onClick={handleCopy} disabled={!canCopy && !copying && !copyDone}
-                className="flex items-center gap-2 text-[13px] font-bold tracking-wider px-5 py-2.5 rounded-full text-white shrink-0"
-                style={{ background: canCopy || copying || copyDone ? 'var(--brand)' : '#555', cursor: canCopy ? 'pointer' : 'not-allowed' }}>
-                {copying ? (
-                  <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" strokeLinecap="round"/></svg>Copying...</>
-                ) : copyDone ? (
-                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20,6 9,17 4,12"/></svg>Copied</>
-                ) : 'Copy Contacts'}
-              </button>
             </div>
           </div>
         </div>,
@@ -6428,7 +6286,6 @@
       const [mobile, setMobile] = useState('');
       const [tab, setTab] = useState('manual');
       const [showFromContacts, setShowFromContacts] = useState(false);
-      const [showFromGallery, setShowFromGallery] = useState(false);
       const [showImportCSV, setShowImportCSV] = useState(false);
       const [moreOpen, setMoreOpen] = useState(false);
 
@@ -6477,11 +6334,10 @@
             {[
               { id: 'manual', label: 'Add Manually' },
               { id: 'from-contacts', label: 'Add from Contacts' },
-              ...(!isMobile ? [{ id: 'from-gallery', label: 'Add from Gallery' }] : []),
               { id: 'csv', label: 'Import CSV' },
             ].map(t => (
               <button key={t.id}
-                onClick={() => { if (t.disabled) return; if (t.id === 'from-contacts') { setShowFromContacts(true); } else if (t.id === 'from-gallery') { setShowFromGallery(true); } else if (t.id === 'csv') { setShowImportCSV(true); } else { setTab(t.id); } }}
+                onClick={() => { if (t.disabled) return; if (t.id === 'from-contacts') { setShowFromContacts(true); } else if (t.id === 'csv') { setShowImportCSV(true); } else { setTab(t.id); } }}
                 className="relative text-[13px] py-2 transition-colors"
                 style={{
                   color: tab === t.id ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -6499,9 +6355,6 @@
 
           {showFromContacts && (
             <AddFromContactsModal roles={roles} onClose={() => setShowFromContacts(false)} onAdd={(c) => { onAdd(c); }} />
-          )}
-          {showFromGallery && (
-            <AddFromGalleryModal roles={roles} onClose={() => setShowFromGallery(false)} onAdd={(c) => { onAdd(c); }} onOverwrite={onOverwrite} />
           )}
           {showImportCSV && (
             <ImportCSVModal roles={roles} viewMode={viewMode} savedRoles={savedRoles} onEnsureRoles={onEnsureRoles} onClose={() => setShowImportCSV(false)} onAdd={(c) => { onAdd(c); }} />
