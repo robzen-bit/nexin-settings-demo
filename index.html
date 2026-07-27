@@ -5216,6 +5216,8 @@
     };
 
     // Generate grouped dropdown options from the current mappings.
+    // Groups by contact number (Contact 1, Contact 2, …), with all field types per contact.
+    // Number of contacts = number of email columns detected + 1 (to allow adding another).
     // includeRole adds "Role (N)" options when option 3 is selected.
     const generateFieldOptions = (mappings, includeRole) => {
       const types = includeRole ? [...BASE_FIELD_TYPES, 'Role'] : BASE_FIELD_TYPES;
@@ -5228,9 +5230,13 @@
           maxCounts[type] = Math.max(maxCounts[type] || 0, n);
         }
       });
-      return types.map(type => {
-        const max = Math.min((maxCounts[type] || 0) + 1, 10);
-        return { type, options: Array.from({ length: max }, (_, i) => `${type} (${i + 1})`) };
+      const numContacts = Math.min((maxCounts['Email'] || 0) + 1, 10);
+      return Array.from({ length: numContacts }, (_, i) => {
+        const n = i + 1;
+        return {
+          label: `Contact ${n}`,
+          options: types.map(type => ({ value: `${type} (${n})`, label: `${type} ${n}` })),
+        };
       });
     };
 
@@ -5823,8 +5829,8 @@
                             style={{ borderColor: 'var(--card-border)', color: val ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
                             <option value="">Select Column</option>
                             {generateFieldOptions(mappings, roleConfigOption === 'csvColumn').map(group => (
-                              <optgroup key={group.type} label={group.type}>
-                                {group.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                              <optgroup key={group.label} label={group.label}>
+                                {group.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                               </optgroup>
                             ))}
                           </select>
