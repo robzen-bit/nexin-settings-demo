@@ -636,7 +636,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useMemo, useEffect } = React;
+    const { useState, useMemo, useEffect, useRef } = React;
 
     // ===== Body scroll lock (reference-counted so nested sheets don't prematurely unlock) =====
     let _sheetDepth = 0;
