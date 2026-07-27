@@ -3292,7 +3292,7 @@
                     <div key={c.id}
                       className={`shared-flat-row grid items-start gap-4 mobile-child-row${c.type === 'multicheck' ? ' is-multicheck-row' : ''}${c.type === 'toggle' ? ' is-toggle-child' : ''}`}
                       style={{
-                        gridTemplateColumns: '1fr auto',
+                        gridTemplateColumns: c.type === 'multicheck' ? '1fr' : '1fr auto',
                         padding: '6px 0 12px 22px',
                         marginTop: -8,
                       }}>
@@ -3301,7 +3301,7 @@
                         <span>{c.label}</span>
                         {c.tooltip && <InfoTooltip content={c.tooltip} />}
                       </div>
-                      <div className="control-end flex flex-col items-end gap-1" style={disabledStyle} aria-disabled={!roleEnabled}>
+                      <div className={`control-end flex flex-col ${c.type === 'multicheck' ? 'items-start' : 'items-end'} gap-1`} style={disabledStyle} aria-disabled={!roleEnabled}>
                         <SettingControl s={c} value={perRole[role.id]?.[feature.id]?.values?.[c.id]} onChange={(v) => onUpdate(role.id, c.id, v)} compact />
                         {role.id === 'everyone' && (c.id === 'specific-amount' || c.id === 'video-specific-amount') && (
                           <p className="text-[11px] leading-snug text-right" style={{ color: 'var(--danger)', whiteSpace: 'nowrap' }}>
@@ -3440,7 +3440,7 @@
                     <div key={c.id}
                       className="role-row per-role-row grid items-start child-row"
                       style={{
-                        gridTemplateColumns: '1fr auto',
+                        gridTemplateColumns: c.type === 'multicheck' ? '1fr' : '1fr auto',
                         padding: '8px 14px 8px 28px',
                         background: 'var(--soft-bg)',
                         minHeight: 0,
@@ -3451,7 +3451,7 @@
                         <span className="truncate" title={c.label}>{c.label}</span>
                         {c.tooltip && <InfoTooltip content={c.tooltip} />}
                       </div>
-                      <div className="control-cell flex flex-col items-end gap-1" style={disabledStyle} aria-disabled={!roleEnabled}>
+                      <div className={`control-cell flex flex-col ${c.type === 'multicheck' ? 'items-start' : 'items-end'} gap-1`} style={disabledStyle} aria-disabled={!roleEnabled}>
                         <SettingControl s={c}
                           value={perRole[r.id]?.[featureId]?.values?.[c.id]}
                           onChange={(v) => onUpdate(r.id, c.id, v)} compact />
