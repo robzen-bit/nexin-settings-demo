@@ -630,20 +630,6 @@
     .mobile-feature-modal .multicheck-suboption { display: block !important; }
     .mobile-feature-modal .multicheck-suboption select { min-width: 0 !important; }
 
-    /* ===== Plan Level Picker (top bar) ===== */
-    @keyframes mode-panel-down {
-      from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-      to   { opacity: 1; transform: translateY(0)    scale(1);    }
-    }
-    .mode-panel { animation: mode-panel-down 0.15s cubic-bezier(0.32,0.72,0,1); transform-origin: top left; }
-    .mode-option { transition: background-color 0.1s; }
-    .mode-option:hover:not(.is-active) { background: var(--bg-hover) !important; }
-    .plan-trigger {
-      transition: background 0.15s, border-color 0.15s;
-      border: 1px solid var(--line);
-    }
-    .plan-trigger:hover { background: var(--bg-hover); border-color: var(--text-4); }
-    .mode-chevron { transition: transform 0.2s cubic-bezier(0.4,0,0.2,1); display: block; }
   </style>
 </head>
 <body>
@@ -1329,7 +1315,7 @@
     const TermsContext = React.createContext({ featuresLabel: 'Gallery Features', roleLabel: 'Role', defaultRoleLabel: 'General' });
     const useTerms = () => React.useContext(TermsContext);
 
-    const TopBar = ({ viewMode, setViewMode, simulateMobile, onToggleMobile, onAdminOpen }) => (
+    const TopBar = ({ simulateMobile, onToggleMobile, onAdminOpen }) => (
       <header className="top-bar flex items-center justify-between px-6 h-[52px] bg-white border-b" style={{ borderColor: 'var(--card-border)' }}>
         <div className="flex items-center gap-4">
           {/* Brand */}
@@ -1337,35 +1323,6 @@
             <span className="text-[20px] font-extrabold tracking-tight" style={{ color: '#222' }}>zenfolio</span>
             <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded"
               style={{ background: 'var(--brand-cream, #FFF1E6)', color: 'var(--brand)', border: '1px solid var(--brand)' }}>RV1</span>
-          </div>
-
-          <div style={{ width: 1, height: 20, background: 'var(--card-border)', flexShrink: 0 }} />
-
-          {/* Plan Level — inline radio buttons */}
-          <div className="flex items-center gap-3">
-            <span className="text-[11px]" style={{ color: 'var(--text-3)' }}>Plan:</span>
-            {[
-              { id: 'basic',        label: 'Basic'        },
-              { id: 'professional', label: 'Professional' },
-              { id: 'advanced',     label: 'Advanced'     },
-            ].map(m => {
-              const active = viewMode === m.id;
-              return (
-                <div key={m.id} className="flex items-center gap-1.5 cursor-pointer" onClick={() => setViewMode(m.id)}>
-                  <div style={{
-                    width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
-                    border: `2px solid ${active ? 'var(--brand)' : 'var(--line)'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'border-color 0.15s',
-                  }}>
-                    {active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand)' }} />}
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                    {m.label}
-                  </span>
-                </div>
-              );
-            })}
           </div>
 
           <div style={{ width: 1, height: 20, background: 'var(--card-border)', flexShrink: 0 }} />
@@ -8986,8 +8943,7 @@
       // Compare-All modal (v4 — opt-in scanning view). Single boolean that opens an
       // almost-full-screen matrix showing every feature × every role at once.
       const [compareAllOpen, setCompareAllOpen] = useState(false);
-      const [viewMode, setViewMode] = useState('basic');
-      const [modeMenuOpen, setModeMenuOpen] = useState(false);
+      const [viewMode] = useState('advanced');
       const roleHeaderWidth = useMemo(() => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -9008,7 +8964,6 @@
       useEffect(() => {
         document.documentElement.style.setProperty('--role-header-max-w', roleHeaderWidth + 'px');
       }, [roleHeaderWidth]);
-      const [showPlansModal, setShowPlansModal] = useState(false);
       // Access tab — gallery-wide access mode + a couple of toggles. Defaults to public.
       const [accessMode, setAccessMode] = useState('public');
       const [showGalleryRegistration, setShowGalleryRegistration] = useState(false);
@@ -9042,18 +8997,7 @@
         return () => document.removeEventListener('click', handler);
       }, [openMenuRoleId, isMobile]);
 
-      useEffect(() => {
-        if (!modeMenuOpen) return;
-        const handler = () => setModeMenuOpen(false);
-        document.addEventListener('click', handler);
-        return () => document.removeEventListener('click', handler);
-      }, [modeMenuOpen]);
 
-      const selectPlan = (plan) => {
-        setViewMode(plan);
-        setShowPlansModal(false);
-        showToast(`Plan updated to ${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
-      };
 
       const showToast = (msg) => {
         setToast(msg);
@@ -9591,7 +9535,6 @@
           {showModal && (
             <AddRoleModal onClose={() => setShowModal(false)}
               onSelect={addRole} onSelectBulk={addRoles} onDeleteSaved={deleteSavedRoles}
-              onOpenPlans={() => { setShowModal(false); setShowPlansModal(true); }}
               existingNames={existingNames} viewMode={viewMode}
               customRoleCount={roles.filter(r => r.isCustom).length} savedRoles={savedRoles} />
           )}
@@ -9649,10 +9592,6 @@
               onRoleDuplicate={(id) => duplicateRole(id)}
               onRoleRemove={(id) => requestRemoveRole(id)}
               onRoleAddContact={(id) => setContactRoleId(id)} />
-          )}
-
-          {showPlansModal && (
-            <PlansModal currentPlan={viewMode} onClose={() => setShowPlansModal(false)} onSelectPlan={selectPlan} />
           )}
 
           {removeConfirm && (() => {
@@ -9835,7 +9774,7 @@
         <TermsContext.Provider value={terms}>
         <MobileSimContext.Provider value={simulateMobile}>
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--page-bg)' }}>
-          {!realMobile && <TopBar viewMode={viewMode} setViewMode={setViewMode}
+          {!realMobile && <TopBar
             simulateMobile={simulateMobile} onToggleMobile={() => setSimulateMobile(v => !v)}
             onAdminOpen={() => setAdminOpen(true)} />}
           {simulateMobile ? (
