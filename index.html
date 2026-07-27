@@ -1801,6 +1801,7 @@
       const [contactMobile, setContactMobile] = useState('');
       const [selectedCards, setSelectedCards] = useState(new Set());
       const [savedPerRoleState, setSavedPerRoleState] = useState(null);
+      const [fromSavedRole, setFromSavedRole] = useState(false);
       const [pendingDelete, setPendingDelete] = useState(null); // array of ids to delete
       const trimmed = customName.trim();
       const nameTaken = existingNames.includes(trimmed.toLowerCase());
@@ -1867,7 +1868,7 @@
         setPendingDelete(null);
       };
 
-      const goDetail = (id) => { setPresetId(id); setStep('detail'); };
+      const goDetail = (id) => { setPresetId(id); setFromSavedRole(false); setStep('detail'); };
       const roleDisplayName =
         presetId === 'guest' ? 'Guest'
         : presetId === 'client' ? 'Client'
@@ -1878,6 +1879,7 @@
         setCustomName(saved.name);
         setPresetId('custom');
         setSavedPerRoleState(saved.perRoleState || null);
+        setFromSavedRole(true);
         setStep('detail');
       };
 
@@ -2118,7 +2120,7 @@
                 {step === 'detail' && (
                   <>
                     <button onClick={onClose} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'#1B1C1F', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-                    <button onClick={submit} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>{presetId === 'custom' ? `Create ${roleLabel}` : `Add ${roleLabel}`}</button>
+                    <button onClick={submit} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>{(presetId === 'custom' && !fromSavedRole) ? `Create ${roleLabel}` : `Add ${roleLabel}`}</button>
                   </>
                 )}
               </div>
@@ -2382,7 +2384,7 @@
                   {isMobile ? (
                     <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
                       <button onClick={onClose} style={{ flex: 1, padding: '12px 0', borderRadius: 9999, background: '#1B1C1F', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
-                      <button onClick={submit} style={{ flex: 1, padding: '12px 0', borderRadius: 9999, background: 'var(--brand)', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>{presetId === 'custom' ? `Create ${roleLabel}` : `Add ${roleLabel}`}</button>
+                      <button onClick={submit} style={{ flex: 1, padding: '12px 0', borderRadius: 9999, background: 'var(--brand)', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>{(presetId === 'custom' && !fromSavedRole) ? `Create ${roleLabel}` : `Add ${roleLabel}`}</button>
                     </div>
                   ) : (
                     <div className="flex justify-end gap-2 mt-5 flex-wrap">
@@ -2392,7 +2394,7 @@
                       <button onClick={submit}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full text-white transition-all whitespace-nowrap"
                         style={{ background: 'var(--brand)', boxShadow: 'var(--shadow-sm)' }}>
-                        {presetId === 'custom' ? `CREATE ${roleLabel.toUpperCase()}` : `ADD ${roleLabel.toUpperCase()}`}
+                        {(presetId === 'custom' && !fromSavedRole) ? `CREATE ${roleLabel.toUpperCase()}` : `ADD ${roleLabel.toUpperCase()}`}
                       </button>
                     </div>
                   )}
