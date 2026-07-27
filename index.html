@@ -3507,8 +3507,8 @@
       const refRoleId = roles[0].id;
 
       return (
-        <div style={{ background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)' }}>
-          <div className="multi-panel-body px-8 pt-4 pb-5" style={{ maxWidth: 760 }}>
+        <div style={{ background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)', maxWidth: `calc(100% - ${roles.length - 1} * var(--role-header-max-w))` }}>
+          <div className="multi-panel-body px-8 pt-4 pb-5">
             {(() => {
               const topLevel = mainSettings.filter(s => !s.dependsOn);
               const childrenOf = (id) => mainSettings.filter(s => s.dependsOn?.settingId === id);
