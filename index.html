@@ -4376,7 +4376,7 @@
     }) => {
       const { defaultRoleLabel, roleLabel } = useTerms();
       const isElevated = viewMode === 'professional' || viewMode === 'advanced';
-      const visitorRole = { id: '__visitor__', name: `Visitor / ${defaultRoleLabel}` };
+      const visitorRole = { id: '__visitor__', name: `Visitor (gets default audience permissions)` };
       const systemRoles = [
         { id: 'everyone', name: defaultRoleLabel },
         { id: '__guest__', name: 'Guest' },
@@ -4719,7 +4719,7 @@
                   <MobileRoleSelect
                     value={collectEmailRole}
                     onChange={setCollectEmailRole}
-                    allRoles={[visitorRole, ...(roles || []).filter(r => r.id !== 'everyone')]}
+                    allRoles={[visitorRole, { id: 'everyone', name: defaultRoleLabel }, ...(roles || []).filter(r => r.id !== 'everyone')]}
                     label={`Registrant ${roleLabel}`}
                     className="w-full border rounded px-3 py-2 text-[13px] outline-none"
                     style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)', background: '#fff', cursor: 'pointer' }}
@@ -6989,7 +6989,7 @@
 
       const { defaultRoleLabel, roleLabel } = useTerms();
       const isElevated = viewMode === 'professional' || viewMode === 'advanced';
-      const visitorRole = { id: '__visitor__', name: `Visitor / ${defaultRoleLabel}` };
+      const visitorRole = { id: '__visitor__', name: `Visitor (gets default audience permissions)` };
       const systemRoles = [
         { id: 'everyone', name: defaultRoleLabel },
         { id: '__guest__', name: 'Guest' },
@@ -7615,7 +7615,7 @@
                 <MobileRoleSelect
                   value={emailRole}
                   onChange={setEmailRole}
-                  allRoles={[visitorRole, ...roles.filter(r => r.id !== 'everyone')]}
+                  allRoles={[visitorRole, { id: 'everyone', name: defaultRoleLabel }, ...roles.filter(r => r.id !== 'everyone')]}
                   label={`Registrant ${roleLabel} Assignment`}
                   className="border rounded px-3 py-2 text-[13px] outline-none w-full"
                   style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)', background: '#fff', cursor: 'pointer', maxWidth: 320 }}
