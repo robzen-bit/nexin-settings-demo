@@ -4394,7 +4394,7 @@
       const [expirationDate, setExpirationDate] = useState('');
       const isMobile = useIsMobile();
 
-      const [collectEmailRole, setCollectEmailRole] = useState('everyone');
+      const [collectEmailRole, setCollectEmailRole] = useState('__visitor__');
       const [feeDetailsOpen, setFeeDetailsOpen] = useState(false);
       const [feeTitle, setFeeTitle] = useState('Access Fee');
       const [feeDesc, setFeeDesc] = useState("By filling out the form and clicking 'Continue, you will be prompted to pay a one time Access Fee.");
@@ -4719,7 +4719,7 @@
                   <MobileRoleSelect
                     value={collectEmailRole}
                     onChange={setCollectEmailRole}
-                    allRoles={[visitorRole, ...systemRoles, ...galleryCustomRoles, ...savedNotInGallery]}
+                    allRoles={[visitorRole, ...(roles || []).filter(r => r.id !== 'everyone')]}
                     label={`Registrant ${roleLabel}`}
                     className="w-full border rounded px-3 py-2 text-[13px] outline-none"
                     style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)', background: '#fff', cursor: 'pointer' }}
@@ -6962,7 +6962,7 @@
       const [fieldEnabled, setFieldEnabled] = useState({ first_name: true, last_name: true, email: true, phone_number: true });
       const [fieldRequired, setFieldRequired] = useState({ first_name: false, last_name: false, email: true, phone_number: false });
       const [customFields, setCustomFields] = useState([]);
-      const [emailRole, setEmailRole] = useState('everyone');
+      const [emailRole, setEmailRole] = useState('__visitor__');
       const [addFieldMenuOpen, setAddFieldMenuOpen] = useState(false);
       const [addFieldModal, setAddFieldModal] = useState(null); // 'text' | 'dropdown' | 'date'
       const [modalLabel, setModalLabel] = useState('');
@@ -7615,7 +7615,7 @@
                 <MobileRoleSelect
                   value={emailRole}
                   onChange={setEmailRole}
-                  allRoles={[visitorRole, ...systemRoles, ...galleryCustomRoles, ...savedNotInGallery]}
+                  allRoles={[visitorRole, ...roles.filter(r => r.id !== 'everyone')]}
                   label={`Registrant ${roleLabel} Assignment`}
                   className="border rounded px-3 py-2 text-[13px] outline-none w-full"
                   style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)', background: '#fff', cursor: 'pointer', maxWidth: 320 }}
