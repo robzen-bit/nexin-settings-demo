@@ -4915,6 +4915,33 @@
       { id: 'fc-56', first: 'Wes',        last: 'Maxfield',   email: 'wes.maxfield@yopmail.com'      },
     ];
 
+    const DEMO_CSV_TEXT = `student_first_name,student_last_name,student_email,student_phone,parent1_first_name,parent1_last_name,parent1_email,parent1_phone,parent2_first_name,parent2_last_name,parent2_email,parent2_phone
+Hope,Mikaelson,hope.mikaelson@yopmail.com,555-101-2233,Klaus,Mikaelson,klaus.mikaelson@yopmail.com,555-201-3344,Hayley,Marshall,hayley.marshall@yopmail.com,555-301-4455
+Josie,Saltzman,josie.saltzman@yopmail.com,555-102-2234,Alaric,Saltzman,alaric.saltzman@yopmail.com,555-202-3345,Jo,Laughlin,jo.laughlin@yopmail.com,555-302-4456
+Lizzie,Saltzman,lizzie.saltzman@yopmail.com,555-103-2235,Alaric,Saltzman,alaric.saltzman@yopmail.com,555-202-3345,Jo,Laughlin,jo.laughlin@yopmail.com,555-302-4456
+Landon,Kirby,landon.kirby@yopmail.com,555-104-2236,Seylah,Cheung,seylah.cheung@yopmail.com,555-203-3346,Ted,Kirby,ted.kirby@yopmail.com,555-303-4457
+Rafael,Waithe,rafael.waithe@yopmail.com,555-105-2237,Lucia,Waithe,lucia.waithe@yopmail.com,555-204-3347,Raf Sr,Waithe,rafsr.waithe@yopmail.com,555-304-4458
+Penelope,Park,penelope.park@yopmail.com,555-106-2238,Diana,Park,diana.park@yopmail.com,555-205-3348,James,Park,james.park@yopmail.com,555-305-4459
+MG,Greasley,mg.greasley@yopmail.com,555-107-2239,Veronica,Greasley,veronica.greasley@yopmail.com,555-206-3349,Ethan,Greasley,ethan.greasley@yopmail.com,555-306-4460
+Kaleb,Hawkins,kaleb.hawkins@yopmail.com,555-108-2240,Rosemary,Hawkins,rosemary.hawkins@yopmail.com,555-207-3350,David,Hawkins,david.hawkins@yopmail.com,555-307-4461
+Jed,Tien,jed.tien@yopmail.com,555-109-2241,Mai,Tien,mai.tien@yopmail.com,555-208-3351,Henry,Tien,henry.tien@yopmail.com,555-308-4462
+Jade,Nguyen,jade.nguyen@yopmail.com,555-110-2242,Linh,Nguyen,linh.nguyen@yopmail.com,555-209-3352,Minh,Nguyen,minh.nguyen@yopmail.com,555-309-4463
+Wade,Malachi,wade.malachi@yopmail.com,555-111-2243,Sandra,Malachi,sandra.malachi@yopmail.com,555-210-3353,Carl,Malachi,carl.malachi@yopmail.com,555-310-4464
+Cleo,Sowande,cleo.sowande@yopmail.com,555-112-2244,Ama,Sowande,ama.sowande@yopmail.com,555-211-3354,Kofi,Sowande,kofi.sowande@yopmail.com,555-311-4465
+Ethan,Mac,ethan.mac@yopmail.com,555-113-2245,Sharon,Mac,sharon.mac@yopmail.com,555-212-3355,Greg,Mac,greg.mac@yopmail.com,555-312-4466
+Jeremy,Gilbert,jeremy.gilbert@yopmail.com,555-114-2246,Miranda,Gilbert,miranda.gilbert@yopmail.com,555-213-3356,Grayson,Gilbert,grayson.gilbert@yopmail.com,555-313-4467
+Elena,Gilbert,elena.gilbert@yopmail.com,555-115-2247,Miranda,Gilbert,miranda.gilbert@yopmail.com,555-213-3356,Grayson,Gilbert,grayson.gilbert@yopmail.com,555-313-4467
+Bonnie,Bennett,bonnie.bennett@yopmail.com,555-116-2248,Abby,Bennett,abby.bennett@yopmail.com,555-214-3357,Rudy,Hopkins,rudy.hopkins@yopmail.com,555-314-4468
+Tyler,Lockwood,tyler.lockwood@yopmail.com,555-117-2249,Carol,Lockwood,carol.lockwood@yopmail.com,555-215-3358,Richard,Lockwood,richard.lockwood@yopmail.com,555-315-4469
+Matt,Donovan,matt.donovan@yopmail.com,555-118-2250,Kelly,Donovan,kelly.donovan@yopmail.com,555-216-3359,Pete,Donovan,pete.donovan@yopmail.com,555-316-4470
+Caroline,Forbes,caroline.forbes@yopmail.com,555-119-2251,Liz,Forbes,liz.forbes@yopmail.com,555-217-3360,Bill,Forbes,bill.forbes@yopmail.com,555-317-4471
+Kol Jr,Mikaelson,koljr.mikaelson@yopmail.com,555-120-2252,Kol,Mikaelson,kol.mikaelson@yopmail.com,555-218-3361,Davina,Claire,davina.claire@yopmail.com,555-318-4472
+Nik,Mikaelson,nik.mikaelson@yopmail.com,555-121-2253,Rebekah,Mikaelson,rebekah.mikaelson@yopmail.com,555-219-3362,Marcel,Gerard,marcel.gerard@yopmail.com,555-319-4473
+Alyssa,Chang,alyssa.chang@yopmail.com,555-122-2254,Wei,Chang,wei.chang@yopmail.com,555-220-3363,Mei,Chang,mei.chang@yopmail.com,555-320-4474
+Sebastian,Hawthorne,sebastian.hawthorne@yopmail.com,555-123-2255,Victor,Hawthorne,victor.hawthorne@yopmail.com,555-221-3364,Irene,Hawthorne,irene.hawthorne@yopmail.com,555-321-4475
+Finch,Talib,finch.talib@yopmail.com,555-124-2256,Omar,Talib,omar.talib@yopmail.com,555-222-3365,Nadia,Talib,nadia.talib@yopmail.com,555-322-4476
+Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555-223-3366,Diana,Park,diana.park@yopmail.com,555-323-4477`;
+
     const AddFromContactsModal = ({ roles, onClose, onAdd }) => {
       const [search, setSearch] = useState('');
       const [page, setPage] = useState(0);
@@ -5609,9 +5636,8 @@
       };
 
       const handleDemoData = () => {
-        const header = ['First Name', 'Last Name', 'Email'];
-        const rows = FAKE_CONTACTS.map(c => [c.first, c.last, c.email]);
-        setCsvRawRows([header, ...rows]);
+        const rows = parseCSV(DEMO_CSV_TEXT);
+        setCsvRawRows(rows);
         setCsvFilename('demo-data.csv');
         setCsvUploaded(true);
         setHasHeaders(true);
