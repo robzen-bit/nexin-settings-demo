@@ -4882,7 +4882,7 @@
 
       const otherRoles = roles.filter(r => r.id !== 'everyone');
       const everyone = roles.find(r => r.id === 'everyone');
-      const allRoles = otherRoles.length ? otherRoles : (everyone ? [everyone] : []);
+      const allRoles = everyone ? [everyone, ...otherRoles] : otherRoles;
 
       const filtered = FAKE_CONTACTS.filter(c => {
         const q = search.toLowerCase();
@@ -5079,7 +5079,7 @@
                       <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" strokeLinecap="round"/></svg>Adding...</>
                     ) : addDone ? (
                       <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20,6 9,17 4,12"/></svg>Added</>
-                    ) : 'Add'}
+                    ) : 'Add as Default'}
                   </button>
                 </div>
               ) : (
