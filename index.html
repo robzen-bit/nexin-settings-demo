@@ -3233,7 +3233,7 @@
       const roleEnabled = !!perRole[role.id]?.[feature.id]?.enabled;
       const disabledStyle = roleEnabled ? null : { opacity: 0.5, pointerEvents: 'none' };
       return (
-        <div className="multi-panel-body px-8 py-2" style={{ background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)' }}>
+        <div className="multi-panel-body px-8 py-2" style={{ position: 'sticky', left: 0, width: 'var(--matrix-visible-w, 100%)', background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)' }}>
           {topLevel.map((s, i) => {
             const isToggle = s.type === 'toggle';
             const kids = childrenOf(s.id);
@@ -3507,7 +3507,7 @@
       const refRoleId = roles[0].id;
 
       return (
-        <div style={{ background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)', maxWidth: `calc(100% - ${roles.length - 1} * var(--role-header-max-w))` }}>
+        <div style={{ position: 'sticky', left: 0, width: 'var(--matrix-visible-w, 100%)', background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)' }}>
           <div className="multi-panel-body px-8 pt-4 pb-5">
             {(() => {
               const topLevel = mainSettings.filter(s => !s.dependsOn);
@@ -8666,6 +8666,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       useEffect(() => {
         document.documentElement.style.setProperty('--role-header-max-w', roleHeaderWidth + 'px');
       }, [roleHeaderWidth]);
+      const matrixScrollRef = useRef(null);
+      useEffect(() => {
+        const el = matrixScrollRef.current;
+        if (!el) return;
+        const update = () => document.documentElement.style.setProperty('--matrix-visible-w', el.clientWidth + 'px');
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+      }, []);
       // Access tab — gallery-wide access mode + a couple of toggles. Defaults to public.
       const [accessMode, setAccessMode] = useState('public');
       const [showGalleryRegistration, setShowGalleryRegistration] = useState(false);
@@ -9136,7 +9146,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                     );
                   })()}
 
-                  <div className="matrix-scroll" style={{ overflowX: 'auto', ...(isMobile ? {} : { overflowY: 'auto', maxHeight: 'calc(100vh - 270px)' }) }}>
+                  <div ref={matrixScrollRef} className="matrix-scroll" style={{ overflowX: 'auto', ...(isMobile ? {} : { overflowY: 'auto', maxHeight: 'calc(100vh - 270px)' }) }}>
                   <div className="bg-white rounded-xl border" style={{ borderColor: 'var(--card-border)', minWidth: !isMobile ? matrixMinWidth : undefined }}>
                     {/* Header row — sticky within the scroll container */}
                     {!isMobile && (
