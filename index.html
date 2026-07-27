@@ -4337,34 +4337,12 @@
     };
 
     // Extracted sub-component so useState is called at the top level (not inside an IIFE).
-    const FeeBypassMobileAdder = ({ availRoles, feeBypassRoles, onChangeFeeBypassRoles }) => {
-      const [open, setOpen] = useState(false);
-      if (!availRoles.length) return null;
-      return (
-        <>
-          <button type="button" onClick={() => setOpen(true)} className="text-[12px]"
-            style={{ color: feeBypassRoles.length ? 'var(--brand)' : 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>
-            {feeBypassRoles.length ? '+ Add role…' : 'Select roles…'}
-          </button>
-          {open && (
-            <BottomSheet
-              options={availRoles.map(r => r.name)}
-              value=""
-              label="Fee Bypass — Add Role"
-              onChange={name => { const r = availRoles.find(x => x.name === name); if (r) onChangeFeeBypassRoles([...feeBypassRoles, r.id]); setOpen(false); }}
-              onClose={() => setOpen(false)}
-            />
-          )}
-        </>
-      );
-    };
 
     const AccessSection = ({
       mode, onSelectMode,
       showRegistration, onToggleRegistration,
       accessFeeEnabled, onToggleAccessFee,
       accessFeeAmount, onChangeAccessFeeAmount,
-      feeBypassRoles = [], onChangeFeeBypassRoles,
       roles, savedRoles, viewMode,
       collectEmailEnabled, onToggleCollectEmail,
       collectEmailOptional, onToggleCollectEmailOptional,
@@ -4631,74 +4609,6 @@
                         style={{ borderColor: 'var(--brand)', color: 'var(--brand)', background: '#fff' }}>
                         Edit Details
                       </button>
-                      {/* Fee Bypass */}
-                      <div className="mt-4">
-                        <div className="text-[13px] font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Fee Bypass</div>
-                        <p className="text-[12px] mb-2" style={{ color: 'var(--text-secondary)' }}>
-                          Allow a specific role / roles to bypass paying the Registration / Access Fee.{' '}
-                          <a href="#" onClick={e => e.preventDefault()} style={{ color: 'var(--brand)' }}>Learn More</a>
-                        </p>
-                        {/* Multi-select role chips */}
-                        <div className="rounded-md border bg-white px-2 py-1.5 flex flex-wrap gap-1.5 cursor-text"
-                          style={{ borderColor: 'var(--card-border)', maxWidth: 320, minHeight: 38 }}>
-                          {feeBypassRoles.map(roleId => {
-                            const allRoles = [
-                              ...systemRoles,
-                              ...(isElevated ? galleryCustomRoles : []),
-                              ...(isElevated ? savedNotInGallery : []),
-                            ];
-                            const r = allRoles.find(x => x.id === roleId);
-                            return r ? (
-                              <span key={roleId} className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-medium"
-                                style={{ background: 'var(--brand)', color: '#fff' }}>
-                                {r.name}
-                                <button type="button" onClick={() => onChangeFeeBypassRoles(feeBypassRoles.filter(id => id !== roleId))}
-                                  className="flex items-center justify-center rounded-full hover:opacity-75"
-                                  style={{ width: 14, height: 14, background: 'rgba(255,255,255,0.3)', fontSize: 10, lineHeight: 1 }}>
-                                  ×
-                                </button>
-                              </span>
-                            ) : null;
-                          })}
-                          {isMobile ? (
-                            <FeeBypassMobileAdder
-                              availRoles={[...systemRoles, ...galleryCustomRoles, ...savedNotInGallery].filter(r => !feeBypassRoles.includes(r.id))}
-                              feeBypassRoles={feeBypassRoles}
-                              onChangeFeeBypassRoles={onChangeFeeBypassRoles}
-                            />
-                          ) : (
-                          <select
-                            value=""
-                            onChange={e => {
-                              const val = e.target.value;
-                              if (val && !feeBypassRoles.includes(val)) onChangeFeeBypassRoles([...feeBypassRoles, val]);
-                            }}
-                            className="text-[12px] outline-none bg-transparent flex-1 min-w-[80px]"
-                            style={{ color: feeBypassRoles.length ? 'var(--text-tertiary)' : 'var(--text-secondary)', border: 'none' }}>
-                            <option value="">{feeBypassRoles.length ? '+ Add role…' : 'Select roles…'}</option>
-                            {!isElevated ? (
-                              systemRoles.filter(r => !feeBypassRoles.includes(r.id)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)
-                            ) : (
-                              <>
-                                <optgroup label="System Roles">
-                                  {systemRoles.filter(r => !feeBypassRoles.includes(r.id)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </optgroup>
-                                {galleryCustomRoles.filter(r => !feeBypassRoles.includes(r.id)).length > 0 && (
-                                  <optgroup label="Gallery Roles">
-                                    {galleryCustomRoles.filter(r => !feeBypassRoles.includes(r.id)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                  </optgroup>
-                                )}
-                                {savedNotInGallery.filter(r => !feeBypassRoles.includes(r.id)).length > 0 && (
-                                  <optgroup label="Saved Custom Roles">
-                                    {savedNotInGallery.filter(r => !feeBypassRoles.includes(r.id)).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                  </optgroup>
-                                )}
-                              </>
-                            )}
-                          </select>
-                          )}
-                        </div>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -8836,7 +8746,6 @@
       const [showGalleryRegistration, setShowGalleryRegistration] = useState(false);
       const [accessFeeEnabled, setAccessFeeEnabled] = useState(false);
       const [accessFeeAmount, setAccessFeeAmount] = useState('0.00');
-      const [feeBypassRoles, setFeeBypassRoles] = useState([]);
       const [collectEmailEnabled, setCollectEmailEnabled] = useState(false);
       const [collectEmailOptional, setCollectEmailOptional] = useState(false);
       const [customFormEnabled, setCustomFormEnabled] = useState(false);
@@ -9224,7 +9133,6 @@
                     showRegistration={showGalleryRegistration} onToggleRegistration={() => { const next = !showGalleryRegistration; setShowGalleryRegistration(next); if (next) setCollectEmailEnabled(true); }}
                     accessFeeEnabled={accessFeeEnabled} onToggleAccessFee={() => setAccessFeeEnabled(v => !v)}
                     accessFeeAmount={accessFeeAmount} onChangeAccessFeeAmount={setAccessFeeAmount}
-                    feeBypassRoles={feeBypassRoles} onChangeFeeBypassRoles={setFeeBypassRoles}
                     roles={roles} savedRoles={savedRoles} viewMode={viewMode}
                     collectEmailEnabled={collectEmailEnabled} onToggleCollectEmail={() => { setCollectEmailEnabled(true); setCustomFormEnabled(false); }}
                     collectEmailOptional={collectEmailOptional} onToggleCollectEmailOptional={() => setCollectEmailOptional(v => !v)}
