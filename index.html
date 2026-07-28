@@ -9069,29 +9069,62 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         return ReactDOM.createPortal(jsx, document.body);
       }
 
+      const actionBullet = (label) => (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--card-border)' }}>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            <li><strong>{label}</strong></li>
+          </ul>
+        </div>
+      );
+
       const callouts = {
         1: {
-          text: <span>Let's set up your Default Audience. To turn on a permission for an Audience, turn on the toggle for that permission underneath the Audience. Let's <strong>turn on Screenshot Protection for your Default Audience</strong>. We'll advance to the next step once you're done.</span>,
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Let's set up your Default audience. To turn on a permission for an audience, turn on the toggle for that permission underneath the audience. Let's turn on Screenshot Protection for your Default audience. We'll advance to the next step once you're done.</p>
+              {actionBullet('Turn on the Screenshot Protection toggle under the Default audience.')}
+            </>
+          ),
           placement: 'center',
         },
         2: {
-          text: <span>Perfect, you've turned on Screenshot Protection for your Default Audience. You may notice some permissions have advanced settings you can see by expanding the permission. We'll leave Screenshot Protection set up as it is. You can collapse the advanced settings by clicking the chevron to the left of the permission's name. Go ahead and <strong>click that chevron to collapse the settings</strong>, and we'll move on.</span>,
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Perfect, you've turned on Screenshot Protection for your Default audience. You may notice some permissions have advanced settings you can see by expanding the permission. We'll leave Screenshot Protection set up as it is. You can collapse the advanced settings by clicking the chevron to the left of the permission's name. Go ahead and click that chevron to collapse the settings, and we'll move on.</p>
+              {actionBullet('Click the chevron to the left of Screenshot Protection to collapse its advanced settings.')}
+            </>
+          ),
           placement: 'upper-center',
         },
         3: {
-          text: <span>Now let's turn on the Sharing permission. This one doesn't have advanced settings, it's simply an on/off toggle for each Audience you've added to the gallery. Go ahead and <strong>toggle Sharing on for your Default Audience</strong>, and we'll move on.</span>,
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Now let's turn on the Sharing permission. This one doesn't have advanced settings, it's simply an on/off toggle for each audience you've added to the gallery. Go ahead and toggle Sharing on for your Default audience, and we'll move on.</p>
+              {actionBullet('Turn on the Sharing toggle under the Default audience.')}
+            </>
+          ),
           placement: 'center',
         },
         4: {
-          text: <span>Now that you've learned how to set up your Default Audience, let's add a contact to it without leaving the Gallery Permissions page. If you click the name of an Audience in the header, a window pops up that lets you add a contact to that Audience. Go ahead and <strong>click Default in the header</strong>.</span>,
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Now that you've learned how to set up your Default audience, let's add a contact to it without leaving the Gallery Permissions page. If you click the name of an audience in the header, a window pops up that lets you add a contact to that audience. Go ahead and click Default in the header.</p>
+              {actionBullet('Click Default in the audience header to open the add-contact window.')}
+            </>
+          ),
           placement: 'center',
         },
         5: {
-          text: <span>Go ahead and <strong>enter some contact information here</strong>. All that's required is an email. Then <strong>click Add as Default</strong> to complete this part of the tour.</span>,
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Go ahead and enter some contact information here. All that's required is an email. Then click Add as Default to complete this part of the tour.</p>
+              {actionBullet('Enter an email (the only required field), then click Add as Default.')}
+            </>
+          ),
           placement: 'upper-center',
         },
         6: {
-          text: <span>That's your Default Audience set up. These are the baseline gallery permissions every visitor receives when they access your gallery, along with anyone you add as a Default contact. Nicely done.</span>,
+          text: <span>That's your Default audience set up. These are the baseline gallery permissions every visitor receives when they access your gallery, along with anyone you add as a Default contact. Nicely done.</span>,
           placement: 'center',
           nextLabel: 'Done',
           onNext: onComplete,
