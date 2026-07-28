@@ -8673,16 +8673,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     };
 
     const CALLOUT_POSITIONS = {
-      'upper-center': { top: 88,    left: '50%', transform: 'translateX(-50%)' },
-      'upper-right':  { top: 88,    right: 24 },
-      'center-left':  { top: '50%', left: 56,    transform: 'translateY(-50%)' },
-      'center':       { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+      'upper-center':  { top: 88,    left: '50%', transform: 'translateX(-50%)' },
+      'upper-center-flush': { top: 12, left: '50%', transform: 'translateX(-50%)' },
+      'upper-right':   { top: 88,    right: 24 },
+      'center-right':  { top: 120,   left: '62%', transform: 'translateX(-50%)', width: 290 },
+      'center-left':   { top: '50%', left: 56,    transform: 'translateY(-50%)' },
+      'center':        { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
     };
 
     const CalloutModal = ({ text, placement, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel }) => {
       const pos = CALLOUT_POSITIONS[placement] || CALLOUT_POSITIONS['center'];
+      const { width: posWidth, ...posStyle } = pos;
       const jsx = (
-        <div style={{ position: 'fixed', ...pos, zIndex: 550, width: 340, maxWidth: 'calc(100vw - 48px)', pointerEvents: 'auto' }}>
+        <div style={{ position: 'fixed', ...posStyle, zIndex: 550, width: posWidth || 340, maxWidth: 'calc(100vw - 48px)', pointerEvents: 'auto' }}>
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 12px 48px rgba(0,0,0,0.28)', overflow: 'hidden' }}>
             {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0' }}>
@@ -8727,7 +8730,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const main = document.querySelector('[data-tour="access-main"]');
             return [card, main].filter(Boolean).map(el => el.getBoundingClientRect());
           },
-          placement: 'upper-center',
+          placement: 'upper-center-flush',
           text: "This is Gallery Access. It's where you set how your gallery can be accessed: Public, Password Protected, Invite Only (just the contacts you've added to the gallery), or Offline (visible only to you). It's also where you turn on features like gallery registration and choose whether the gallery can appear in search results.",
         },
         {
@@ -8748,7 +8751,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = document.querySelector('[data-tour="add-audience-btn"]');
             return el ? [el.getBoundingClientRect()] : [];
           },
-          placement: 'upper-right',
+          placement: 'center-right',
           text: "This is where you add an audience. Think of an audience as a permission set you can add contacts to. We'll go over this in more detail later in the tour.",
         },
         {
