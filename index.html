@@ -8760,7 +8760,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return el ? [el.getBoundingClientRect()] : [];
           },
           placement: 'center-right',
-          text: "This is where you add an audience. Think of an audience as a permission set you can add contacts to. We'll go over this in more detail later in the tour.",
+          text: "This is where you add an Audience. Think of an Audience as a permission set you can add contacts to. We'll go over this in more detail later in the tour.",
         },
         {
           navigate: () => {
@@ -8775,7 +8775,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return [{ x: c.left, y: m.top, width: c.width, height: m.height }];
           },
           placement: 'center',
-          text: "This is the Default audience. Think of it as your baseline gallery settings. Anyone who accesses your gallery who isn't in another audience gets these Default settings. We'll cover this in more detail later in the tour.",
+          text: "This is the Default Audience. Think of it as your baseline gallery settings. Anyone who accesses your gallery who isn't in another Audience gets these Default settings. We'll cover this in more detail later in the tour.",
         },
         {
           navigate: () => {
@@ -8787,7 +8787,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return [header, rows].filter(Boolean).map(el => el.getBoundingClientRect());
           },
           placement: 'upper-center',
-          text: "These are your permissions by audience. Some permissions can be turned on or off per audience, and even customized individually per audience. We'll cover this in more detail later in the tour.",
+          text: "These are your permissions by Audience. Some permissions can be turned on or off per Audience, and even customized individually per Audience. We'll cover this in more detail later in the tour.",
         },
         {
           navigate: () => {
@@ -8803,7 +8803,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return el ? [el.getBoundingClientRect()] : [];
           },
           placement: 'center',
-          text: "These are your full gallery permissions. When you turn one on, it applies to the whole gallery and everyone who accesses it, and it can't be customized by audience.",
+          text: "These are your full gallery permissions. When you turn one on, it applies to the whole gallery and everyone who accesses it, and it can't be customized by Audience.",
         },
       ];
 
@@ -8949,7 +8949,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-primary)', lineHeight: 1.2 }}>Using the Default Audience</div>
               </div>
               <div style={{ padding: '0 36px 28px', fontSize: 15, lineHeight: 1.7, color: 'var(--text-primary)', textAlign: 'center' }}>
-                Here we'll cover your Default audience. Think of it as your baseline gallery settings. It applies to visitors who access your galleries, and to anyone you add as a Default contact.
+                Here we'll cover your Default Audience. Think of it as your baseline gallery permissions. It applies to visitors who access your galleries, and to anyone you add as a Default contact.
               </div>
               <div style={{ display: 'flex', gap: 12, padding: '0 36px 36px' }}>
                 <button onClick={handleCancel} style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1.5px solid var(--card-border)', background: '#fff', color: 'var(--text-primary)', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
@@ -8966,7 +8966,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <>
             {stepHighlights}
             <CalloutModal
-              text="Let's set up your Default audience. Turn on Photo Downloads for the Default audience, then expand it to see the options you have. You can expand a permission by clicking it, double-clicking it, or clicking its arrow. Take a look at the settings you can adjust. Then turn on Favorites for the Default audience. Feel free to explore, and when you're done, click Continue Tour in the top right."
+              text="Let's set up your Default Audience. Turn on Photo Downloads for the Default Audience, then expand it to see the options you have. You can expand a permission by clicking it, double-clicking it, or clicking its arrow. Take a look at the settings you can adjust. Then turn on Favorites for the Default Audience. Feel free to explore, and when you're done, click Continue Tour in the top right."
               placement="table-center-right"
               stepNum={1} totalSteps={3} nextLabel="Let me try"
               onNext={() => { const m = document.querySelector('.matrix-scroll'); park(m ? [m.getBoundingClientRect()] : []); }}
@@ -8981,7 +8981,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <>
             {stepHighlights}
             <CalloutModal
-              text="Now that you've configured your Default audience, let's add a contact to it right here from the Gallery Permissions page. Click the word Default in the header, then add a contact in the modal that pops up. When you're done, click Continue Tour in the top right."
+              text="Now that you've configured your Default Audience, let's add a contact to it right here from the Gallery Permissions page. Click the word Default in the header, then add a contact in the modal that pops up. When you're done, click Continue Tour in the top right."
               placement="table-upper-center"
               stepNum={2} totalSteps={3} nextLabel="Let me try"
               onNext={() => { const col = document.querySelector('[data-tour="default-col"]'); park(col ? [col.getBoundingClientRect()] : []); }}
@@ -9047,7 +9047,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               <p style={{ marginBottom: 20 }}>Big changes are coming to Gallery Settings, an area we know matters to you. We wanted you to have time to learn them ahead of release, so they're not a surprise. The last thing we want is for you to log in on a tight deadline and have to figure out something new.</p>
               <p style={{ marginBottom: 12, fontWeight: 700, fontSize: 14, letterSpacing: '0.01em' }}>Here's what the new Gallery Settings let you do:</p>
               <ol style={{ paddingLeft: 22, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <li>Name your audiences whatever you want, not just "clients" and "guests."</li>
+                <li>Name your Audiences whatever you want, not just "clients" and "guests."</li>
                 <li>Give different contacts different settings, so each group gets exactly the access you choose.</li>
                 <li>See at a glance how your gallery is set up and who can do what.</li>
               </ol>
