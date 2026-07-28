@@ -4458,7 +4458,7 @@
       };
 
       return (
-        <main className="main-pane flex-1 px-6 pt-6 pb-12" style={{ maxWidth: 920 }}>
+        <main data-tour="access-main" className="main-pane flex-1 px-6 pt-6 pb-12" style={{ maxWidth: 920 }}>
           <MobileSectionNav activeSection={activeSection}
             onSelectSection={onSelectSection} contactsCount={contactsCount} />
           <header className="gallery-features-header mb-5">
@@ -8674,6 +8674,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
     const CALLOUT_POSITIONS = {
       'upper-center': { top: 88,    left: '50%', transform: 'translateX(-50%)' },
+      'upper-right':  { top: 88,    right: 24 },
       'center-left':  { top: '50%', left: 56,    transform: 'translateY(-50%)' },
       'center':       { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
     };
@@ -8722,8 +8723,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         {
           navigate: () => { setActiveMainTab('Settings'); setActiveSection('access'); },
           getHighlights: () => {
-            const el = document.querySelector('[data-tour="access-card"]');
-            return el ? [el.getBoundingClientRect()] : [];
+            const card = document.querySelector('[data-tour="access-card"]');
+            const main = document.querySelector('[data-tour="access-main"]');
+            return [card, main].filter(Boolean).map(el => el.getBoundingClientRect());
           },
           placement: 'upper-center',
           text: "This is Gallery Access. It's where you set how your gallery can be accessed: Public, Password Protected, Invite Only (just the contacts you've added to the gallery), or Offline (visible only to you). It's also where you turn on features like gallery registration and choose whether the gallery can appear in search results.",
@@ -8746,7 +8748,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = document.querySelector('[data-tour="add-audience-btn"]');
             return el ? [el.getBoundingClientRect()] : [];
           },
-          placement: 'center-left',
+          placement: 'upper-right',
           text: "This is where you add an audience. Think of an audience as a permission set you can add contacts to. We'll go over this in more detail later in the tour.",
         },
         {
@@ -8769,8 +8771,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
           },
           getHighlights: () => {
-            const el = document.querySelector('[data-tour="per-audience-rows"]');
-            return el ? [el.getBoundingClientRect()] : [];
+            const header = document.querySelector('[data-tour="matrix-header-row"]');
+            const rows = document.querySelector('[data-tour="per-audience-rows"]');
+            return [header, rows].filter(Boolean).map(el => el.getBoundingClientRect());
           },
           placement: 'upper-center',
           text: "These are your permissions by audience. Some permissions can be turned on or off per audience, and even customized individually per audience. We'll cover this in more detail later in the tour.",
@@ -9507,7 +9510,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                   <div className="bg-white rounded-xl border" style={{ borderColor: 'var(--card-border)', minWidth: !isMobile ? matrixMinWidth : undefined }}>
                     {/* Header row — sticky within the scroll container */}
                     {!isMobile && (
-                      <div className="grid items-center" style={{ gridTemplateColumns: gridCols, padding: '14px 0',
+                      <div data-tour="matrix-header-row" className="grid items-center" style={{ gridTemplateColumns: gridCols, padding: '14px 0',
                         background: 'var(--soft-bg)', borderTopLeftRadius: 12, borderTopRightRadius: 12,
                         position: 'sticky', top: 0, zIndex: 10 }}>
                         <div className="pl-6 text-[13px]" style={{ color: 'var(--text-secondary)' }}>{(() => {
