@@ -1435,7 +1435,7 @@
               </div>
             </div>
           </div>
-          <div className="gallery-header-actions flex items-center gap-2">
+          <div className="gallery-header-actions flex items-center gap-2" data-tour="gallery-header-actions">
             {continueTourFn && (
               <button onClick={continueTourFn}
                 style={{ padding: '9px 16px', borderRadius: 9999, border: '1.5px solid var(--brand)', background: 'var(--brand-cream, #FFF1E6)', color: 'var(--brand)', fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
@@ -1951,7 +1951,7 @@
                 <div style={{ width:36, height:4, borderRadius:2, background:'var(--card-border)' }} />
               </div>
               <div style={{ textAlign:'center', fontSize:15, fontWeight:700, color:'var(--text-primary)', padding:'8px 20px 12px', borderBottom:'1px solid var(--card-border)', flexShrink:0 }}>
-                {step === 'choose' ? `Add ${roleLabel}` : step === 'name' ? `Name Your ${roleLabel}` : `Add ${roleDisplayName} ${roleLabel}`}
+                {step === 'choose' ? `Add ${roleLabel}` : step === 'name' ? `Name Your Audience` : `Add a contact to the ${roleDisplayName} audience`}
               </div>
               <div className={`flex-1 ${step === 'choose' ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{ minHeight:0 }}>
                 {step === 'choose' && (
@@ -2254,7 +2254,7 @@
                   <div className="px-6">
                   {/* ── Saved custom roles ── */}
                   {savedRoles.length > 0 && (
-                    <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--line-2)' }}>
+                    <div data-tour="saved-audiences-section" className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--line-2)' }}>
                       <p className="text-[10px] font-bold tracking-[0.14em] mb-3" style={{ color: 'var(--text-3)' }}>
                         {`SAVED CUSTOM ${roleLabel.toUpperCase()}S`}
                       </p>
@@ -2378,9 +2378,10 @@
               )}
               {step === 'name' && (
                 <div className="p-6">
-                  <h3 className="text-[13px] font-bold tracking-wider mb-2" style={{ color: 'var(--text-primary)' }}>NAME YOUR ROLE</h3>
+                  <h3 className="text-[13px] font-bold tracking-wider mb-2" style={{ color: 'var(--text-primary)' }}>NAME YOUR AUDIENCE</h3>
                   <p className="text-[13px] mb-4" style={{ color: 'var(--text-secondary)' }}>Choose a name your viewers won't see — it's just for you.</p>
                   <input
+                    data-tour="audience-name-input"
                     autoFocus value={customName}
                     onChange={e => setCustomName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && trimmed && !nameTaken && !isReserved) goDetail('custom'); }}
@@ -2399,7 +2400,7 @@
                       <button onClick={() => setStep('choose')}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full border bg-white transition-all hover:bg-[var(--bg)]"
                         style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}>BACK</button>
-                      <button disabled={!trimmed || nameTaken || isReserved}
+                      <button data-tour="audience-name-next-btn" disabled={!trimmed || nameTaken || isReserved}
                         onClick={() => goDetail('custom')}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full text-white disabled:opacity-40 transition-all"
                         style={{ background: 'var(--brand)', boxShadow: 'var(--shadow-sm)' }}>NEXT</button>
@@ -2410,7 +2411,7 @@
               {step === 'detail' && (
                 <div className="p-6">
                   <h3 className="text-[13px] font-bold tracking-wider mb-3" style={{ color: 'var(--text-primary)' }}>
-                    {`ADD A ${roleDisplayName.toUpperCase()} ${roleLabel.toUpperCase()}`}
+                    {`ADD A CONTACT TO THE ${roleDisplayName.toUpperCase()} AUDIENCE`}
                   </h3>
                   <div className="rounded-md px-3 py-2.5 mb-3 text-[13px]"
                     style={{ background: 'var(--soft-bg)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}>
@@ -2433,10 +2434,10 @@
                     </div>
                   ) : (
                     <div className="flex justify-end gap-2 mt-5 flex-wrap">
-                      <button onClick={onClose}
+                      <button data-tour="audience-detail-cancel-btn" onClick={onClose}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full border bg-white transition-all hover:bg-[var(--bg)]"
                         style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}>CANCEL</button>
-                      <button onClick={submit}
+                      <button data-tour="audience-create-btn" onClick={submit}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full text-white transition-all whitespace-nowrap"
                         style={{ background: 'var(--brand)', boxShadow: 'var(--shadow-sm)' }}>
                         {(presetId === 'custom' && !fromSavedRole) ? `CREATE ${roleLabel.toUpperCase()}` : `ADD ${roleLabel.toUpperCase()}`}
@@ -2604,18 +2605,18 @@
       <div className="menu-pop absolute right-0 top-full mt-1.5 z-40 bg-white rounded-md shadow-lg border min-w-[210px] py-1.5"
         style={{ borderColor: 'var(--card-border)' }} onClick={e => e.stopPropagation()}>
         {!presetOnly && (<>
-          <button onClick={onRename}
+          <button data-tour="role-menu-rename" onClick={onRename}
             className="menu-item w-full text-left text-[12px] font-bold tracking-wider px-4 py-2.5"
             style={{ color: 'var(--text-primary)' }}>RENAME</button>
-          <button onClick={onSaveLater}
+          <button data-tour="role-menu-save-later" onClick={onSaveLater}
             className="menu-item w-full text-left text-[12px] font-bold tracking-wider px-4 py-2.5"
             style={{ color: 'var(--text-primary)' }}>SAVE FOR LATER USE</button>
-          <button onClick={onDuplicate}
+          <button data-tour="role-menu-duplicate" onClick={onDuplicate}
             className="menu-item w-full text-left text-[12px] font-bold tracking-wider px-4 py-2.5"
             style={{ color: 'var(--text-primary)' }}>DUPLICATE</button>
         </>)}
         {canRemove && (
-          <button onClick={onRemove}
+          <button data-tour="role-menu-remove" onClick={onRemove}
             className="menu-item-danger w-full text-left text-[12px] font-bold tracking-wider px-4 py-2.5"
             style={{ color: 'var(--danger)' }}>REMOVE</button>
         )}
@@ -2763,7 +2764,7 @@
       useEffect(() => { if (isRenaming) setTempName(role.name); }, [isRenaming, role.name]);
 
       return (
-        <div data-tour={role.id === 'everyone' ? 'default-col' : undefined} className="relative w-full flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
+        <div data-tour={role.id === 'everyone' ? 'default-col' : undefined} data-tour-col={role.id} className="relative w-full flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
           {isRenaming ? (
             <input autoFocus value={tempName}
               onChange={(e) => setTempName(e.target.value)}
@@ -2791,7 +2792,7 @@
             </>
           )}
           {!isRenaming && role.removable && (
-            <button onClick={(e) => { e.stopPropagation(); onMenuToggle(); }}
+            <button data-tour-col-kebab={role.id} onClick={(e) => { e.stopPropagation(); onMenuToggle(); }}
               className="kebab-btn rounded p-1"
               style={{ color: 'var(--text-tertiary)', position: 'absolute', right: 0 }}>
               <KebabIcon size={14} />
@@ -9637,6 +9638,374 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       );
     };
 
+    // ===== Saved Custom Audiences Topic =====
+    const GENRE_NAMES = {
+      sports:     { most: 'Parent',          lesser: 'Player' },
+      weddings:   { most: 'Bride and Groom', lesser: 'Wedding Party' },
+      portraits:  { most: 'Primary Contact', lesser: 'Family Member' },
+      commercial: { most: 'Agency',          lesser: 'Collaborator' },
+    };
+
+    const SavedAudiencesTopic = ({
+      onComplete, onCancel,
+      setActiveSection, setActiveMainTab,
+      roles, setRoles,
+      perRole, setPerRole,
+      openFeatures, setFeatureOpen,
+      showModal, setShowModal,
+      openMenuRoleId, setOpenMenuRoleId,
+      savedRoles,
+      onSetContinueTour,
+    }) => {
+      const [phase, setPhase] = useState('intro');
+      const [genre, setGenre] = useState(null);
+      const [mostPrivilegedName, setMostPrivilegedName] = useState('');
+      const [lesserPrivilegedName, setLesserPrivilegedName] = useState('');
+      const [highlightRects, setHighlightRects] = useState([]);
+      const [visible, setVisible] = useState(false);
+      const [nudge, setNudge] = useState(null);
+      const advancingRef = useRef(false);
+      const obsRef = useRef(null);
+      const FADE = 160;
+      const ADVANCE_DELAY = 1000;
+
+      const saLockClean = () => {
+        document.body.classList.remove('tour-model-a-active');
+        document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
+        document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+      };
+      const saLockAll = (...selectors) => {
+        saLockClean();
+        document.body.classList.add('tour-model-a-active');
+        selectors.flat().forEach(sel => {
+          const el = document.querySelector(`[data-tour="${sel}"]`);
+          if (el) el.setAttribute('data-tour-active-target', 'true');
+        });
+      };
+      const saOverlay = (...selectors) => {
+        selectors.flat().forEach(sel => {
+          const el = document.querySelector(`[data-tour="${sel}"]`);
+          if (el) el.setAttribute('data-tour-overlay', 'true');
+        });
+      };
+      const saRects = (...selectors) =>
+        selectors.flat().map(sel => document.querySelector(`[data-tour="${sel}"]`)).filter(Boolean).map(el => el.getBoundingClientRect());
+
+      const getMPRole = () => roles.find(r => r.name === mostPrivilegedName);
+      const getLPRole = () => roles.find(r => r.name === lesserPrivilegedName);
+      const disconnectObs = () => { if (obsRef.current) { obsRef.current.disconnect(); obsRef.current = null; } };
+
+      const advance = (toPhase) => {
+        if (advancingRef.current) return;
+        advancingRef.current = true;
+        disconnectObs();
+        saLockClean();
+        setNudge(null);
+        setVisible(false);
+        setTimeout(() => { advancingRef.current = false; setPhase(toPhase); }, FADE);
+      };
+
+      const parkModelB = (nextPhase) => {
+        disconnectObs();
+        saLockClean();
+        setHighlightRects([]);
+        setVisible(false);
+        onSetContinueTour(() => { saLockClean(); onSetContinueTour(null); advance(nextPhase); });
+      };
+
+      const closeAndGoto = (nextPhase) => {
+        setShowModal(false);
+        setTimeout(() => setPhase(nextPhase), FADE);
+      };
+      const closeReopenGoto = (reopenPhase) => {
+        setShowModal(false);
+        setTimeout(() => { setShowModal(true); setTimeout(() => setPhase(reopenPhase), 100); }, FADE);
+      };
+
+      const goBack = (from) => {
+        disconnectObs(); saLockClean(); advancingRef.current = false; setNudge(null); setVisible(false);
+        if (from === 1) { setShowModal(false); setPhase('intro'); return; }
+        if (from === 2) { closeAndGoto(1); return; }
+        if (from === 3) { closeReopenGoto(2); return; }
+        if (from === 4) { closeReopenGoto(2); return; }
+        if (from === 5) {
+          const r = getMPRole();
+          if (r) { setRoles(prev => prev.filter(x => x.id !== r.id)); setPerRole(prev => { const n = { ...prev }; delete n[r.id]; return n; }); }
+          setMostPrivilegedName('');
+          setShowModal(true); setTimeout(() => setPhase(2), FADE); return;
+        }
+        if (from === 7) { closeAndGoto(6); return; }
+        if (from === 8) { closeReopenGoto(7); return; }
+        if (from === 9) { closeReopenGoto(7); return; }
+        if (from === 10) {
+          const r = getLPRole();
+          if (r) { setRoles(prev => prev.filter(x => x.id !== r.id)); setPerRole(prev => { const n = { ...prev }; delete n[r.id]; return n; }); }
+          setLesserPrivilegedName('');
+          setShowModal(true); setTimeout(() => setPhase(7), FADE); return;
+        }
+        if (from === 12) { setOpenMenuRoleId(null); setTimeout(() => setPhase(11), FADE); return; }
+        if (from === 13) { const r = getMPRole(); if (r) setOpenMenuRoleId(r.id); setTimeout(() => setPhase(12), FADE); return; }
+        if (from === 14) { setShowModal(false); setTimeout(() => setPhase(13), FADE); return; }
+        if (from === 15) { setShowModal(true); setTimeout(() => setPhase(14), FADE); return; }
+        setTimeout(() => setPhase(from - 1), FADE);
+      };
+
+      const calloutStyle = useMemo(() => {
+        if (highlightRects.length === 0) return null;
+        if ([2, 5, 7, 10, 14, 15].includes(phase)) return null;
+        if (phase === 1 || phase === 6 || phase === 13) return nearRect(highlightRects[0], 'below');
+        return nearRect(highlightRects[0]);
+      }, [highlightRects, phase]);
+
+      const handleGenreSelect = (g) => {
+        if (advancingRef.current) return;
+        setGenre(g);
+        setRoles([{ id: 'everyone', name: 'Default', removable: false }]);
+        const base = buildEveryoneState();
+        const allOff = {};
+        Object.keys(base).forEach(fId => { allOff[fId] = { ...base[fId], enabled: false }; });
+        setPerRole({ everyone: allOff });
+        setShowModal(false);
+        setOpenMenuRoleId(null);
+        setActiveMainTab('Settings');
+        setActiveSection('features');
+        advance(1);
+      };
+
+      const handleCancel = () => { saLockClean(); disconnectObs(); onSetContinueTour(null); onCancel(); };
+      const TOTAL = 15;
+
+      // Phase setup
+      useEffect(() => {
+        if (phase === 'intro') { saLockClean(); setHighlightRects([]); setActiveMainTab('Settings'); setActiveSection('features'); return; }
+        disconnectObs();
+        const t = setTimeout(() => {
+          if (phase === 1) {
+            setHighlightRects(saRects('add-audience-btn'));
+            saLockAll('add-audience-btn');
+            setVisible(true); return;
+          }
+          if (phase === 2 || phase === 7) {
+            setHighlightRects(saRects('add-audience-modal'));
+            saLockAll('add-audience-modal');
+            saOverlay('add-audience-guest-card', 'add-audience-client-card', 'add-audience-cancel-btn');
+            setVisible(true);
+            const obs = new MutationObserver(() => {
+              if (document.querySelector('[data-tour="audience-name-input"]')) {
+                obs.disconnect(); obsRef.current = null;
+                setTimeout(() => advance(phase === 2 ? 3 : 8), ADVANCE_DELAY);
+              }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+            obsRef.current = obs; return;
+          }
+          if (phase === 3 || phase === 8) {
+            setHighlightRects(saRects('audience-name-input'));
+            saLockAll('audience-name-input', 'audience-name-next-btn');
+            setVisible(true);
+            const obs = new MutationObserver(() => {
+              if (document.querySelector('[data-tour="audience-create-btn"]')) {
+                obs.disconnect(); obsRef.current = null;
+                setTimeout(() => advance(phase === 3 ? 4 : 9), FADE);
+              }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+            obsRef.current = obs; return;
+          }
+          if (phase === 4 || phase === 9) {
+            setHighlightRects(saRects('add-audience-modal'));
+            saLockAll('add-audience-modal');
+            saOverlay('audience-detail-cancel-btn');
+            setVisible(true); return;
+          }
+          if (phase === 5 || phase === 10) {
+            setHighlightRects(saRects('matrix-header-row'));
+            saLockClean();
+            setVisible(true); return;
+          }
+          if (phase === 6) {
+            setHighlightRects(saRects('add-audience-btn'));
+            saLockAll('add-audience-btn');
+            setVisible(true); return;
+          }
+          if (phase === 11) {
+            const r = getMPRole(); const rid = r?.id;
+            const colEl = rid ? document.querySelector(`[data-tour-col="${rid}"]`) : null;
+            setHighlightRects(colEl ? [colEl.getBoundingClientRect()] : []);
+            if (rid) {
+              saLockClean(); document.body.classList.add('tour-model-a-active');
+              const kebab = document.querySelector(`[data-tour-col-kebab="${rid}"]`);
+              if (kebab) kebab.setAttribute('data-tour-active-target', 'true');
+            }
+            setVisible(true); return;
+          }
+          if (phase === 12) {
+            const r = getMPRole(); const rid = r?.id;
+            const colEl = rid ? document.querySelector(`[data-tour-col="${rid}"]`) : null;
+            const menuEl = document.querySelector('[data-tour="role-menu-save-later"]');
+            setHighlightRects(menuEl ? [menuEl.getBoundingClientRect()] : colEl ? [colEl.getBoundingClientRect()] : []);
+            saLockClean(); document.body.classList.add('tour-model-a-active');
+            if (colEl) colEl.setAttribute('data-tour-active-target', 'true');
+            if (menuEl) menuEl.setAttribute('data-tour-active-target', 'true');
+            saOverlay('role-menu-rename', 'role-menu-duplicate', 'role-menu-remove');
+            setVisible(true); return;
+          }
+          if (phase === 13) {
+            setOpenMenuRoleId(null);
+            setHighlightRects(saRects('add-audience-btn'));
+            saLockAll('add-audience-btn');
+            setVisible(true); return;
+          }
+          if (phase === 14) {
+            const rects = saRects('saved-audiences-section');
+            setHighlightRects(rects.length ? rects : saRects('add-audience-modal'));
+            saLockClean(); setVisible(true); return;
+          }
+          if (phase === 15) {
+            setShowModal(false); saLockClean(); setHighlightRects([]); setVisible(true); return;
+          }
+        }, 160);
+        return () => clearTimeout(t);
+      }, [phase]);
+
+      // Validated advance watchers
+      useEffect(() => {
+        if ((phase !== 1 && phase !== 6 && phase !== 13) || advancingRef.current || !showModal) return;
+        const next = phase === 1 ? 2 : phase === 6 ? 7 : 14;
+        const t = setTimeout(() => advance(next), ADVANCE_DELAY);
+        return () => clearTimeout(t);
+      }, [phase, showModal]);
+
+      useEffect(() => {
+        if ((phase !== 4 && phase !== 9) || advancingRef.current) return;
+        const customRoles = roles.filter(r => r.removable);
+        if (phase === 4 && customRoles.length >= 1 && !mostPrivilegedName) {
+          const newest = customRoles[customRoles.length - 1];
+          setMostPrivilegedName(newest.name);
+          const t = setTimeout(() => advance(5), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+        if (phase === 9) {
+          const mpId = getMPRole()?.id;
+          const newRoles = customRoles.filter(r => r.id !== mpId);
+          if (newRoles.length >= 1 && !lesserPrivilegedName) {
+            const newest = newRoles[newRoles.length - 1];
+            setLesserPrivilegedName(newest.name);
+            const t = setTimeout(() => advance(10), ADVANCE_DELAY);
+            return () => clearTimeout(t);
+          }
+        }
+      }, [phase, roles]);
+
+      useEffect(() => {
+        if (phase !== 11 || advancingRef.current) return;
+        const r = getMPRole();
+        if (r && openMenuRoleId === r.id) {
+          const t = setTimeout(() => advance(12), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, openMenuRoleId]);
+
+      useEffect(() => {
+        if (phase !== 12 || advancingRef.current) return;
+        const r = getMPRole();
+        if (r && savedRoles.some(s => s.name.toLowerCase() === r.name.toLowerCase())) {
+          const t = setTimeout(() => advance(13), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, savedRoles]);
+
+      useEffect(() => {
+        if (phase !== 3 && phase !== 8) { return; }
+        const t = setTimeout(() => setNudge('Enter a valid audience name and click NEXT when ready.'), 5000);
+        return () => { clearTimeout(t); setNudge(null); };
+      }, [phase]);
+
+      useEffect(() => { return () => { saLockClean(); disconnectObs(); onSetContinueTour(null); }; }, []);
+
+      const mpName = mostPrivilegedName || (genre ? GENRE_NAMES[genre].most : 'your first audience');
+      const lpName = lesserPrivilegedName || (genre ? GENRE_NAMES[genre].lesser : 'your second audience');
+
+      // Intro
+      if (phase === 'intro') {
+        const GENRES = [
+          { id: 'sports', label: 'Sports and Events' },
+          { id: 'weddings', label: 'Weddings' },
+          { id: 'portraits', label: 'Portraits' },
+          { id: 'commercial', label: 'Commercial' },
+        ];
+        return (
+          <CalloutModal
+            text={<>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Saved Custom Audiences</div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>
+                Now that you've learned how to set up audiences, let's create two custom audiences. First, what type of photography do you shoot most? We'll use this to suggest audience names that fit your work.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {GENRES.map(g => (
+                  <button key={g.id} onClick={() => handleGenreSelect(g.id)}
+                    style={{ padding: '10px 14px', borderRadius: 10, border: `2px solid ${genre === g.id ? 'var(--brand)' : 'var(--card-border)'}`, background: genre === g.id ? 'var(--brand-cream, #FFF1E6)' : '#fff', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.12s' }}>
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+            </>}
+            placement="center"
+            stepNum={null} totalSteps={TOTAL}
+            nextLabel={null} onNext={null}
+            onBack={null} onCancel={handleCancel}
+            opacity={1}
+          />
+        );
+      }
+
+      const CALLOUT_TEXT = {
+        1: <>Let's create your first custom audience.<br /><br /><strong>Click the Add Audience button.</strong></>,
+        2: <>This is where you create a custom audience of your own.<br /><br /><strong>Click Create Your Own to create your first custom audience.</strong></>,
+        3: <>Let's name your most important group — the people who should have the most permissions. We suggest <strong>"{genre ? GENRE_NAMES[genre].most : ''}"</strong> — type it in or enter your own name.<br /><br /><strong>Enter a name for this audience and click NEXT.</strong></>,
+        4: <>Adding a contact to your custom audience is optional. You can add your first contact here, or just click <strong>Create Audience</strong> to create the audience.</>,
+        5: <>Nice, your <strong>{mpName}</strong> audience has been added to your Gallery Permissions. Go ahead and customize the permissions for this audience however you like. When you're done, click <strong>Continue Tour</strong> in the top right.</>,
+        6: <>Now let's create a second custom audience, this time for a group that should have less access than your <strong>{mpName}</strong> audience.<br /><br /><strong>Click the Add Audience button.</strong></>,
+        7: <>Let's create another custom audience.<br /><br /><strong>Click Create Your Own.</strong></>,
+        8: <>Now let's name your less privileged group — the people who should have less access. We suggest <strong>"{genre ? GENRE_NAMES[genre].lesser : ''}"</strong> — type it in or enter your own name.<br /><br /><strong>Enter a name for this audience and click NEXT.</strong></>,
+        9: <>Adding a contact is optional. You can add your first contact here, or just click <strong>Create Audience</strong> to create the audience.</>,
+        10: <>Your <strong>{lpName}</strong> audience has been added. Go ahead and customize its permissions — this group should have less access than your <strong>{mpName}</strong> audience. Click <strong>Continue Tour</strong> in the top right when you're done.</>,
+        11: <>Each audience has its own menu where you can manage it. Let's open the menu for your <strong>{mpName}</strong> audience.<br /><br /><strong>Click the three-dot menu on the {mpName} header.</strong></>,
+        12: <>From here you can rename an audience, save it for later, duplicate it, or remove it. Saving it for later adds it to your <strong>Saved Custom Audiences</strong> so you can reuse it on other galleries without building it again.<br /><br /><strong>Click Save for Later Use.</strong></>,
+        13: <>Your <strong>{mpName}</strong> audience is now saved. Let's open Add Audience again to see where your Saved Custom Audiences live.<br /><br /><strong>Click the Add Audience button.</strong></>,
+        14: <>This is your <strong>Saved Custom Audiences</strong> section. Any custom audience you save for later shows up here, so you can add it to any gallery without building it again. Your <strong>{mpName}</strong> audience is here now, and since it's already on this gallery, it shows as already added. You can also delete a Saved Custom Audience from this list — that removes it from your saved list but won't remove it from any gallery it's already been added to.</>,
+        15: <>Nicely done. You created two custom audiences for your work, customized their permissions, and saved one to your Saved Custom Audiences so you can reuse it on any gallery. Custom audiences let you give exactly the right access to each group you photograph.</>,
+      };
+      const PLACEMENTS = { 1:'upper-left', 2:'upper-center', 3:'upper-center', 4:'upper-center', 5:'center', 6:'upper-left', 7:'upper-center', 8:'upper-center', 9:'upper-center', 10:'center', 11:'center', 12:'center', 13:'upper-left', 14:'upper-center', 15:'center' };
+      const NO_BACK = new Set([6, 11]);
+      const AUTO_ADVANCE = new Set([1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13]);
+
+      const resolvedNextLabel = AUTO_ADVANCE.has(phase) ? null : (phase === 5 || phase === 10) ? 'Start Customizing Audience Permissions' : phase === 15 ? 'Done' : 'Next';
+      const resolvedOnNext = AUTO_ADVANCE.has(phase) ? null : (phase === 5 || phase === 10) ? () => parkModelB(phase + 1) : phase === 14 ? () => advance(15) : phase === 15 ? () => onComplete() : null;
+
+      const nudgeEl = nudge ? (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--card-border)', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{nudge}</div>
+      ) : null;
+
+      return (
+        <>
+          <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} />
+          <CalloutModal
+            text={<>{CALLOUT_TEXT[phase]}{nudgeEl}</>}
+            placement={PLACEMENTS[phase] || 'center'}
+            posStyle={calloutStyle}
+            stepNum={typeof phase === 'number' ? phase : null}
+            totalSteps={TOTAL}
+            nextLabel={resolvedNextLabel}
+            onNext={resolvedOnNext}
+            onBack={NO_BACK.has(phase) ? null : () => goBack(phase)}
+            onCancel={handleCancel}
+            opacity={visible ? 1 : 0}
+          />
+        </>
+      );
+    };
+
     // Placeholder for topics not yet implemented — marks complete immediately.
     const TourTopicPlaceholder = ({ onComplete }) => {
       useEffect(() => { onComplete(); }, []);
@@ -9756,7 +10125,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
     // Routes to the correct topic component. Unimplemented topics complete immediately.
     const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab, onSetContinueTour,
-      roles, setRoles, perRole, setPerRole, openFeatures, setFeatureOpen, showModal, setShowModal }) => {
+      roles, setRoles, perRole, setPerRole, openFeatures, setFeatureOpen, showModal, setShowModal,
+      openMenuRoleId, setOpenMenuRoleId, savedRoles }) => {
       if (topicId === 'overview') {
         return <GeneralOverviewTopic
           onComplete={onComplete} onCancel={onCancel}
@@ -9775,6 +10145,18 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           perRole={perRole} setPerRole={setPerRole}
           openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
           showModal={showModal} setShowModal={setShowModal} />;
+      }
+      if (topicId === 'saved-audiences') {
+        return <SavedAudiencesTopic
+          onComplete={onComplete} onCancel={onCancel}
+          setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
+          onSetContinueTour={onSetContinueTour}
+          roles={roles} setRoles={setRoles}
+          perRole={perRole} setPerRole={setPerRole}
+          openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
+          showModal={showModal} setShowModal={setShowModal}
+          openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
+          savedRoles={savedRoles} />;
       }
       return <TourTopicPlaceholder onComplete={onComplete} />;
     };
@@ -10658,7 +11040,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             roles={roles} setRoles={setRoles}
             perRole={perRole} setPerRole={setPerRole}
             openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
-            showModal={showModal} setShowModal={setShowModal} />}
+            showModal={showModal} setShowModal={setShowModal}
+            openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
+            savedRoles={savedRoles} />}
           {simulateMobile ? (
             <div style={{ flex:1, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'32px 24px', overflowY:'auto', background:'#DEDAD3' }}>
               <IPhoneFrame modals={_modals}>{_mV}</IPhoneFrame>
