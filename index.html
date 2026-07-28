@@ -8748,33 +8748,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         }
       };
 
-      const PRESET_SAVED_ROLE_NAMES = [
-        'Immediate Family Members',
-        'Senior Portrait Clients',
-        'VIP Wedding Party Members',
-        'Exclusive Preview Access',
-        'Extended Family and Friends',
-        'Contracted Event Attendees',
-        'Private Collection Viewers',
-        'Licensed Media Recipients',
-        'Corporate Client Delegates',
-        'Authenticated Press Members',
-      ];
       const [savedRoles, setSavedRoles] = useState([]);
-      useEffect(() => {
-        setSavedRoles(prev => {
-          const isElevated = viewMode === 'professional' || viewMode === 'advanced';
-          const hasPresets = prev.some(r => r.id.startsWith('preset-saved-'));
-          if (isElevated && !hasPresets) {
-            const presets = PRESET_SAVED_ROLE_NAMES.map((name, i) => ({ id: `preset-saved-${i}`, name, enabledFeatures: [], perRoleState: {} }));
-            return [...presets, ...prev];
-          }
-          if (!isElevated) {
-            return prev.filter(r => !r.id.startsWith('preset-saved-'));
-          }
-          return prev;
-        });
-      }, [viewMode]);
 
       const saveRoleForLater = (roleId) => {
         const r = roles.find(x => x.id === roleId);
