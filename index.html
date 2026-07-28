@@ -8664,7 +8664,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
     // Full-screen overlay that dims everything and blocks all pointer events.
     // SVG mask cuts out transparent windows over highlighted rects.
-    const SpotlightOverlay = ({ rects }) => {
+    const SpotlightOverlay = ({ rects, opacity = 1 }) => {
       const [dims, setDims] = useState({ w: window.innerWidth, h: window.innerHeight });
       useEffect(() => {
         const onResize = () => setDims({ w: window.innerWidth, h: window.innerHeight });
@@ -8674,7 +8674,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const P = 8; // padding around each highlighted rect
       const { w, h } = dims;
       return ReactDOM.createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 540, pointerEvents: 'auto', cursor: 'default' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 540, pointerEvents: 'auto', cursor: 'default', opacity, transition: 'opacity 160ms ease' }}>
           <svg width={w} height={h} style={{ display: 'block', position: 'absolute', inset: 0 }}>
             <defs>
               <mask id="tour-spotlight">
@@ -8702,13 +8702,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       'center':              { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },
     };
 
-    const CalloutModal = ({ text, placement, posStyle: posStyleProp, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel }) => {
+    const CalloutModal = ({ text, placement, posStyle: posStyleProp, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel, opacity = 1 }) => {
       const pos = CALLOUT_POSITIONS[placement] || CALLOUT_POSITIONS['center'];
       const { width: posWidth, ...namedPos } = pos;
       const resolvedPos = posStyleProp || namedPos;
       const resolvedWidth = posStyleProp ? undefined : posWidth;
       const jsx = (
-        <div className="tour-callout-portal" style={{ position: 'fixed', ...resolvedPos, zIndex: 550, width: resolvedWidth || 340, maxWidth: 'calc(100vw - 50px)', maxHeight: 'calc(100vh - 60px)', overflowY: 'auto', pointerEvents: 'auto' }}>
+        <div className="tour-callout-portal" style={{ position: 'fixed', ...resolvedPos, zIndex: 550, width: resolvedWidth || 340, maxWidth: 'calc(100vw - 50px)', maxHeight: 'calc(100vh - 60px)', overflowY: 'auto', opacity, transition: 'opacity 160ms ease', pointerEvents: opacity === 0 ? 'none' : 'auto' }}>
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 12px 48px rgba(0,0,0,0.28)', overflow: 'hidden' }}>
             {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0' }}>
@@ -8746,6 +8746,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     const GeneralOverviewTopic = ({ onComplete, onCancel, setActiveSection, setActiveMainTab }) => {
       const [phase, setPhase] = useState('intro'); // 'intro' | 1..6
       const [highlightRects, setHighlightRects] = useState([]);
+      const [visible, setVisible] = useState(false);
+      const FADE = 160;
 
       const STEPS = [
         {
@@ -8830,19 +8832,24 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (phase === 'intro') { setHighlightRects([]); return; }
         const step = STEPS[phase - 1];
         step.navigate();
-        const timer = setTimeout(() => setHighlightRects(step.getHighlights()), 120);
+        const timer = setTimeout(() => {
+          setHighlightRects(step.getHighlights());
+          setVisible(true);
+        }, 120);
         return () => clearTimeout(timer);
       }, [phase]);
 
       const goNext = () => {
         if (phase === 'intro') { setPhase(1); return; }
         if (phase === TOTAL) { onComplete(); return; }
-        setPhase(p => p + 1);
+        setVisible(false);
+        setTimeout(() => setPhase(p => p + 1), FADE);
       };
       const goBack = () => {
         if (phase === 'intro') { onCancel(); return; }
-        if (phase === 1) { setHighlightRects([]); setPhase('intro'); return; }
-        setPhase(p => p - 1);
+        if (phase === 1) { setHighlightRects([]); setVisible(false); setPhase('intro'); return; }
+        setVisible(false);
+        setTimeout(() => setPhase(p => p - 1), FADE);
       };
 
       // Intro modal — centered, full overlay
@@ -8876,7 +8883,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const step = STEPS[phase - 1];
       return (
         <>
-          <SpotlightOverlay rects={highlightRects} />
+          <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} />
           <CalloutModal
             text={step.text}
             placement={step.placement}
@@ -8886,6 +8893,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             onNext={goNext}
             onBack={goBack}
             onCancel={onCancel}
+            opacity={visible ? 1 : 0}
           />
         </>
       );
@@ -8940,12 +8948,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     const DefaultAudienceTopic = ({ onComplete, onCancel, setActiveSection, setActiveMainTab }) => {
       const [phase, setPhase] = useState('intro');
       const [highlightRects, setHighlightRects] = useState([]);
+      const [visible, setVisible] = useState(false);
       // Derived: recomputed whenever highlightRects or phase changes — avoids stale-setState race
       const calloutStyle = useMemo(() => {
         const prefer = phase === 2 ? 'below' : undefined;
         return highlightRects.length > 0 ? nearRect(highlightRects[0], prefer) : null;
       }, [highlightRects, phase]);
       const advancingRef = useRef(false);
+      const FADE = 160;
 
       const lockCleanup = () => {
         document.body.classList.remove('tour-model-a-active');
@@ -8966,23 +8976,25 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (advancingRef.current) return;
         advancingRef.current = true;
         lockCleanup();
+        setVisible(false);
         setTimeout(() => {
           advancingRef.current = false;
           setPhase(toPhase);
-        }, 950);
+        }, FADE);
       };
 
       const handleCancel = () => { lockCleanup(); onCancel(); };
       const goBack = (from) => {
         lockCleanup();
         advancingRef.current = false;
-        setPhase(from <= 1 ? 'intro' : from - 1);
+        setVisible(false);
+        setTimeout(() => setPhase(from <= 1 ? 'intro' : from - 1), FADE);
       };
 
       // Navigate and set up Model A lock for each numbered phase
       useEffect(() => {
         if (phase === 'intro') { lockCleanup(); setHighlightRects([]); return; }
-        if (phase === 6) { lockCleanup(); setHighlightRects([]); return; }
+        if (phase === 6) { lockCleanup(); setHighlightRects([]); setVisible(true); return; }
         setActiveMainTab && setActiveMainTab('Settings');
         setActiveSection('features');
 
@@ -8991,6 +9003,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = lockTarget('[data-tour="screenshot-protection-default-toggle"]');
             const rect = el ? el.getBoundingClientRect() : null;
             setHighlightRects(rect ? [rect] : []);
+            setVisible(true);
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -9008,6 +9021,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = lockTarget('[data-tour="screenshot-protection-row"]');
             const rect = el ? el.getBoundingClientRect() : null;
             setHighlightRects(rect ? [rect] : []);
+            setVisible(true);
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -9025,6 +9039,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = lockTarget('[data-tour="sharing-default-toggle"]');
             const rect = el ? el.getBoundingClientRect() : null;
             setHighlightRects(rect ? [rect] : []);
+            setVisible(true);
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -9042,6 +9057,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = lockTarget('[data-tour="default-col"]');
             const rect = el ? el.getBoundingClientRect() : null;
             setHighlightRects(rect ? [rect] : []);
+            setVisible(true);
             const btn = el ? el.querySelector('button') : null;
             if (!btn) return;
             const onClick = () => advance(5);
@@ -9057,12 +9073,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               lockTarget('[data-tour="add-contact-modal"]');
               const mRect = modal.getBoundingClientRect();
               setHighlightRects([mRect]);
+              setVisible(true);
               const btn = document.querySelector('[data-tour="add-as-role-btn"]');
               if (!btn) return;
-              const onClick = () => {
-                lockCleanup();
-                setTimeout(() => setPhase(6), 950);
-              };
+              const onClick = () => advance(6);
               btn.addEventListener('click', onClick);
             };
             setup();
@@ -9075,7 +9089,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Cleanup on unmount
       useEffect(() => () => lockCleanup(), []);
 
-      const stepHighlights = (typeof phase === 'number') ? <SpotlightOverlay rects={highlightRects} /> : null;
+      const stepHighlights = (typeof phase === 'number') ? <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} /> : null;
 
       if (phase === 'intro') {
         const jsx = (
@@ -9176,6 +9190,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             onNext={currentCallout.onNext || null}
             onBack={() => goBack(phase)}
             onCancel={handleCancel}
+            opacity={visible ? 1 : 0}
           />
         </>
       );
