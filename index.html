@@ -8702,11 +8702,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       'center':              { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },
     };
 
-    const CalloutModal = ({ text, placement, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel }) => {
+    const CalloutModal = ({ text, placement, posStyle: posStyleProp, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel }) => {
       const pos = CALLOUT_POSITIONS[placement] || CALLOUT_POSITIONS['center'];
-      const { width: posWidth, ...posStyle } = pos;
+      const { width: posWidth, ...namedPos } = pos;
+      const resolvedPos = posStyleProp || namedPos;
+      const resolvedWidth = posStyleProp ? undefined : posWidth;
       const jsx = (
-        <div className="tour-callout-portal" style={{ position: 'fixed', ...posStyle, zIndex: 550, width: posWidth || 340, maxWidth: 'calc(100vw - 48px)', pointerEvents: 'auto' }}>
+        <div className="tour-callout-portal" style={{ position: 'fixed', ...resolvedPos, zIndex: 550, width: resolvedWidth || 340, maxWidth: 'calc(100vw - 48px)', pointerEvents: 'auto' }}>
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 12px 48px rgba(0,0,0,0.28)', overflow: 'hidden' }}>
             {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0' }}>
@@ -8916,9 +8918,24 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       );
     };
 
+    // Positions a callout adjacent to a highlighted rect (≤8px gap).
+    // Right-column elements get the callout to their left; centered/full-width elements get it above.
+    const nearRect = (rect) => {
+      if (!rect) return null;
+      const W = 340, GAP = 8;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const cx = Math.max(12, Math.min(Math.round(rect.left + rect.width / 2 - W / 2), vw - W - 12));
+      if ((rect.left + rect.width / 2) > vw * 0.6 && rect.left - W - GAP >= 0) {
+        return { top: Math.min(Math.max(12, Math.round(rect.top)), vh - 300), left: Math.round(rect.left - W - GAP) };
+      }
+      if (rect.top > 100) return { bottom: Math.round(vh - rect.top + GAP), left: cx };
+      return { top: Math.round(rect.bottom + GAP), left: cx };
+    };
+
     const DefaultAudienceTopic = ({ onComplete, onCancel, setActiveSection, setActiveMainTab }) => {
       const [phase, setPhase] = useState('intro');
       const [highlightRects, setHighlightRects] = useState([]);
+      const [calloutStyle, setCalloutStyle] = useState(null);
       const advancingRef = useRef(false);
 
       const lockCleanup = () => {
@@ -8955,8 +8972,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       // Navigate and set up Model A lock for each numbered phase
       useEffect(() => {
-        if (phase === 'intro') { lockCleanup(); setHighlightRects([]); return; }
-        if (phase === 6) { lockCleanup(); setHighlightRects([]); return; }
+        if (phase === 'intro') { lockCleanup(); setHighlightRects([]); setCalloutStyle(null); return; }
+        if (phase === 6) { lockCleanup(); setHighlightRects([]); setCalloutStyle(null); return; }
         setActiveMainTab && setActiveMainTab('Settings');
         setActiveSection('features');
 
@@ -8965,6 +8982,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = lockTarget('[data-tour="screenshot-protection-default-toggle"]');
             const rect = el ? el.getBoundingClientRect() : null;
             setHighlightRects(rect ? [rect] : []);
+            setCalloutStyle(nearRect(rect));
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -8980,7 +8998,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
           if (phase === 2) {
             const el = lockTarget('[data-tour="screenshot-protection-row"]');
-            setHighlightRects(el ? [el.getBoundingClientRect()] : []);
+            const rect = el ? el.getBoundingClientRect() : null;
+            setHighlightRects(rect ? [rect] : []);
+            setCalloutStyle(nearRect(rect));
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -8998,6 +9018,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = lockTarget('[data-tour="sharing-default-toggle"]');
             const rect = el ? el.getBoundingClientRect() : null;
             setHighlightRects(rect ? [rect] : []);
+            setCalloutStyle(nearRect(rect));
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -9013,7 +9034,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
           if (phase === 4) {
             const el = lockTarget('[data-tour="default-col"]');
-            setHighlightRects(el ? [el.getBoundingClientRect()] : []);
+            const rect = el ? el.getBoundingClientRect() : null;
+            setHighlightRects(rect ? [rect] : []);
+            setCalloutStyle(nearRect(rect));
             const btn = el ? el.querySelector('button') : null;
             if (!btn) return;
             const onClick = () => advance(5);
@@ -9027,7 +9050,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               const modal = document.querySelector('[data-tour="add-contact-modal"]');
               if (!modal) { setTimeout(setup, 80); return; }
               lockTarget('[data-tour="add-contact-modal"]');
-              setHighlightRects([modal.getBoundingClientRect()]);
+              const mRect = modal.getBoundingClientRect();
+              setHighlightRects([mRect]);
+              setCalloutStyle(nearRect(mRect));
               const btn = document.querySelector('[data-tour="add-as-role-btn"]');
               if (!btn) return;
               const onClick = () => {
@@ -9140,6 +9165,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <CalloutModal
             text={currentCallout.text}
             placement={currentCallout.placement}
+            posStyle={calloutStyle}
             stepNum={phase}
             totalSteps={6}
             nextLabel={currentCallout.nextLabel || null}
