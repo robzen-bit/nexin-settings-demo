@@ -1564,7 +1564,7 @@
       const access = ACCESS_MODES.find(m => m.id === accessMode) || ACCESS_MODES[0];
       return (
         <aside className="inner-sidebar w-[270px] shrink-0 px-5 pt-6 pb-10">
-          <div onClick={() => onSelectSection('access')}
+          <div data-tour="access-card" onClick={() => onSelectSection('access')}
             className="rounded-xl px-3 py-3 mb-2 cursor-pointer transition-colors"
             style={{ background: isAccess ? 'var(--brand-cream)' : '#fff',
                      border: '1px solid', borderColor: isAccess ? 'transparent' : 'var(--card-border)' }}>
@@ -1582,7 +1582,7 @@
               {access.sidebar()}
             </div>
           </div>
-          <div onClick={() => onSelectSection('features')}
+          <div data-tour="permissions-card" onClick={() => onSelectSection('features')}
             className="rounded-xl px-3 py-3 mb-2 cursor-pointer transition-colors"
             style={{ background: isFeatures ? 'var(--brand-cream)' : '#fff',
                      border: '1px solid', borderColor: isFeatures ? 'transparent' : 'var(--card-border)' }}>
@@ -2742,7 +2742,7 @@
       useEffect(() => { if (isRenaming) setTempName(role.name); }, [isRenaming, role.name]);
 
       return (
-        <div className="relative w-full flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
+        <div data-tour={role.id === 'everyone' ? 'default-col' : undefined} className="relative w-full flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
           {isRenaming ? (
             <input autoFocus value={tempName}
               onChange={(e) => setTempName(e.target.value)}
@@ -8641,6 +8641,231 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       { id: 4, type: 'General Coupon', code: 'SAVE20!!!!!', status: 'Draft', duration: 'N/A', uses: 0, profit: '£0.00' },
     ];
 
+    // ===== WALKTHROUGH TOUR TOPIC COMPONENTS =====
+
+    // Full-screen overlay that dims everything and blocks all pointer events.
+    // SVG mask cuts out transparent windows over highlighted rects.
+    const SpotlightOverlay = ({ rects }) => {
+      const [dims, setDims] = useState({ w: window.innerWidth, h: window.innerHeight });
+      useEffect(() => {
+        const onResize = () => setDims({ w: window.innerWidth, h: window.innerHeight });
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+      }, []);
+      const P = 8; // padding around each highlighted rect
+      const { w, h } = dims;
+      return ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 540, pointerEvents: 'auto', cursor: 'default' }}>
+          <svg width={w} height={h} style={{ display: 'block', position: 'absolute', inset: 0 }}>
+            <defs>
+              <mask id="tour-spotlight">
+                <rect width={w} height={h} fill="white" />
+                {rects.map((r, i) => (
+                  <rect key={i} x={r.x - P} y={r.y - P} width={r.width + P * 2} height={r.height + P * 2} rx="10" fill="black" />
+                ))}
+              </mask>
+            </defs>
+            <rect width={w} height={h} fill="rgba(0,0,0,0.62)" mask="url(#tour-spotlight)" />
+          </svg>
+        </div>,
+        document.body
+      );
+    };
+
+    const CALLOUT_POSITIONS = {
+      'upper-center': { top: 88,    left: '50%', transform: 'translateX(-50%)' },
+      'center-left':  { top: '50%', left: 56,    transform: 'translateY(-50%)' },
+      'center':       { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+    };
+
+    const CalloutModal = ({ text, placement, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel }) => {
+      const pos = CALLOUT_POSITIONS[placement] || CALLOUT_POSITIONS['center'];
+      const jsx = (
+        <div style={{ position: 'fixed', ...pos, zIndex: 550, width: 340, maxWidth: 'calc(100vw - 48px)', pointerEvents: 'auto' }}>
+          <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 12px 48px rgba(0,0,0,0.28)', overflow: 'hidden' }}>
+            {/* Header row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--brand)', opacity: 0.75 }}>
+                STEP {stepNum} OF {totalSteps}
+              </span>
+              <button onClick={onCancel}
+                style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: 'var(--text-tertiary, #aaa)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>
+                CANCEL
+              </button>
+            </div>
+            {/* Body */}
+            <div style={{ padding: '10px 16px 14px', fontSize: 14, lineHeight: 1.65, color: 'var(--text-primary)' }}>
+              {text}
+            </div>
+            {/* Footer */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px 14px', borderTop: '1px solid var(--card-border)' }}>
+              <button onClick={onBack}
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
+                ← Back
+              </button>
+              <button onClick={onNext}
+                style={{ padding: '8px 20px', borderRadius: 9999, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em' }}>
+                {nextLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+      return ReactDOM.createPortal(jsx, document.body);
+    };
+
+    const GeneralOverviewTopic = ({ onComplete, onCancel, setActiveSection, setActiveMainTab }) => {
+      const [phase, setPhase] = useState('intro'); // 'intro' | 1..6
+      const [highlightRects, setHighlightRects] = useState([]);
+
+      const STEPS = [
+        {
+          navigate: () => { setActiveMainTab('Settings'); setActiveSection('access'); },
+          getHighlights: () => {
+            const el = document.querySelector('[data-tour="access-card"]');
+            return el ? [el.getBoundingClientRect()] : [];
+          },
+          placement: 'upper-center',
+          text: "This is Gallery Access. It's where you set how your gallery can be accessed: Public, Password Protected, Invite Only (just the contacts you've added to the gallery), or Offline (visible only to you). It's also where you turn on features like gallery registration and choose whether the gallery can appear in search results.",
+        },
+        {
+          navigate: () => setActiveSection('features'),
+          getHighlights: () => {
+            const a = document.querySelector('[data-tour="permissions-card"]');
+            const b = document.querySelector('.matrix-scroll');
+            return [a, b].filter(Boolean).map(el => el.getBoundingClientRect());
+          },
+          placement: 'upper-center',
+          text: "This is Gallery Permissions. It's where you turn on and off the different permissions available in your gallery. For example, this is where you can turn on downloads, screenshot protection, or face finder, add a watermark, and more.",
+        },
+        {
+          navigate: () => {
+            document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
+          },
+          getHighlights: () => {
+            const el = document.querySelector('[data-tour="add-audience-btn"]');
+            return el ? [el.getBoundingClientRect()] : [];
+          },
+          placement: 'center-left',
+          text: "This is where you add an audience. Think of an audience as a permission set you can add contacts to. We'll go over this in more detail later in the tour.",
+        },
+        {
+          navigate: () => {
+            document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
+          },
+          getHighlights: () => {
+            const col = document.querySelector('[data-tour="default-col"]');
+            const matrix = document.querySelector('.matrix-scroll');
+            if (!col || !matrix) return [];
+            const c = col.getBoundingClientRect();
+            const m = matrix.getBoundingClientRect();
+            return [{ x: c.left, y: m.top, width: c.width, height: m.height }];
+          },
+          placement: 'center',
+          text: "This is the Default audience. Think of it as your baseline gallery settings. Anyone who accesses your gallery who isn't in another audience gets these Default settings. We'll cover this in more detail later in the tour.",
+        },
+        {
+          navigate: () => {
+            document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
+          },
+          getHighlights: () => {
+            const el = document.querySelector('[data-tour="per-audience-rows"]');
+            return el ? [el.getBoundingClientRect()] : [];
+          },
+          placement: 'upper-center',
+          text: "These are your permissions by audience. Some permissions can be turned on or off per audience, and even customized individually per audience. We'll cover this in more detail later in the tour.",
+        },
+        {
+          navigate: () => {
+            const section = document.querySelector('[data-tour="full-gallery-section"]');
+            const container = document.querySelector('.matrix-scroll');
+            if (section && container) {
+              const rel = section.getBoundingClientRect().top - container.getBoundingClientRect().top;
+              container.scrollTop += rel - 20;
+            }
+          },
+          getHighlights: () => {
+            const el = document.querySelector('[data-tour="full-gallery-section"]');
+            return el ? [el.getBoundingClientRect()] : [];
+          },
+          placement: 'center',
+          text: "These are your full gallery permissions. When you turn one on, it applies to the whole gallery and everyone who accesses it, and it can't be customized by audience.",
+        },
+      ];
+
+      const TOTAL = STEPS.length;
+
+      useEffect(() => {
+        if (phase === 'intro') { setHighlightRects([]); return; }
+        const step = STEPS[phase - 1];
+        step.navigate();
+        const timer = setTimeout(() => setHighlightRects(step.getHighlights()), 120);
+        return () => clearTimeout(timer);
+      }, [phase]);
+
+      const goNext = () => {
+        if (phase === 'intro') { setPhase(1); return; }
+        if (phase === TOTAL) { onComplete(); return; }
+        setPhase(p => p + 1);
+      };
+      const goBack = () => {
+        if (phase === 'intro') { onCancel(); return; }
+        if (phase === 1) { setHighlightRects([]); setPhase('intro'); return; }
+        setPhase(p => p - 1);
+      };
+
+      // Intro modal — centered, full overlay
+      if (phase === 'intro') {
+        const jsx = (
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.52)', zIndex: 600, pointerEvents: 'auto' }}>
+            <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.18)', width: 460, maxWidth: 'calc(100vw - 32px)', overflow: 'hidden' }}>
+              <div style={{ padding: '36px 36px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--brand)', marginBottom: 10, opacity: 0.75 }}>GENERAL OVERVIEW</div>
+                <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-primary)', lineHeight: 1.2 }}>General Overview</div>
+              </div>
+              <div style={{ padding: '0 36px 28px', fontSize: 15, lineHeight: 1.7, color: 'var(--text-primary)', textAlign: 'center' }}>
+                First, let's get you oriented. We'll quickly point out the different areas of the new Gallery Settings and what each one is for.
+              </div>
+              <div style={{ display: 'flex', gap: 12, padding: '0 36px 36px' }}>
+                <button onClick={onCancel}
+                  style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1.5px solid var(--card-border)', background: '#fff', color: 'var(--text-primary)', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button onClick={goNext}
+                  style={{ flex: 2, padding: '13px 0', borderRadius: 12, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                  Let's go
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+        return ReactDOM.createPortal(jsx, document.body);
+      }
+
+      const step = STEPS[phase - 1];
+      return (
+        <>
+          <SpotlightOverlay rects={highlightRects} />
+          <CalloutModal
+            text={step.text}
+            placement={step.placement}
+            stepNum={phase}
+            totalSteps={TOTAL}
+            nextLabel={phase === TOTAL ? 'Done' : 'Next →'}
+            onNext={goNext}
+            onBack={goBack}
+            onCancel={onCancel}
+          />
+        </>
+      );
+    };
+
+    // Placeholder for topics not yet implemented — marks complete immediately.
+    const TourTopicPlaceholder = ({ onComplete }) => {
+      useEffect(() => { onComplete(); }, []);
+      return null;
+    };
+
     // ===== WALKTHROUGH TOUR =====
 
     const TOUR_TOPICS = [
@@ -8696,7 +8921,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       return ReactDOM.createPortal(jsx, document.body);
     };
 
-    const TourMenuModal = ({ completedTopics, onSelectTopic, onClose }) => {
+    const TourMenuModal = ({ completedTopics, onSelectTopic, onClose, suggestedTopicId }) => {
       const allDone = TOUR_TOPICS.every(t => completedTopics.has(t.id));
       const jsx = (
         <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.52)', zIndex: 600 }}
@@ -8731,6 +8956,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                     </span>
                     <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', flex: 1 }}>{topic.label}</span>
                     {done && <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--brand)' }}>DONE</span>}
+                    {!done && suggestedTopicId === topic.id && (
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--brand)', background: 'var(--brand-cream, #FFF1E6)', borderRadius: 5, padding: '3px 7px' }}>NEXT UP</span>
+                    )}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary, #ccc)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9,18 15,12 9,6"/></svg>
                   </button>
                 );
@@ -8749,11 +8977,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       return ReactDOM.createPortal(jsx, document.body);
     };
 
-    // Placeholder topic runner — marks the topic complete immediately and returns to the menu.
-    // Replace with per-topic step sequences when building out each lesson.
-    const TourTopicRunner = ({ topicId, onComplete }) => {
-      useEffect(() => { onComplete(); }, [topicId]);
-      return null;
+    // Routes to the correct topic component. Unimplemented topics complete immediately.
+    const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab }) => {
+      if (topicId === 'overview') {
+        return <GeneralOverviewTopic
+          onComplete={onComplete} onCancel={onCancel}
+          setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab} />;
+      }
+      return <TourTopicPlaceholder onComplete={onComplete} />;
     };
 
     function App() {
@@ -8797,6 +9028,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         setActiveTopic(null);
         setTourPhase('menu');
       };
+      const cancelTopic = () => { setActiveTopic(null); setTourPhase('menu'); };
       const roleHeaderWidth = useMemo(() => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -9219,7 +9451,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                           <CompareIcon size={13} stroke={2} /> COMPARE ALL
                         </button>
                       )}
-                      <button onClick={() => setShowModal(true)}
+                      <button data-tour="add-audience-btn" onClick={() => setShowModal(true)}
                         className="add-role-btn flex items-center gap-2 text-[11px] font-bold tracking-wider px-4 py-2 rounded-full text-white whitespace-nowrap">
                         <UserIcon size={13} stroke={2} /> {`ADD ${terms.roleLabel.toUpperCase()}`}
                       </button>
@@ -9306,53 +9538,63 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                       </div>
                     )}
 
-                    {features.map(feature => {
-                      const hasSettings = feature.settings.length > 0;
-                      const isOpen = openFeatures.has(feature.id);
-
+                    {(() => {
+                      const splitIdx = features.findIndex(f => f.sectionStart);
+                      const perAudience = splitIdx >= 0 ? features.slice(0, splitIdx) : features;
+                      const fullGallery = splitIdx >= 0 ? features.slice(splitIdx) : [];
+                      const renderFeatureRow = (feature) => {
+                        const hasSettings = feature.settings.length > 0;
+                        const isOpen = openFeatures.has(feature.id);
+                        return (
+                          <React.Fragment key={feature.id}>
+                            <MatrixRow
+                              feature={feature} roles={roles} perRole={perRole}
+                              isOpen={isOpen} onToggleOpen={() => toggleOpen(feature.id)}
+                              onToggleEnabled={(rId) => toggleEnabled(feature.id, rId)}
+                              onUpdateShared={(sId, v) => updateSharedValue(feature.id, sId, v)}
+                              onSetOpen={(open) => setFeatureOpen(feature.id, open)}
+                              gridCols={gridCols} hasSettings={hasSettings} isMobile={isMobile}
+                              onEditSettings={() => setMobileEditFeatureId(feature.id)}
+                            />
+                            {!isMobile && isOpen && hasSettings && (
+                              isMultiRole ? (
+                                <MultiRoleSettingsBlock
+                                  feature={feature} roles={roles} perRole={perRole}
+                                  onUpdate={(rId, sId, v) => updateValue(feature.id, rId, sId, v)}
+                                  onUpdateShared={(sId, v) => {
+                                    updateSharedValue(feature.id, sId, v);
+                                    if (sId === 'watermark-source' && v === 'None') setFeatureOpen(feature.id, false);
+                                  }}
+                                />
+                              ) : (
+                                <SimpleSettingsBlock feature={feature} role={roles[0]} perRole={perRole}
+                                  onUpdate={(rId, sId, v) => {
+                                    updateValue(feature.id, rId, sId, v);
+                                    if (sId === 'watermark-source' && v === 'None') setFeatureOpen(feature.id, false);
+                                  }} />
+                              )
+                            )}
+                          </React.Fragment>
+                        );
+                      };
                       return (
-                        <React.Fragment key={feature.id}>
-                          {feature.sectionStart && (
-                            <div className="px-6 py-2.5"
-                              style={{ background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)' }}>
-                              <span className="text-[11px] font-bold tracking-widest uppercase"
-                                style={{ color: 'var(--text-tertiary)' }}>
-                                {`Full ${terms.featuresLabel}`}
-                              </span>
+                        <>
+                          <div data-tour="per-audience-rows">{perAudience.map(renderFeatureRow)}</div>
+                          {fullGallery.length > 0 && (
+                            <div data-tour="full-gallery-section">
+                              <div className="px-6 py-2.5"
+                                style={{ background: 'var(--soft-bg)', borderTop: '1px solid var(--card-border)' }}>
+                                <span className="text-[11px] font-bold tracking-widest uppercase"
+                                  style={{ color: 'var(--text-tertiary)' }}>
+                                  {`Full ${terms.featuresLabel}`}
+                                </span>
+                              </div>
+                              {fullGallery.map(renderFeatureRow)}
                             </div>
                           )}
-                          <MatrixRow
-                            feature={feature} roles={roles} perRole={perRole}
-                            isOpen={isOpen} onToggleOpen={() => toggleOpen(feature.id)}
-                            onToggleEnabled={(rId) => toggleEnabled(feature.id, rId)}
-                            onUpdateShared={(sId, v) => updateSharedValue(feature.id, sId, v)}
-                            onSetOpen={(open) => setFeatureOpen(feature.id, open)}
-                            gridCols={gridCols} hasSettings={hasSettings} isMobile={isMobile}
-                            onEditSettings={() => setMobileEditFeatureId(feature.id)}
-                          />
-                          {/* Inline settings panel only on desktop. On mobile, settings open
-                              in MobileFeatureSettingsModal triggered by the EDIT SETTINGS button. */}
-                          {!isMobile && isOpen && hasSettings && (
-                            isMultiRole ? (
-                              <MultiRoleSettingsBlock
-                                feature={feature} roles={roles} perRole={perRole}
-                                onUpdate={(rId, sId, v) => updateValue(feature.id, rId, sId, v)}
-                                onUpdateShared={(sId, v) => {
-                                  updateSharedValue(feature.id, sId, v);
-                                  if (sId === 'watermark-source' && v === 'None') setFeatureOpen(feature.id, false);
-                                }}
-                              />
-                            ) : (
-                              <SimpleSettingsBlock feature={feature} role={roles[0]} perRole={perRole}
-                                onUpdate={(rId, sId, v) => {
-                                  updateValue(feature.id, rId, sId, v);
-                                  if (sId === 'watermark-source' && v === 'None') setFeatureOpen(feature.id, false);
-                                }} />
-                            )
-                          )}
-                        </React.Fragment>
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                   </div>
                 </main>
@@ -9612,8 +9854,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             simulateMobile={simulateMobile} onToggleMobile={() => setSimulateMobile(v => !v)}
             onOpenTour={openTourMenu} tourVisible={tourPhase !== 'welcome'} />}
           {tourPhase === 'welcome' && <WelcomeTourModal onTakeTour={openTourMenu} onExplore={() => setTourPhase('idle')} />}
-          {tourPhase === 'menu' && <TourMenuModal completedTopics={completedTopics} onSelectTopic={startTopic} onClose={closeTourMenu} />}
-          {tourPhase === 'running' && activeTopic && <TourTopicRunner topicId={activeTopic} onComplete={completeTopic} />}
+          {tourPhase === 'menu' && <TourMenuModal
+            completedTopics={completedTopics} onSelectTopic={startTopic} onClose={closeTourMenu}
+            suggestedTopicId={TOUR_TOPICS.find(t => !completedTopics.has(t.id))?.id || null} />}
+          {tourPhase === 'running' && activeTopic && <TourTopicRunner
+            topicId={activeTopic} onComplete={completeTopic} onCancel={cancelTopic}
+            setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab} />}
           {simulateMobile ? (
             <div style={{ flex:1, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'32px 24px', overflowY:'auto', background:'#DEDAD3' }}>
               <IPhoneFrame modals={_modals}>{_mV}</IPhoneFrame>
