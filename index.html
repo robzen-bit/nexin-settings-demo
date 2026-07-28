@@ -9334,10 +9334,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       // Phase setup
       useEffect(() => {
-        if (phase === 'intro') { tourLockClean(); setHighlightRects([]); return; }
+        if (phase === 'intro') {
+          tourLockClean(); setHighlightRects([]);
+          setActiveMainTab('Settings'); setActiveSection('features');
+          return;
+        }
         const t = setTimeout(() => {
           if (phase === 1) {
-            setActiveMainTab('Settings'); setActiveSection('features');
             const rects = getRects('add-audience-btn');
             setHighlightRects(rects);
             lockAll('add-audience-btn');
