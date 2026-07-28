@@ -8956,6 +8956,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Navigate and set up Model A lock for each numbered phase
       useEffect(() => {
         if (phase === 'intro') { lockCleanup(); setHighlightRects([]); return; }
+        if (phase === 6) { lockCleanup(); setHighlightRects([]); return; }
         setActiveMainTab && setActiveMainTab('Settings');
         setActiveSection('features');
 
@@ -8979,8 +8980,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
           if (phase === 2) {
             const el = lockTarget('[data-tour="screenshot-protection-row"]');
-            const chevron = document.querySelector('[data-tour="screenshot-protection-chevron"]');
-            setHighlightRects(chevron ? [chevron.getBoundingClientRect()] : el ? [el.getBoundingClientRect()] : []);
+            setHighlightRects(el ? [el.getBoundingClientRect()] : []);
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
@@ -9032,7 +9032,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               if (!btn) return;
               const onClick = () => {
                 lockCleanup();
-                setTimeout(() => onComplete(), 950);
+                setTimeout(() => setPhase(6), 950);
               };
               btn.addEventListener('click', onClick);
             };
@@ -9046,7 +9046,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Cleanup on unmount
       useEffect(() => () => lockCleanup(), []);
 
-      const stepHighlights = highlightRects.length > 0 ? <SpotlightOverlay rects={highlightRects} /> : null;
+      const stepHighlights = (typeof phase === 'number') ? <SpotlightOverlay rects={highlightRects} /> : null;
 
       if (phase === 'intro') {
         const jsx = (
@@ -9090,6 +9090,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           text: <span>Go ahead and <strong>enter some contact information here</strong>. All that's required is an email. Then <strong>click Add as Default</strong> to complete this part of the tour.</span>,
           placement: 'upper-center',
         },
+        6: {
+          text: <span>That's your Default Audience set up. These are the baseline gallery permissions every visitor receives when they access your gallery, along with anyone you add as a Default contact. Nicely done.</span>,
+          placement: 'center',
+          nextLabel: 'Done',
+          onNext: onComplete,
+        },
       };
 
       const currentCallout = callouts[phase];
@@ -9102,9 +9108,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             text={currentCallout.text}
             placement={currentCallout.placement}
             stepNum={phase}
-            totalSteps={5}
-            nextLabel={null}
-            onNext={null}
+            totalSteps={6}
+            nextLabel={currentCallout.nextLabel || null}
+            onNext={currentCallout.onNext || null}
             onBack={() => goBack(phase)}
             onCancel={handleCancel}
           />
