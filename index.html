@@ -8644,9 +8644,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     ];
 
     const WelcomeTourModal = ({ onTakeTour, onExplore }) => {
+      const [closing, setClosing] = useState(false);
+      const handleExplore = () => {
+        setClosing(true);
+        setTimeout(onExplore, 420);
+      };
       const jsx = (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.52)', zIndex: 600 }}>
-          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.18)', width: 560, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: closing ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.52)', zIndex: 600, transition: 'background 0.38s ease', pointerEvents: closing ? 'none' : 'auto' }}>
+          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.18)', width: 560, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto', transform: closing ? 'translate(-30vw, -47vh) scale(0.06)' : 'translate(0,0) scale(1)', opacity: closing ? 0 : 1, transition: closing ? 'transform 0.42s cubic-bezier(0.55,0,0.75,0.4), opacity 0.32s ease-in' : 'none', transformOrigin: 'center center' }}>
             {/* Header */}
             <div style={{ padding: '44px 48px 20px', textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', lineHeight: 1.25 }}>
@@ -8666,7 +8671,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             </div>
             {/* Footer */}
             <div style={{ padding: '0 48px 44px', display: 'flex', gap: 12 }}>
-              <button onClick={onExplore}
+              <button onClick={handleExplore}
                 style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: '1.5px solid var(--card-border)', background: '#fff', color: 'var(--text-primary)', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
                 Let Me Explore
               </button>
