@@ -173,6 +173,9 @@
     body.tour-model-a-active [data-tour-active-target] * { pointer-events: auto !important; user-select: auto !important; }
     body.tour-model-a-active .tour-callout-portal,
     body.tour-model-a-active .tour-callout-portal * { pointer-events: auto !important; }
+    /* Black overlay for elements explicitly disabled during a tour step */
+    [data-tour-overlay] { position: relative !important; overflow: hidden !important; }
+    [data-tour-overlay]::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.42); border-radius: inherit; pointer-events: none; z-index: 2; }
     /* Compare-roles modal — uses the same scrollbar styling as the matrix when the grid
        grows wider than the modal viewport (many roles). */
     .compare-grid-scroll { overflow-x: auto; overflow-y: visible; }
@@ -1603,7 +1606,9 @@
             </div>
             <ul className="pl-1 space-y-1">
               {features.map(f => (
-                <li key={f.id} className="flex items-center text-[12px]" style={{ color: 'var(--text-primary)' }}>
+                <li key={f.id}
+                  data-tour={(f.id === 'photo-downloads' || f.id === 'favorites') ? `sidebar-${f.id}` : undefined}
+                  className="flex items-center text-[12px]" style={{ color: 'var(--text-primary)' }}>
                   <StatusPill {...featureStatus(f.id)} />{f.name}
                 </li>
               ))}
@@ -1649,8 +1654,9 @@
     };
 
     // ===== Add Role Modal =====
-    const RoleCard = ({ icon: IconCmp, title, desc, onClick, disabled, planLock, selectable, selected, onToggleSelect, horizontal }) => (
+    const RoleCard = ({ icon: IconCmp, title, desc, onClick, disabled, planLock, selectable, selected, onToggleSelect, horizontal, tourAttr }) => (
       <button type="button" disabled={disabled} onClick={onClick}
+        data-tour={tourAttr}
         className={`role-card-hover ${disabled ? 'is-disabled' : ''} ${horizontal ? 'flex items-stretch text-left' : 'text-center px-5 py-6'} rounded-xl border transition-colors relative`}
         style={{
           borderColor: selected ? 'var(--orange)' : 'var(--card-border)',
@@ -1781,7 +1787,7 @@
     };
 
     // Wrapper that renders as a fly-up bottom sheet on mobile, centered modal on desktop.
-    const MobileSheetModal = ({ onClose, zIndex = 100, maxWidth = 680, children }) => {
+    const MobileSheetModal = ({ onClose, zIndex = 100, maxWidth = 680, tourAttr, children }) => {
       const isMobile = useIsMobile();
 
       React.useEffect(() => {
@@ -1817,6 +1823,7 @@
         <div className="modal-backdrop fixed inset-0 flex items-center justify-center px-4"
           style={{ background: 'rgba(27, 28, 31, 0.45)', zIndex }} onClick={onClose}>
           <div className="modal-card bg-white rounded-2xl border shadow-xl w-full flex flex-col"
+            data-tour={tourAttr}
             style={{ borderColor: 'var(--card-border)', maxWidth, maxHeight: 'calc(100vh - 80px)', overflow: 'hidden' }}
             onClick={e => e.stopPropagation()}>
             {children}
@@ -2136,12 +2143,12 @@
               <div style={{ display:'flex', gap:12, padding:'6px 16px 14px', background:'#fff', borderTop:'1px solid var(--card-border)', flexShrink:0 }}>
                 {step === 'choose' && (
                   <>
-                    <button onClick={onClose} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'#1B1C1F', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
+                    <button data-tour="add-audience-cancel-btn" onClick={onClose} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'#1B1C1F', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
                     {selectedCards.size > 0 && canDelete && (
                       <button onClick={handleDelete} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'#e53935', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Delete</button>
                     )}
                     {selectedCards.size > 0 && (
-                      <button onClick={handleAddRoles} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>
+                      <button data-tour="add-audience-modal-add-btn" onClick={handleAddRoles} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>
                         {selectedCards.size === 1 ? `Add ${roleLabel}` : `Add ${selectedCards.size} ${roleLabel}s`}
                       </button>
                     )}
@@ -2163,7 +2170,7 @@
             </div>
           </div>
         ) : (
-          <MobileSheetModal onClose={onClose} zIndex={100} maxWidth={680}>
+          <MobileSheetModal onClose={onClose} zIndex={100} maxWidth={680} tourAttr="add-audience-modal">
               {step === 'choose' && (
                 <>
                   <div className="px-6 pt-6 pb-0">
@@ -2173,14 +2180,14 @@
                       <RoleCard icon={UserIcon} title="GUEST" desc={PRESETS.guest.desc}
                         disabled={existingNames.includes('guest')} onClick={() => toggleCard('guest')}
                         selectable={!existingNames.includes('guest')} selected={selectedCards.has('guest')}
-                        onToggleSelect={() => toggleCard('guest')} />
+                        onToggleSelect={() => toggleCard('guest')} tourAttr="add-audience-guest-card" />
                       <RoleCard icon={StarIcon} title="CLIENT" desc={PRESETS.client.desc}
                         disabled={existingNames.includes('client')} onClick={() => toggleCard('client')}
                         selectable={!existingNames.includes('client')} selected={selectedCards.has('client')}
-                        onToggleSelect={() => toggleCard('client')} />
+                        onToggleSelect={() => toggleCard('client')} tourAttr="add-audience-client-card" />
                       <RoleCard icon={SlidersIcon} title="CREATE YOUR OWN" desc={PRESETS.custom.desc}
                         disabled={basicLock || atLimit} planLock={basicLock || atLimit}
-                        onClick={(basicLock || atLimit) ? undefined : () => setStep('name')} />
+                        onClick={(basicLock || atLimit) ? undefined : () => setStep('name')} tourAttr="add-audience-create-own-card" />
                     </div>
 
                     {(basicLock || atLimit) && (
@@ -3454,6 +3461,7 @@
                 </div>
                 {/* Main setting as a sub-row */}
                 <div className="role-row per-role-row grid items-center child-row"
+                  data-tour={featureId === 'photo-downloads' && r.id === 'guest' && s.id === 'download-type' ? 'photo-downloads-guest-download-type' : undefined}
                   style={{
                     gridTemplateColumns: '1fr auto',
                     padding: '8px 14px 8px 28px',
@@ -3475,6 +3483,7 @@
                   return (
                     <div key={c.id}
                       className="role-row per-role-row grid items-start child-row"
+                      data-tour={featureId === 'photo-downloads' && r.id === 'guest' && c.id === 'specific-amount' ? 'photo-downloads-guest-specific-amount' : featureId === 'photo-downloads' && r.id === 'guest' && c.id === 'gallery-resolutions' ? 'photo-downloads-guest-gallery-resolutions' : undefined}
                       style={{
                         gridTemplateColumns: c.type === 'multicheck' ? '1fr' : '1fr auto',
                         padding: '8px 14px 8px 28px',
@@ -3688,13 +3697,13 @@
         <div className="border-t" style={{ borderColor: 'var(--card-border)' }}>
           <div onClick={() => hasSettings && onToggleOpen()}
             className={`feature-row grid items-center${hasSettings ? ' is-collapsible' : ''}${isOpen ? ' is-open' : ''}`}
-            data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-row' : undefined}
+            data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-row' : feature.id === 'photo-downloads' ? 'photo-downloads-row' : feature.id === 'favorites' ? 'favorites-row' : undefined}
             style={{ gridTemplateColumns: gridCols, minHeight: 58, padding: '16px 0',
               cursor: hasSettings ? 'pointer' : 'default',
               background: isOpen ? 'var(--soft-bg)' : undefined }}>
             <div className="pl-6">
               <div className="flex items-center gap-2">
-                <span data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-chevron' : undefined}
+                <span data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-chevron' : feature.id === 'photo-downloads' ? 'photo-downloads-chevron' : undefined}
                   style={{ color: 'var(--text-tertiary)',
                   visibility: hasSettings ? 'visible' : 'hidden',
                   transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}><ChevronRight /></span>
@@ -3772,7 +3781,13 @@
                 const enabled = !!perRole[r.id]?.[feature.id]?.enabled;
                 const tourAttr =
                   (feature.id === 'screenshot-protection' && r.id === 'everyone') ? 'screenshot-protection-default-toggle' :
-                  (feature.id === 'sharing' && r.id === 'everyone') ? 'sharing-default-toggle' : undefined;
+                  (feature.id === 'sharing' && r.id === 'everyone') ? 'sharing-default-toggle' :
+                  (feature.id === 'photo-downloads' && r.id === 'everyone') ? 'photo-downloads-default-toggle' :
+                  (feature.id === 'photo-downloads' && r.id === 'guest') ? 'photo-downloads-guest-toggle' :
+                  (feature.id === 'photo-downloads' && r.id === 'client') ? 'photo-downloads-client-toggle' :
+                  (feature.id === 'favorites' && r.id === 'everyone') ? 'favorites-default-toggle' :
+                  (feature.id === 'favorites' && r.id === 'guest') ? 'favorites-guest-toggle' :
+                  (feature.id === 'favorites' && r.id === 'client') ? 'favorites-client-toggle' : undefined;
                 return (
                   <div key={r.id} className="flex justify-center"
                     data-tour={tourAttr}
@@ -9196,6 +9211,427 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       );
     };
 
+    // ===== Using Audiences Topic =====
+    const UsingAudiencesTopic = ({
+      onComplete, onCancel,
+      setActiveSection, setActiveMainTab,
+      roles, setRoles,
+      perRole, setPerRole,
+      openFeatures, setFeatureOpen,
+      showModal, setShowModal,
+    }) => {
+      const [phase, setPhase] = useState('intro');
+      const [highlightRects, setHighlightRects] = useState([]);
+      const [visible, setVisible] = useState(false);
+      const [nudge, setNudge] = useState(null);
+      const advancingRef = useRef(false);
+      const FADE = 160;
+      const ADVANCE_DELAY = 1000;
+
+      const tourLockClean = () => {
+        document.body.classList.remove('tour-model-a-active');
+        document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
+        document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+      };
+
+      const lockAll = (...selectors) => {
+        tourLockClean();
+        document.body.classList.add('tour-model-a-active');
+        selectors.flat().forEach(sel => {
+          const el = document.querySelector(`[data-tour="${sel}"]`);
+          if (el) el.setAttribute('data-tour-active-target', 'true');
+        });
+      };
+
+      const overlayDisable = (...selectors) => {
+        selectors.flat().forEach(sel => {
+          const el = document.querySelector(`[data-tour="${sel}"]`);
+          if (el) el.setAttribute('data-tour-overlay', 'true');
+        });
+      };
+
+      const getRects = (...selectors) =>
+        selectors.flat()
+          .map(sel => document.querySelector(`[data-tour="${sel}"]`))
+          .filter(Boolean)
+          .map(el => el.getBoundingClientRect());
+
+      const advance = (toPhase) => {
+        if (advancingRef.current) return;
+        advancingRef.current = true;
+        tourLockClean();
+        setNudge(null);
+        setVisible(false);
+        setTimeout(() => { advancingRef.current = false; setPhase(toPhase); }, FADE);
+      };
+
+      const goBack = (from) => {
+        tourLockClean();
+        advancingRef.current = false;
+        setNudge(null);
+        setVisible(false);
+        if (from === 2) {
+          setShowModal(false);
+          setTimeout(() => setPhase(1), FADE);
+          return;
+        }
+        if (from === 3) {
+          setRoles([{ id: 'everyone', name: 'Default', removable: false }]);
+          setPerRole(prev => ({ everyone: prev.everyone }));
+          setShowModal(true);
+          setTimeout(() => setPhase(2), FADE);
+          return;
+        }
+        if (from === 5) { setFeatureOpen('photo-downloads', false); }
+        if (from === 7) {
+          setPerRole(prev => ({
+            ...prev,
+            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'], enabled: false } },
+          }));
+        }
+        if (from === 8) {
+          setPerRole(prev => ({
+            ...prev,
+            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'],
+              values: { ...prev.guest['photo-downloads'].values, 'download-type': 'All photos and individual download' },
+            }},
+          }));
+        }
+        if (from === 9) {
+          setPerRole(prev => ({
+            ...prev,
+            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'],
+              values: { ...prev.guest['photo-downloads'].values, 'download-type': 'All photos and individual download' },
+            }},
+          }));
+        }
+        if (from === 10) {
+          setFeatureOpen('photo-downloads', true);
+          setPerRole(prev => ({
+            ...prev,
+            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'],
+              values: { ...prev.guest['photo-downloads'].values, 'specific-amount': 10, 'gallery-resolutions': ['Original'] },
+            }},
+          }));
+        }
+        if (from === 11) { setFeatureOpen('photo-downloads', true); }
+        if (from === 12) {
+          setPerRole(prev => ({
+            ...prev,
+            everyone: { ...prev.everyone, favorites: { ...prev.everyone.favorites, enabled: false } },
+          }));
+        }
+        setTimeout(() => setPhase(from <= 1 ? 'intro' : from - 1), FADE);
+      };
+
+      const calloutStyle = useMemo(() => {
+        if (highlightRects.length === 0) return null;
+        if ([2, 3, 5, 7, 10, 12].includes(phase)) return null;
+        if (phase === 1) return nearRect(highlightRects[0], 'below');
+        if (phase === 4) return nearRect(highlightRects[0], 'below');
+        return nearRect(highlightRects[0]);
+      }, [highlightRects, phase]);
+
+      // Phase setup
+      useEffect(() => {
+        if (phase === 'intro') { tourLockClean(); setHighlightRects([]); return; }
+        const t = setTimeout(() => {
+          if (phase === 1) {
+            setActiveMainTab('Settings'); setActiveSection('access');
+            const rects = getRects('add-audience-btn');
+            setHighlightRects(rects);
+            lockAll('add-audience-btn');
+            setVisible(true);
+            return;
+          }
+          if (phase === 2) {
+            const rects = getRects('add-audience-modal');
+            setHighlightRects(rects);
+            lockAll('add-audience-guest-card', 'add-audience-client-card', 'add-audience-modal-add-btn');
+            overlayDisable('add-audience-create-own-card', 'add-audience-cancel-btn');
+            setVisible(true);
+            return;
+          }
+          if (phase === 3) {
+            const rects = getRects('matrix-header-row');
+            setHighlightRects(rects);
+            tourLockClean();
+            setVisible(true);
+            return;
+          }
+          if (phase === 4) {
+            setActiveSection('features');
+            const rects = getRects('photo-downloads-row');
+            setHighlightRects(rects);
+            lockAll('photo-downloads-row');
+            setVisible(true);
+            return;
+          }
+          if (phase === 5) {
+            const rects = getRects('photo-downloads-row');
+            setHighlightRects(rects);
+            tourLockClean();
+            setVisible(true);
+            return;
+          }
+          if (phase === 6) {
+            const rects = getRects('photo-downloads-guest-toggle');
+            setHighlightRects(rects);
+            lockAll('photo-downloads-guest-toggle');
+            setVisible(true);
+            return;
+          }
+          if (phase === 7) {
+            const matEl = document.querySelector('.matrix-scroll, [data-tour="per-audience-rows"]');
+            if (matEl) matEl.scrollTop = 0;
+            const rects = getRects('photo-downloads-row');
+            setHighlightRects(rects);
+            tourLockClean();
+            setVisible(true);
+            return;
+          }
+          if (phase === 8) {
+            const rects = getRects('photo-downloads-guest-download-type');
+            setHighlightRects(rects);
+            lockAll('photo-downloads-guest-download-type');
+            setVisible(true);
+            return;
+          }
+          if (phase === 9) {
+            const rects = getRects('photo-downloads-guest-specific-amount');
+            setHighlightRects(rects.length ? rects : getRects('photo-downloads-guest-gallery-resolutions'));
+            lockAll('photo-downloads-guest-specific-amount', 'photo-downloads-guest-gallery-resolutions');
+            setVisible(true);
+            return;
+          }
+          if (phase === 10) {
+            const rects = getRects('photo-downloads-row');
+            setHighlightRects(rects);
+            lockAll('photo-downloads-row');
+            setVisible(true);
+            return;
+          }
+          if (phase === 11) {
+            setFeatureOpen('favorites', true);
+            const rects = getRects('favorites-row');
+            setHighlightRects(rects);
+            lockAll('favorites-default-toggle', 'favorites-guest-toggle', 'favorites-client-toggle');
+            setVisible(true);
+            return;
+          }
+          if (phase === 12) {
+            const rects = getRects('sidebar-photo-downloads', 'sidebar-favorites');
+            setHighlightRects(rects);
+            tourLockClean();
+            setVisible(true);
+            return;
+          }
+        }, 160);
+        return () => clearTimeout(t);
+      }, [phase]);
+
+      // Validated advance watchers
+      useEffect(() => {
+        if (phase !== 1 || advancingRef.current) return;
+        if (showModal) {
+          const t = setTimeout(() => advance(2), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, showModal]);
+
+      useEffect(() => {
+        if (phase !== 2 || advancingRef.current) return;
+        const hasGuest = roles.some(r => r.id === 'guest');
+        const hasClient = roles.some(r => r.id === 'client');
+        if (hasGuest && hasClient) {
+          const t = setTimeout(() => advance(3), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, roles]);
+
+      useEffect(() => {
+        if (phase !== 4 || advancingRef.current) return;
+        if (openFeatures.has('photo-downloads')) {
+          const t = setTimeout(() => advance(5), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, openFeatures]);
+
+      useEffect(() => {
+        if (phase !== 6 || advancingRef.current) return;
+        if (perRole['guest']?.['photo-downloads']?.enabled) {
+          const t = setTimeout(() => advance(7), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, perRole]);
+
+      useEffect(() => {
+        if (phase !== 8 || advancingRef.current) return;
+        const dt = perRole['guest']?.['photo-downloads']?.values?.['download-type'];
+        if (dt === 'Specific amount download') {
+          const t = setTimeout(() => advance(9), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        } else if (dt && dt !== 'All photos and individual download') {
+          setNudge('Feel free to explore — when ready, select "Specific Amount Download" to advance.');
+        } else {
+          setNudge(null);
+        }
+      }, [phase, perRole]);
+
+      useEffect(() => {
+        if (phase !== 9 || advancingRef.current) return;
+        const vals = perRole['guest']?.['photo-downloads']?.values;
+        const amount = Number(vals?.['specific-amount'] ?? 10);
+        const res = vals?.['gallery-resolutions'] || ['Original'];
+        if (amount === 5 && res.includes('Medium') && !res.includes('Original')) {
+          const t = setTimeout(() => advance(10), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        } else if (amount !== 10 || !res.includes('Original') || res.length !== 1) {
+          setNudge('Set the number of images to 5, then check Medium and uncheck Original under Gallery Allowed Resolutions.');
+        } else {
+          setNudge(null);
+        }
+      }, [phase, perRole]);
+
+      useEffect(() => {
+        if (phase !== 10 || advancingRef.current) return;
+        if (!openFeatures.has('photo-downloads')) {
+          const t = setTimeout(() => advance(11), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, openFeatures]);
+
+      useEffect(() => {
+        if (phase !== 11 || advancingRef.current) return;
+        const allOn = roles.every(r => !!perRole[r.id]?.['favorites']?.enabled);
+        if (allOn) {
+          const t = setTimeout(() => advance(12), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        } else {
+          const guestOn = !!perRole['guest']?.['favorites']?.enabled;
+          const clientOn = !!perRole['client']?.['favorites']?.enabled;
+          if (!guestOn || !clientOn) {
+            setNudge('Turn on the Favorites toggle for all three audiences to advance.');
+          } else {
+            setNudge(null);
+          }
+        }
+      }, [phase, perRole, roles]);
+
+      useEffect(() => { return () => tourLockClean(); }, []);
+
+      const TOTAL = 12;
+
+      const callouts = {
+        intro: {
+          text: <>In this topic you'll learn how to add multiple audiences to a gallery and configure different download permissions for each one.</>,
+          placement: 'center',
+          nextLabel: 'Start',
+          onNext: () => advance(1),
+        },
+        1: {
+          text: <>The <strong>Add Audience</strong> button lets you add preset audience types like Guest or Client, or create a custom one. Click it to open the audience picker.</>,
+          placement: 'upper-left',
+          onNext: null,
+        },
+        2: {
+          text: <>Select <strong>Guest</strong> and <strong>Client</strong>, then click <strong>Add Audiences</strong> to add both to your gallery at once.</>,
+          placement: 'upper-center',
+          onNext: null,
+        },
+        3: {
+          text: <>The matrix now shows a column for each audience. Each row is a feature — you can control whether it's on or off per audience, and adjust its settings independently.</>,
+          placement: 'center',
+          onNext: () => advance(4),
+        },
+        4: {
+          text: <>Click the <strong>Photo Downloads</strong> row to expand it and see per-audience settings.</>,
+          placement: 'center',
+          onNext: null,
+        },
+        5: {
+          text: <>Photo Downloads is now expanded. Notice that <strong>Default</strong> and <strong>Guest</strong> show the settings as grayed out — that means the feature is off for those audiences. Let's turn it on for Guest.</>,
+          placement: 'center',
+          onNext: () => advance(6),
+        },
+        6: {
+          text: <>Toggle <strong>Photo Downloads on</strong> for the Guest audience.</>,
+          placement: 'center',
+          onNext: null,
+        },
+        7: {
+          text: <>Now Guest has Photo Downloads on, with their own settings to customize. Scroll down if needed to see the Guest and Client columns — each audience's settings are fully independent.</>,
+          placement: 'upper-center',
+          onNext: () => advance(8),
+        },
+        8: {
+          text: <>Change the <strong>Download Type</strong> for Guest to <strong>Specific Amount Download</strong> to limit how many photos they can download.</>,
+          placement: 'center',
+          onNext: null,
+        },
+        9: {
+          text: <>Set the <strong>number of images to 5</strong>, then change <strong>Gallery Allowed Resolutions</strong> — check <strong>Medium</strong> and uncheck <strong>Original</strong>.</>,
+          placement: 'center',
+          onNext: null,
+        },
+        10: {
+          text: <>Great configuration! Now collapse the <strong>Photo Downloads</strong> settings by clicking the row header again.</>,
+          placement: 'upper-center',
+          onNext: null,
+        },
+        11: {
+          text: <>Now turn on <strong>Favorites</strong> for all three audiences using the toggles in the Favorites row.</>,
+          placement: 'center',
+          onNext: null,
+        },
+        12: {
+          text: <>Notice how the sidebar now reflects your configuration — <strong>Photo Downloads</strong> and <strong>Favorites</strong> both show as active. The sidebar is a quick summary of your gallery's feature status.</>,
+          placement: 'center',
+          onNext: () => onComplete(),
+        },
+      };
+
+      const handleCancel = () => { tourLockClean(); onCancel(); };
+
+      if (phase === 'intro') {
+        const c = callouts.intro;
+        return (
+          <CalloutModal
+            text={c.text} placement={c.placement}
+            stepNum={null} totalSteps={TOTAL}
+            nextLabel={c.nextLabel} onNext={c.onNext}
+            onBack={null} onCancel={handleCancel}
+            opacity={1}
+          />
+        );
+      }
+
+      const currentCallout = callouts[phase];
+      if (!currentCallout) return null;
+
+      const nudgeEl = nudge ? (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--card-border)', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{nudge}</div>
+      ) : null;
+
+      return (
+        <>
+          <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} />
+          <CalloutModal
+            text={<>{currentCallout.text}{nudgeEl}</>}
+            placement={currentCallout.placement}
+            posStyle={calloutStyle}
+            stepNum={typeof phase === 'number' ? phase : null}
+            totalSteps={TOTAL}
+            nextLabel={currentCallout.nextLabel !== undefined ? currentCallout.nextLabel : (currentCallout.onNext ? 'Next' : null)}
+            onNext={currentCallout.onNext || null}
+            onBack={() => goBack(phase)}
+            onCancel={handleCancel}
+            opacity={visible ? 1 : 0}
+          />
+        </>
+      );
+    };
+
     // Placeholder for topics not yet implemented — marks complete immediately.
     const TourTopicPlaceholder = ({ onComplete }) => {
       useEffect(() => { onComplete(); }, []);
@@ -9314,8 +9750,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     };
 
     // Routes to the correct topic component. Unimplemented topics complete immediately.
-    const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab, onSetContinueTour }) => {
-      const noop = () => {};
+    const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab, onSetContinueTour,
+      roles, setRoles, perRole, setPerRole, openFeatures, setFeatureOpen, showModal, setShowModal }) => {
       if (topicId === 'overview') {
         return <GeneralOverviewTopic
           onComplete={onComplete} onCancel={onCancel}
@@ -9325,6 +9761,15 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         return <DefaultAudienceTopic
           onComplete={onComplete} onCancel={onCancel}
           setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab} />;
+      }
+      if (topicId === 'audiences') {
+        return <UsingAudiencesTopic
+          onComplete={onComplete} onCancel={onCancel}
+          setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
+          roles={roles} setRoles={setRoles}
+          perRole={perRole} setPerRole={setPerRole}
+          openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
+          showModal={showModal} setShowModal={setShowModal} />;
       }
       return <TourTopicPlaceholder onComplete={onComplete} />;
     };
@@ -10204,7 +10649,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           {tourPhase === 'running' && activeTopic && <TourTopicRunner
             topicId={activeTopic} onComplete={completeTopic} onCancel={cancelTopic}
             setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
-            onSetContinueTour={setContinueTourFn} />}
+            onSetContinueTour={setContinueTourFn}
+            roles={roles} setRoles={setRoles}
+            perRole={perRole} setPerRole={setPerRole}
+            openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
+            showModal={showModal} setShowModal={setShowModal} />}
           {simulateMobile ? (
             <div style={{ flex:1, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'32px 24px', overflowY:'auto', background:'#DEDAD3' }}>
               <IPhoneFrame modals={_modals}>{_mV}</IPhoneFrame>
