@@ -10773,6 +10773,289 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       );
     };
 
+    // ===== Saving and Using Presets Topic =====
+    const PresetsTopic = ({
+      onComplete, onCancel,
+      setActiveSection, setActiveMainTab,
+      roles, setRoles, perRole, setPerRole,
+      contacts, setContacts,
+    }) => {
+      const [phase, setPhase] = useState('intro');
+      const [highlightRects, setHighlightRects] = useState([]);
+      const [visible, setVisible] = useState(false);
+      const advancingRef = useRef(false);
+      const obsRef = useRef(null);
+      const FADE = 160;
+      const ADVANCE_DELAY = 1000;
+      // Phase 3 (preset picker open) is a silent phase folded into step 2's instructions, so
+      // phases 4/5/6 display as steps 3/4/5.
+      const TOTAL = 5;
+
+      const psLockClean = () => {
+        clearElevation();
+        document.body.classList.remove('tour-model-a-active');
+        document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
+        document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+        document.querySelectorAll('[data-tour-bg]').forEach(el => {
+          el.style.background = el.getAttribute('data-tour-bg') || '';
+          el.removeAttribute('data-tour-bg');
+        });
+        document.querySelectorAll('.tour-injected-scrim').forEach(el => el.remove());
+      };
+      const psLockAll = (...selectors) => {
+        psLockClean();
+        document.body.classList.add('tour-model-a-active');
+        selectors.flat().forEach(sel => {
+          const el = document.querySelector(`[data-tour="${sel}"]`);
+          if (el) el.setAttribute('data-tour-active-target', 'true');
+        });
+      };
+      const disconnectObs = () => { if (obsRef.current) { obsRef.current.disconnect(); obsRef.current = null; } };
+
+      const advance = (toPhase) => {
+        if (advancingRef.current) return;
+        advancingRef.current = true;
+        disconnectObs();
+        psLockClean();
+        setVisible(false);
+        setTimeout(() => { advancingRef.current = false; setPhase(toPhase); }, FADE);
+      };
+
+      const goBack = (from) => {
+        disconnectObs(); psLockClean(); advancingRef.current = false; setVisible(false);
+        if (from === 1) { setPhase('intro'); return; }
+        if (from === 6) { setActiveMainTab('Settings'); setActiveSection('features'); setTimeout(() => setPhase(5), FADE); return; }
+        if (from === 7) { setActiveSection('presets'); setTimeout(() => setPhase(6), FADE); return; }
+        setTimeout(() => setPhase(from - 1), FADE);
+      };
+
+      const handleCancel = () => { psLockClean(); disconnectObs(); onCancel(); };
+
+      // Phase setup
+      useEffect(() => {
+        if (phase === 'intro') {
+          psLockClean(); setHighlightRects([]);
+          setActiveMainTab('Settings'); setActiveSection('features');
+          // Demo state: Guest, Client and a custom Parent audience, each configured a little
+          // differently, plus a few contacts per audience added as background learning state.
+          const parentState = buildRoleState('client');
+          if (parentState['favorites']) parentState['favorites'] = { ...parentState['favorites'], enabled: true };
+          if (parentState['commenting']) parentState['commenting'] = { ...parentState['commenting'], enabled: false };
+          const guestState = buildRoleState('guest');
+          if (guestState['sharing']) guestState['sharing'] = { ...guestState['sharing'], enabled: false };
+          setRoles([
+            { id: 'everyone', name: 'Default', removable: false },
+            { id: 'tour-guest', name: 'Guest', removable: true, isCustom: false },
+            { id: 'tour-client', name: 'Client', removable: true, isCustom: false },
+            { id: 'tour-parent', name: 'Parent', removable: true, isCustom: true },
+          ]);
+          setPerRole({
+            everyone: buildEveryoneState(),
+            'tour-guest': guestState,
+            'tour-client': buildRoleState('client'),
+            'tour-parent': parentState,
+          });
+          setContacts([
+            { id: 'tour-c1', first: 'Ava', last: 'Reed', email: 'ava.reed@example.com', mobile: '', roleId: 'everyone' },
+            { id: 'tour-c2', first: 'Liam', last: 'Cole', email: 'liam.cole@example.com', mobile: '', roleId: 'tour-guest' },
+            { id: 'tour-c3', first: 'Maya', last: 'Ortiz', email: 'maya.ortiz@example.com', mobile: '', roleId: 'tour-guest' },
+            { id: 'tour-c4', first: 'Noah', last: 'Banks', email: 'noah.banks@example.com', mobile: '', roleId: 'tour-client' },
+            { id: 'tour-c5', first: 'Zoe', last: 'Park', email: 'zoe.park@example.com', mobile: '', roleId: 'tour-parent' },
+            { id: 'tour-c6', first: 'Eli', last: 'Grant', email: 'eli.grant@example.com', mobile: '', roleId: 'tour-parent' },
+          ]);
+          return;
+        }
+        disconnectObs();
+        const t = setTimeout(() => {
+          if (phase === 1) {
+            psLockAll('sidebar-presets-card');
+            setHighlightRects(elevateEls(['[data-tour="sidebar-presets-card"]']));
+            setVisible(true);
+            const obs = new MutationObserver(() => {
+              if (document.querySelector('[data-tour="presets-main"]')) {
+                obs.disconnect(); obsRef.current = null;
+                setTimeout(() => advance(2), FADE);
+              }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+            obsRef.current = obs;
+            return;
+          }
+          if (phase === 2) {
+            psLockAll('apply-preset-btn');
+            const main = document.querySelector('[data-tour="presets-main"]');
+            setHighlightRects(elevateEls([main].filter(Boolean)));
+            if (main) tourInjectBacking(main, 'var(--bg, #F7F5F2)');
+            setVisible(true);
+            const obs = new MutationObserver(() => {
+              if (document.querySelector('[data-tour="apply-preset-modal"]')) {
+                obs.disconnect(); obsRef.current = null;
+                setTimeout(() => advance(3), FADE);
+              }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+            obsRef.current = obs;
+            return;
+          }
+          if (phase === 3) {
+            // The preset picker sits at z-index 2000 — above both the dim and the callout — and
+            // its own backdrop gates the rest of the app, so the tour goes quiet here: no dim, no
+            // callout (step 2's copy already told them to choose a preset and click Apply).
+            // Watch for the confirm modal to appear (→ step 4) or the picker closing without it
+            // (cancelled → back to step 2).
+            psLockClean();
+            setHighlightRects([]);
+            setVisible(false);
+            const obs = new MutationObserver(() => {
+              if (document.querySelector('[data-tour="preset-confirm-modal"]')) {
+                obs.disconnect(); obsRef.current = null;
+                setTimeout(() => advance(4), FADE);
+              } else if (!document.querySelector('[data-tour="apply-preset-modal"]')) {
+                obs.disconnect(); obsRef.current = null;
+                advance(2);
+              }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+            obsRef.current = obs;
+            return;
+          }
+          if (phase === 4) {
+            // Confirm modal is portaled to body at z 300 — below the dim — inside its own
+            // full-viewport backdrop (plain div, not .modal-backdrop). Elevate that backdrop and
+            // drop its scrim; only the Confirm button is live, so a stray backdrop or Cancel
+            // click can't dismiss the modal mid-step.
+            const setup = () => {
+              const card = document.querySelector('[data-tour="preset-confirm-modal"]');
+              if (!card) { setTimeout(setup, 80); return; }
+              psLockClean();
+              document.body.classList.add('tour-model-a-active');
+              const confirmBtn = document.querySelector('[data-tour="preset-confirm-btn"]');
+              if (confirmBtn) confirmBtn.setAttribute('data-tour-active-target', 'true');
+              const backdrop = card.parentElement;
+              if (backdrop) {
+                backdrop.setAttribute('data-tour-bg', backdrop.style.background || '');
+                backdrop.style.background = 'transparent';
+              }
+              elevateEls([backdrop || card].filter(Boolean));
+              setHighlightRects([card.getBoundingClientRect()]);
+              setVisible(true);
+            };
+            setup();
+            return;
+          }
+          if (phase === 5) {
+            setActiveMainTab('Settings'); setActiveSection('features');
+            // Give the section swap a beat to render before measuring.
+            setTimeout(() => {
+              psLockAll();
+              const main = document.querySelector('.main-pane');
+              setHighlightRects(elevateEls([main].filter(Boolean)));
+              if (main) tourInjectBacking(main, '#fff');
+              setVisible(true);
+            }, 120);
+            return;
+          }
+          if (phase === 6) {
+            setActiveSection('presets');
+            setTimeout(() => {
+              psLockAll();
+              const btn = document.querySelector('[data-tour="save-preset-btn"]');
+              setHighlightRects(elevateEls([btn].filter(Boolean)));
+              setVisible(true);
+            }, 120);
+            return;
+          }
+          if (phase === 7) {
+            psLockClean();
+            setHighlightRects([]);
+            setVisible(true);
+            return;
+          }
+        }, 160);
+        return () => clearTimeout(t);
+      }, [phase]);
+
+      // Preset application replaces the audience list with role-preset-* ids — that's the
+      // signal Confirm was clicked.
+      useEffect(() => {
+        if (phase !== 4 || advancingRef.current) return;
+        if (roles.some(r => String(r.id).startsWith('role-preset-'))) {
+          const t = setTimeout(() => advance(5), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, roles]);
+
+      // Cleanup on unmount
+      useEffect(() => () => { psLockClean(); disconnectObs(); }, []);
+
+      const calloutStyle = useMemo(() => {
+        if (highlightRects.length === 0) return null;
+        if (phase === 1) return nearRect(highlightRects[0]);
+        if (phase === 6) return nearRect(highlightRects[0], 'below');
+        return null;
+      }, [highlightRects, phase]);
+
+      if (phase === 'intro') {
+        return (
+          <CalloutModal
+            text={<>
+              <p style={{ margin: 0 }}>Setting presets let you reconfigure a whole gallery in one click. We've set this gallery up with <strong>Guest</strong>, <strong>Client</strong> and a custom <strong>Parent</strong> audience — each configured a little differently — and added a few contacts to each audience in the background.</p>
+            </>}
+            placement="center"
+            tourName="SETTING PRESETS"
+            stepNum={null} totalSteps={TOTAL}
+            nextLabel="Next" onNext={() => { setVisible(false); setPhase(1); }}
+            onBack={null} onCancel={handleCancel}
+            opacity={1}
+          />
+        );
+      }
+
+      const CALLOUT_TEXT = {
+        1: (
+          <><p style={{ margin: 0 }}>Now that this gallery is set up, what if you want to reuse a configuration — or switch to a completely different one? That's what Setting Presets are for.</p>{actionBullet('Click Setting Presets in the sidebar.')}</>
+        ),
+        2: (
+          <><p style={{ margin: 0 }}>From here you can apply a preset to this gallery.</p>{actionBullet('Click Apply a New Preset, then choose one of the presets and click Apply.')}</>
+        ),
+        4: (
+          <><p style={{ margin: 0 }}>Before anything changes, you get a summary of exactly what applying this preset will do — which audiences get added, updated or removed, and what happens to the contacts in them. Take a moment to read it.</p>{actionBullet('Click Confirm when you\'re ready.')}</>
+        ),
+        5: (
+          <><p style={{ margin: 0 }}>Here's the result. The preset replaced this gallery's audiences with its own set and configured their permissions — compare it to how the table looked a moment ago. Contacts that belonged to removed audiences weren't lost: they moved to your <strong>Default</strong> audience.</p></>
+        ),
+        6: (
+          <><p style={{ margin: 0 }}>It works the other way too — <strong>Save New Preset</strong> is where you'd save this gallery's current settings, audiences included, as a preset you can apply to other galleries. It isn't hooked up in this prototype, but this is where you'll find it in the product.</p></>
+        ),
+        7: <span>Nicely done. You applied a preset and watched it reconfigure the gallery's audiences and permissions in one step — and you know where to save your own presets for the galleries you set up next.</span>,
+      };
+      const PLACEMENTS = { 2: 'upper-right', 4: 'center-left', 5: 'upper-right', 7: 'center' };
+      const AUTO_ADVANCE = new Set([1, 2, 4]);
+      const NO_BACK = new Set([4, 5]);
+
+      const currentText = CALLOUT_TEXT[phase];
+      if (!currentText) return null;
+
+      return (
+        <>
+          <SpotlightOverlay opacity={visible ? 1 : 0} />
+          <CalloutModal
+            text={currentText}
+            posStyle={calloutStyle}
+            placement={PLACEMENTS[phase]}
+            tourName="SETTING PRESETS"
+            stepNum={phase === 7 ? null : (phase > 3 ? phase - 1 : phase)}
+            totalSteps={TOTAL}
+            nextLabel={AUTO_ADVANCE.has(phase) ? null : phase === 7 ? 'Done' : 'Next'}
+            onNext={AUTO_ADVANCE.has(phase) ? null : phase === 7 ? () => onComplete() : () => advance(phase + 1)}
+            onBack={NO_BACK.has(phase) ? null : () => goBack(phase)}
+            onCancel={handleCancel}
+            opacity={visible ? 1 : 0}
+          />
+        </>
+      );
+    };
+
     // Placeholder for topics not yet implemented — marks complete immediately.
     const TourTopicPlaceholder = ({ onComplete }) => {
       useEffect(() => { onComplete(); }, []);
@@ -10930,6 +11213,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       }
       if (topicId === 'contacts') {
         return <AddingContactsTopic
+          onComplete={onComplete} onCancel={onCancel}
+          setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
+          roles={roles} setRoles={setRoles}
+          perRole={perRole} setPerRole={setPerRole}
+          contacts={contacts} setContacts={setContacts} />;
+      }
+      if (topicId === 'presets') {
+        return <PresetsTopic
           onComplete={onComplete} onCancel={onCancel}
           setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
           roles={roles} setRoles={setRoles}
