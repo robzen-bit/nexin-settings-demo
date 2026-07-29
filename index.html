@@ -9442,6 +9442,36 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           .filter(Boolean)
           .map(el => el.getBoundingClientRect());
 
+      // Light up just a horizontal band of the expanded settings panel (steps 8/9). Rows inside
+      // MultiRoleSettingsBlock can't be elevated directly — its root is position:sticky, a
+      // stacking context, so a z-index set inside it never rises above the dim (same trap as the
+      // matrix header row). Instead: elevate the sticky block itself, then re-dim everything
+      // above/below the band spanned by bandEls with scrims matching the 0.62 dim. The scrims are
+      // absolutely-positioned children of the block so they scroll with the content — fixed
+      // scrims stay pinned to the viewport and light up the wrong rows the moment the page
+      // scrolls. Returns the band elements' rects for the callout.
+      const elevateSettingsBand = (bandEls) => {
+        const els = bandEls.filter(Boolean);
+        if (!els.length) return [];
+        const block = els[0].closest('.multi-panel-body')?.parentElement;
+        if (!block) return elevateEls(els);
+        elevateEls([block]);
+        const br = block.getBoundingClientRect();
+        const rects = els.map(el => el.getBoundingClientRect());
+        const bandTop = Math.min(...rects.map(r => r.top));
+        const bandBottom = Math.max(...rects.map(r => r.bottom));
+        // 1px slack on the outer edges so no bright hairline shows where scrims meet the page dim.
+        const mkScrim = (cssText) => {
+          const scrim = document.createElement('div');
+          scrim.className = 'tour-injected-scrim';
+          scrim.style.cssText = `position:absolute;z-index:546;pointer-events:none;background:rgba(0,0,0,0.62);left:-1px;right:-1px;${cssText}`;
+          block.appendChild(scrim);
+        };
+        if (bandTop > br.top) mkScrim(`top:-1px;height:${bandTop - br.top + 1}px;`);
+        if (br.bottom > bandBottom) mkScrim(`top:${bandBottom - br.top}px;bottom:-1px;`);
+        return rects;
+      };
+
       const advance = (toPhase) => {
         if (advancingRef.current) return;
         advancingRef.current = true;
@@ -9673,47 +9703,33 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           // Phases 6 and 7 are retired — step 5 covers turning Photo Downloads on for Guest, and
           // step 8 now carries the "settings are independent per audience" point itself.
           if (phase === 8) {
-            // Only the Guest panel's title and its Download Type row should read as active — but
-            // elevating those rows directly does nothing: MultiRoleSettingsBlock's root is
-            // position:sticky, a stacking context, so a z-index set inside it can never rise above
-            // the dim (same trap as the matrix header row). Instead elevate the sticky settings
-            // block itself (which is what makes step 5 work), then re-dim everything in it except
-            // the Guest title + Download Type band with scrims matching the 0.62 dim.
+            // Guest panel title + Download Type row band; the dropdown row is the sole active
+            // target. See elevateSettingsBand for why the rows can't be elevated directly.
             lockAll('photo-downloads-guest-download-type');
             const dtTitle = document.querySelector('[data-tour="photo-downloads-guest-panel-title"]');
             const dtRow = document.querySelector('[data-tour="photo-downloads-guest-download-type"]');
-            const block = dtTitle ? dtTitle.closest('.multi-panel-body')?.parentElement : null;
-            setHighlightRects(elevateEls([block || dtRow || dtTitle].filter(Boolean)));
-            if (dtTitle && dtRow && block) {
-              setHighlightRects([dtTitle.getBoundingClientRect(), dtRow.getBoundingClientRect()]);
-              const br = block.getBoundingClientRect();
-              const bandTop = dtTitle.getBoundingClientRect().top;
-              const bandBottom = dtRow.getBoundingClientRect().bottom;
-              // White backing on the row so the highlighted band reads white like steps 4/5. The
-              // background comes from React's style prop, so save/restore via data-tour-bg.
+            // White backing on the row so the highlighted band reads white like steps 4/5. The
+            // background comes from React's style prop, so save/restore via data-tour-bg.
+            if (dtRow) {
               dtRow.setAttribute('data-tour-bg', dtRow.style.background || '');
               dtRow.style.background = '#fff';
-              // The scrims live INSIDE the elevated block, absolutely positioned, so they scroll
-              // with the content — fixed-position scrims stay pinned to the viewport and light up
-              // the wrong rows the moment the page scrolls. The block is position:sticky (a
-              // positioned ancestor), so absolute children anchor to it. 1px slack on the outer
-              // edges so no bright hairline shows where the scrims meet the page dim.
-              const mkScrim = (cssText) => {
-                const scrim = document.createElement('div');
-                scrim.className = 'tour-injected-scrim';
-                scrim.style.cssText = `position:absolute;z-index:546;pointer-events:none;background:rgba(0,0,0,0.62);left:-1px;right:-1px;${cssText}`;
-                block.appendChild(scrim);
-              };
-              if (bandTop > br.top) mkScrim(`top:-1px;height:${bandTop - br.top + 1}px;`);
-              if (br.bottom > bandBottom) mkScrim(`top:${bandBottom - br.top}px;bottom:-1px;`);
             }
+            setHighlightRects(elevateSettingsBand([dtTitle, dtRow]));
             setVisible(true);
             return;
           }
           if (phase === 9) {
+            // Same treatment as step 8, banded to the Guest "Number of images allowed" +
+            // "Gallery Allowed Resolutions" rows. Both stay interactive; the watcher below
+            // advances once the amount is 5 with Medium checked and Original unchecked.
             lockAll('photo-downloads-guest-specific-amount', 'photo-downloads-guest-gallery-resolutions');
-            const rects = elevateEls(['[data-tour="photo-downloads-guest-specific-amount"]', '[data-tour="photo-downloads-guest-gallery-resolutions"]']);
-            setHighlightRects(rects.length ? rects : getRects('photo-downloads-guest-gallery-resolutions'));
+            const amtRow = document.querySelector('[data-tour="photo-downloads-guest-specific-amount"]');
+            const resRow = document.querySelector('[data-tour="photo-downloads-guest-gallery-resolutions"]');
+            [amtRow, resRow].filter(Boolean).forEach(el => {
+              el.setAttribute('data-tour-bg', el.style.background || '');
+              el.style.background = '#fff';
+            });
+            setHighlightRects(elevateSettingsBand([amtRow, resRow]));
             setVisible(true);
             return;
           }
@@ -9801,11 +9817,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const vals = perRole[guestId]?.['photo-downloads']?.values;
         const amount = Number(vals?.['specific-amount'] ?? 10);
         const res = vals?.['gallery-resolutions'] || ['Original'];
+        // A transient match while typing (e.g. 5 on the way to 50) is cancelled by this effect's
+        // cleanup when the value changes again within ADVANCE_DELAY.
         if (amount === 5 && res.includes('Medium') && !res.includes('Original')) {
           const t = setTimeout(() => advance(10), ADVANCE_DELAY);
           return () => clearTimeout(t);
         } else if (amount !== 10 || !res.includes('Original') || res.length !== 1) {
-          setNudge('Set the number of images to 5, then check Medium and uncheck Original under Gallery Allowed Resolutions.');
+          setNudge('Set the number of images to 5, check Medium, and uncheck Original to advance.');
         } else {
           setNudge(null);
         }
