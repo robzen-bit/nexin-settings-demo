@@ -9816,7 +9816,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (phase !== 9 || advancingRef.current) return;
         const vals = perRole[guestId]?.['photo-downloads']?.values;
         const amount = Number(vals?.['specific-amount'] ?? 10);
-        const res = vals?.['gallery-resolutions'] || ['Original'];
+        // Touching any resolution checkbox converts the stored value from a plain array to
+        // {selected, sub} (see the multicheck control) — normalize before reading, or .includes
+        // throws inside this effect and unmounts the whole app.
+        const resVal = vals?.['gallery-resolutions'];
+        const res = Array.isArray(resVal) ? resVal : (resVal?.selected || ['Original']);
         // A transient match while typing (e.g. 5 on the way to 50) is cancelled by this effect's
         // cleanup when the value changes again within ADVANCE_DELAY.
         if (amount === 5 && res.includes('Medium') && !res.includes('Original')) {
