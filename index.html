@@ -8877,13 +8877,26 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const el = document.querySelector('[data-tour="access-main"]');
             if (el) el.style.background = '#fff';
           }
+          // default-col header and toggle cells have no background; dim bleeds through as pink
+          if (phase === 4) {
+            const hdr = document.querySelector('[data-tour="default-col"]');
+            if (hdr) hdr.style.background = '#fff';
+            document.querySelectorAll('[data-tour-col-cell="everyone"]').forEach(el => {
+              el.style.background = '#fff';
+            });
+          }
           setVisible(true);
         }, 120);
         return () => {
           clearTimeout(timer);
           clearElevation();
-          const el = document.querySelector('[data-tour="access-main"]');
-          if (el) el.style.background = '';
+          const accessMain = document.querySelector('[data-tour="access-main"]');
+          if (accessMain) accessMain.style.background = '';
+          const colHdr = document.querySelector('[data-tour="default-col"]');
+          if (colHdr) colHdr.style.background = '';
+          document.querySelectorAll('[data-tour-col-cell="everyone"]').forEach(el => {
+            el.style.background = '';
+          });
           document.body.classList.remove('tour-model-a-active');
         };
       }, [phase]);
