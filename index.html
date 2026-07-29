@@ -2152,12 +2152,12 @@
                     {selectedCards.size > 0 && canDelete && (
                       <button onClick={handleDelete} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'#e53935', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Delete</button>
                     )}
-                    {selectedCards.size > 0 && (
+                    {(selectedCards.size > 0 || minSelect > 0) && (
                       <button data-tour="add-audience-modal-add-btn"
                         onClick={handleAddRoles}
                         disabled={minSelect > 0 && selectedCards.size < minSelect}
                         style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor: (minSelect > 0 && selectedCards.size < minSelect) ? 'default' : 'pointer', opacity: (minSelect > 0 && selectedCards.size < minSelect) ? 0.4 : 1 }}>
-                        {selectedCards.size === 1 ? `Add ${roleLabel}` : `Add ${selectedCards.size} ${roleLabel}s`}
+                        {selectedCards.size === 1 ? `Add ${roleLabel}` : `Add ${selectedCards.size > 0 ? `${selectedCards.size} ` : ''}${roleLabel}s`}
                       </button>
                     )}
                   </>
@@ -2356,27 +2356,35 @@
                     </div>
                   ) : (
                     <div className="px-6 pb-6 pt-4 border-t" style={{ borderColor: 'var(--line-2)' }}>
-                    <div className={`flex ${selectedCards.size > 0 ? 'justify-between' : 'justify-end'} items-center`}>
+                    <div className={`flex ${(selectedCards.size > 0 || minSelect > 0) ? 'justify-between' : 'justify-end'} items-center`}>
                       <button onClick={onClose}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full border bg-white transition-all hover:bg-[var(--bg)]"
                         style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}>CANCEL</button>
-                      {selectedCards.size > 0 && (
+                      {/* With minSelect set, the add button shows from the start but stays disabled
+                          until enough cards are picked, so the requirement is visible up front. */}
+                      {(selectedCards.size > 0 || minSelect > 0) && (() => {
+                        const blocked = minSelect > 0 && selectedCards.size < minSelect;
+                        return (
                         <div className="flex items-center gap-2">
-                          <button onClick={handleDelete} disabled={!canDelete}
-                            className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full border transition-all"
-                            style={{
-                              borderColor: canDelete ? 'var(--danger)' : 'var(--line)',
-                              color: canDelete ? 'var(--danger)' : 'var(--text-4)',
-                              background: '#fff',
-                              cursor: canDelete ? 'pointer' : 'not-allowed',
-                            }}>DELETE</button>
-                          <button onClick={handleAddRoles}
+                          {selectedCards.size > 0 && (
+                            <button onClick={handleDelete} disabled={!canDelete}
+                              className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full border transition-all"
+                              style={{
+                                borderColor: canDelete ? 'var(--danger)' : 'var(--line)',
+                                color: canDelete ? 'var(--danger)' : 'var(--text-4)',
+                                background: '#fff',
+                                cursor: canDelete ? 'pointer' : 'not-allowed',
+                              }}>DELETE</button>
+                          )}
+                          <button onClick={handleAddRoles} disabled={blocked}
                             className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full text-white transition-all"
-                            style={{ background: 'var(--brand)', boxShadow: 'var(--shadow-sm)' }}>
-                            {selectedCards.size === 1 ? `ADD ${roleLabel.toUpperCase()}` : `ADD ${selectedCards.size} ${roleLabel.toUpperCase()}S`}
+                            style={{ background: 'var(--brand)', boxShadow: 'var(--shadow-sm)',
+                              opacity: blocked ? 0.4 : 1, cursor: blocked ? 'default' : 'pointer' }}>
+                            {selectedCards.size === 1 ? `ADD ${roleLabel.toUpperCase()}` : `ADD ${selectedCards.size > 0 ? `${selectedCards.size} ` : ''}${roleLabel.toUpperCase()}S`}
                           </button>
                         </div>
-                      )}
+                        );
+                      })()}
                     </div>
                     </div>
                   )}{/* end pinned footer */}
