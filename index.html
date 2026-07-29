@@ -9064,6 +9064,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       const lockCleanup = () => {
         clearElevation();
+        // Restore any background set on elevated rows
+        const spRow = document.querySelector('[data-tour="screenshot-protection-row"]');
+        if (spRow) spRow.style.background = '';
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el =>
           el.removeAttribute('data-tour-active-target')
@@ -9106,10 +9109,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
         const t = setTimeout(() => {
           if (phase === 1) {
-            const el = lockTarget('[data-tour="screenshot-protection-default-toggle"]');
-            setHighlightRects(elevateEls([el].filter(Boolean)));
+            // Active target stays on the toggle (keeps it clickable); elevate the full row
+            const toggle = lockTarget('[data-tour="screenshot-protection-default-toggle"]');
+            const row = document.querySelector('[data-tour="screenshot-protection-row"]');
+            setHighlightRects(elevateEls([row].filter(Boolean)));
+            if (row) row.style.background = '#fff';
             setVisible(true);
-            if (!el) return;
+            if (!toggle) return;
             const onClick = () => {
               setTimeout(() => {
                 const target = document.querySelector('[data-tour="screenshot-protection-default-toggle"]');
@@ -9118,8 +9124,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 }
               }, 80);
             };
-            el.addEventListener('click', onClick);
-            return () => el.removeEventListener('click', onClick);
+            toggle.addEventListener('click', onClick);
+            return () => toggle.removeEventListener('click', onClick);
           }
 
           if (phase === 2) {
