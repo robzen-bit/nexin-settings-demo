@@ -8882,13 +8882,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               _tourElevated.push({ el, origPos, origZ });
               rects.push(el.getBoundingClientRect());
             });
-            // Inject a single white bar covering the full column height so gaps between rows don't show dim
-            if (hdr && cells.length > 0) {
-              const hdrRect = hdr.getBoundingClientRect();
+            // White background on header directly so its text shows above the sticky row
+            if (hdr) hdr.style.background = '#fff';
+            // Inject a single white bar from first cell to last cell — starts BELOW the header so text isn't covered
+            if (cells.length > 0) {
+              const hdrRect = hdr ? hdr.getBoundingClientRect() : cells[0].getBoundingClientRect();
+              const firstRect = cells[0].getBoundingClientRect();
               const lastRect = cells[cells.length - 1].getBoundingClientRect();
               const colBg = document.createElement('div');
               colBg.id = 'tour-col-bg';
-              colBg.style.cssText = `position:fixed;z-index:543;background:#fff;pointer-events:none;top:${hdrRect.top}px;left:${hdrRect.left}px;width:${hdrRect.width}px;height:${lastRect.bottom - hdrRect.top}px;`;
+              colBg.style.cssText = `position:fixed;z-index:543;background:#fff;pointer-events:none;top:${firstRect.top}px;left:${hdrRect.left}px;width:${hdrRect.width}px;height:${lastRect.bottom - firstRect.top}px;`;
               document.body.appendChild(colBg);
             }
             setHighlightRects(rects);
