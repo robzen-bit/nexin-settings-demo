@@ -9613,13 +9613,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             // Reactive step: the Guest toggle is the only live control, and flipping it on
             // advances. (Phase 6 used to ask for this separately and was redundant.)
             lockAll('photo-downloads-guest-toggle');
-            // Elevate the row and its expanded settings block together — the block is a sibling
-            // of the row's .border-t wrapper, not a child, so it needs elevating separately.
+            // Elevate the row wrapper and its expanded settings block together — the block is a
+            // sibling of the .border-t wrapper, not a child, so it needs elevating separately.
             // Both carry their own opaque --soft-bg, so no white backing is needed.
             const row = document.querySelector('[data-tour="photo-downloads-row"]');
             const wrapper = row ? row.closest('.border-t') : null;
             const settings = wrapper ? wrapper.nextElementSibling : null;
-            setHighlightRects(elevateEls([row, settings].filter(Boolean)));
+            // The Guest toggle cell is elevated in its own right and listed last, so it stays the
+            // topmost of the equal-z-index elevations and can't end up under a sibling.
+            const guestToggle = document.querySelector('[data-tour="photo-downloads-guest-toggle"]');
+            setHighlightRects(elevateEls([wrapper || row, settings, guestToggle].filter(Boolean)));
             setVisible(true);
             return;
           }
