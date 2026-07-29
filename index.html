@@ -8868,6 +8868,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         step.navigate();
         const timer = setTimeout(() => {
           if (phase === 4) {
+            // *** LOCKED — do not change this step's selectors, elevation, colBg, or label ***
             clearElevation();
             const hdr = document.querySelector('[data-tour="default-col"]');
             const cells = Array.from(document.querySelectorAll('[data-tour-col-cell="everyone"]'));
