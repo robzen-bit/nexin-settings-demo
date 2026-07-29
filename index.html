@@ -1624,7 +1624,7 @@
               ))}
             </ul>
           </div>
-          <div onClick={() => onSelectSection('contacts')}
+          <div onClick={() => onSelectSection('contacts')} data-tour="sidebar-contacts-card"
             className="rounded-xl px-3 py-3 mb-2 cursor-pointer transition-colors"
             style={{ background: isContacts ? 'var(--brand-cream)' : '#fff',
                      border: '1px solid', borderColor: isContacts ? 'transparent' : 'var(--card-border)' }}>
@@ -1655,7 +1655,7 @@
               <StatusPill on={false} />Price List
             </div>
           </div>
-          <div onClick={() => onSelectSection('presets')} className="rounded-xl px-3 py-3 bg-white border cursor-pointer"
+          <div onClick={() => onSelectSection('presets')} data-tour="sidebar-presets-card" className="rounded-xl px-3 py-3 bg-white border cursor-pointer"
             style={{ borderColor: isPresets ? 'var(--brand)' : 'var(--card-border)', background: isPresets ? 'var(--orange-soft, #fff7f3)' : '#fff' }}>
             <div className="flex items-center gap-2"><PresetIcon size={15} /><span className="text-[13px] font-semibold" style={{ color: isPresets ? 'var(--brand)' : 'var(--text-primary)' }}>Setting Presets</span></div>
           </div>
@@ -4477,7 +4477,7 @@
       };
 
       // Row component for registration sub-options
-      const RegRow = ({ checked, onToggle, label, description, optionalLabel, optionalChecked, onToggleOptional, optionalDisabled, children }) => {
+      const RegRow = ({ checked, onToggle, label, description, optionalLabel, optionalChecked, onToggleOptional, optionalDisabled, tourAttr, children }) => {
         const optionalCheckbox = onToggleOptional ? (
           <button type="button" onClick={!optionalDisabled ? onToggleOptional : undefined}
             className="mt-1 shrink-0 flex items-center justify-center rounded border-2 transition-all"
@@ -4486,7 +4486,7 @@
           </button>
         ) : null;
         return (
-          <div className="py-4" style={{ borderBottom: '1px solid var(--card-border)' }}>
+          <div data-tour={tourAttr} className="py-4" style={{ borderBottom: '1px solid var(--card-border)' }}>
             <div className="flex gap-3">
               <button type="button" onClick={onToggle}
                 className="mt-0.5 shrink-0 flex items-center justify-center rounded-full border-2 transition-all"
@@ -4703,6 +4703,7 @@
 
               {/* Collect Email */}
               <RegRow
+                tourAttr="access-collect-email"
                 checked={collectEmailEnabled} onToggle={onToggleCollectEmail}
                 label="Collect Email"
                 description="Collect visitor's email address before they enter."
@@ -4710,7 +4711,7 @@
                 optionalChecked={collectEmailOptional}
                 onToggleOptional={onToggleCollectEmailOptional}
                 optionalDisabled={accessFeeEnabled}>
-                <div className="mt-3" style={{ width: '100%', maxWidth: 320 }}>
+                <div data-tour="registrant-audience-select" className="mt-3" style={{ width: '100%', maxWidth: 320 }}>
                   <label className="block text-[12px] font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{`Registrant ${roleLabel}`}</label>
                   <p className="text-[11px] mb-1.5" style={{ color: 'var(--text-secondary)' }}>{`What ${roleLabel} should a visitor be added to the gallery as?`}</p>
                   <MobileRoleSelect
@@ -4726,6 +4727,7 @@
 
               {/* Custom Form */}
               <RegRow
+                tourAttr="access-custom-form"
                 checked={customFormEnabled} onToggle={onToggleCustomForm}
                 label="Custom Form"
                 description="Design your own form to collect additional information."
@@ -4733,7 +4735,7 @@
                 optionalChecked={customFormOptional}
                 onToggleOptional={onToggleCustomFormOptional}
                 optionalDisabled={accessFeeEnabled}>
-                <button type="button" onClick={onEditCustomForm}
+                <button type="button" data-tour="edit-form-btn" onClick={onEditCustomForm}
                   className="mt-3 px-4 py-1.5 rounded border text-[13px] font-semibold"
                   style={{ borderColor: 'var(--brand)', color: 'var(--brand)', background: '#fff' }}>
                   Edit Form
@@ -6136,7 +6138,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       return (
         <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 2000, background: 'rgba(0,0,0,0.45)' }}
           onClick={onClose}>
-          <div className="bg-white rounded-2xl shadow-xl flex flex-col" style={{ width: 580, maxHeight: '80vh' }}
+          <div data-tour="apply-preset-modal" className="bg-white rounded-2xl shadow-xl flex flex-col" style={{ width: 580, maxHeight: '80vh' }}
             onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
@@ -6188,7 +6190,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       };
 
       return (
-        <main className="main-pane flex-1 px-6 pt-6 pb-12" style={{ maxWidth: 900 }}>
+        <main data-tour="presets-main" className="main-pane flex-1 px-6 pt-6 pb-12" style={{ maxWidth: 900 }}>
           <MobileSectionNav activeSection={activeSection} onSelectSection={onSelectSection} contactsCount={contactsCount} />
           <h1 className="text-[18px] font-extrabold tracking-tight uppercase mb-1" style={{ color: 'var(--brand)', letterSpacing: '0.02em' }}>Gallery Setting Presets</h1>
           <p className="text-[13px] mb-6" style={{ color: 'var(--text-secondary)' }}>
@@ -6201,10 +6203,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             </p>
           )}
           <div className="flex items-center gap-3 mb-8">
-            <button onClick={() => setShowApplyModal(true)}
+            <button data-tour="apply-preset-btn" onClick={() => setShowApplyModal(true)}
               className="text-[13px] font-bold px-6 py-2.5 rounded-lg text-white"
               style={{ background: 'var(--brand)' }}>Apply a New Preset</button>
-            <button className="text-[13px] font-bold px-6 py-2.5 rounded-lg border-2"
+            <button data-tour="save-preset-btn" className="text-[13px] font-bold px-6 py-2.5 rounded-lg border-2"
               style={{ borderColor: 'var(--text-primary)', color: 'var(--text-primary)', background: '#fff' }}>Save New Preset</button>
           </div>
           <div style={{ borderTop: '1px solid var(--card-border)' }} className="mb-8" />
@@ -6290,7 +6292,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     const PHOTO_ACCESS_LEVELS = [
       { id: 'public',        label: 'PUBLIC',               desc: 'Anyone with the link has access.',          Icon: PeopleIcon },
       { id: 'password',      label: 'PASSWORD PROTECTED',   desc: 'Requires password for access.',             Icon: LockIcon   },
-      { id: 'selectedRoles', label: 'SELECTED ROLES ONLY',  desc: 'Restricted to people you invite.',          Icon: LockIcon   },
+      { id: 'selectedRoles', label: 'SELECTED AUDIENCES ONLY',  desc: 'Restricted to people you invite.',          Icon: LockIcon   },
       { id: 'offline',       label: 'OFFLINE',              desc: 'Only visible to you, no one else can access.', Icon: BlockIcon },
     ];
     const CustomPermissionsModal = ({ photoId, photoOverrides, roles, onClose, onSave, onReset }) => {
@@ -6462,13 +6464,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       );
 
       return (
-        <main className="main-pane flex-1 px-6 pt-6 pb-12" style={{ maxWidth: 920 }}>
+        <main data-tour="contacts-main" className="main-pane flex-1 px-6 pt-6 pb-12" style={{ maxWidth: 920 }}>
           <MobileSectionNav activeSection={activeSection}
             onSelectSection={onSelectSection} contactsCount={contacts.length} />
           <h1 className="features-header-h1 text-[18px] font-extrabold tracking-tight uppercase mb-4" style={{ color: 'var(--brand)', letterSpacing: '0.02em' }}>Gallery Contacts</h1>
 
           {/* Sub-tabs */}
-          <div className="flex items-center gap-6 border-b mb-5" style={{ borderColor: 'var(--card-border)' }}>
+          <div data-tour="contacts-tabs" className="flex items-center gap-6 border-b mb-5" style={{ borderColor: 'var(--card-border)' }}>
             {[
               { id: 'manual', label: 'Add Manually' },
               { id: 'from-contacts', label: 'Add from Contacts' },
@@ -6499,7 +6501,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           )}
           {tab !== 'manual' ? null : (
             <>
-              <div className="contacts-form-grid grid grid-cols-2 gap-3 mb-3">
+              <div data-tour="contacts-form-grid" className="contacts-form-grid grid grid-cols-2 gap-3 mb-3">
                 <input value={first} onChange={e => setFirst(e.target.value)} placeholder="First Name"
                   className="text-[13px] px-3 py-2.5 rounded-md border bg-white outline-none"
                   style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }} />
@@ -6519,7 +6521,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 </div>
               </div>
 
-              <div className="contacts-add-buttons flex items-center gap-3 mb-6 flex-wrap relative">
+              <div data-tour="contacts-add-buttons" className="contacts-add-buttons flex items-center gap-3 mb-6 flex-wrap relative">
                 <SolidBtn onClick={() => submit(everyone?.id)} disabled={!canAdd}>ADD DEFAULT</SolidBtn>
                 {inlineRoles.map(r => (
                   <SolidBtn key={r.id} onClick={() => submit(r.id)} disabled={!canAdd}>
@@ -7134,7 +7136,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       }
 
       return (
-        <div className={`flex flex-col ${isMobile ? '' : 'flex-1 min-h-screen'}`} style={{ background: '#fff' }} onClick={() => { addFieldMenuOpen && setAddFieldMenuOpen(false); blockMenuOpen && setBlockMenuOpen(null); blockAddMenuOpen && setBlockAddMenuOpen(null); }}>
+        <div data-tour="edit-custom-form-view" className={`flex flex-col ${isMobile ? '' : 'flex-1 min-h-screen'}`} style={{ background: '#fff' }} onClick={() => { addFieldMenuOpen && setAddFieldMenuOpen(false); blockMenuOpen && setBlockMenuOpen(null); blockAddMenuOpen && setBlockAddMenuOpen(null); }}>
           {/* Header */}
           <div className={`flex items-center px-4 py-3 border-b shrink-0 ${isMobile ? '' : 'justify-center px-6 py-4'}`} style={{ borderColor: 'var(--card-border)', position: 'relative' }}>
             <button onClick={onBack} className={`flex items-center gap-1.5 text-[13px] font-semibold ${isMobile ? '' : 'absolute left-6'}`}
@@ -7148,7 +7150,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           {/* Two-column layout */}
           <div className={`flex ${isMobile ? '' : 'flex-1 overflow-hidden'}`}>
             {/* Left — builder */}
-            <div className={`flex-1 ${isMobile ? 'px-4 py-4' : 'overflow-y-auto px-8 py-6'}`} style={isMobile ? { paddingBottom: 72 } : { maxWidth: 580, borderRight: '1px solid var(--card-border)' }}>
+            <div data-tour="form-builder-col" className={`flex-1 ${isMobile ? 'px-4 py-4' : 'overflow-y-auto px-8 py-6'}`} style={isMobile ? { paddingBottom: 72 } : { maxWidth: 580, borderRight: '1px solid var(--card-border)' }}>
 
               {/* Title */}
               <div className="mb-5">
@@ -7527,7 +7529,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               </div>
 
               {/* Registrant Role Assignment */}
-              <div className="mt-6">
+              <div data-tour="registrant-assignment-section" className="mt-6">
                 <label className="block text-[12px] font-semibold mb-1.5" style={{ color: 'var(--text-primary)' }}>{`Registrant ${roleLabel} Assignment`}</label>
                 <p className="text-[13px] mb-3" style={{ color: 'var(--text-secondary)' }}>
                   {`What ${roleLabel} should anyone who registers be added to?`}
@@ -8756,6 +8758,60 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       _tourElevated = [];
     };
 
+    // ===== Shared tour elevation recipes =====
+    // A modal card lives inside MobileSheetModal's .modal-backdrop — a stacking context below
+    // the dim — so elevating the card alone leaves the whole modal dimmed. Elevate the backdrop
+    // and drop its own scrim (restored via data-tour-bg by each topic's lock-clean) so only the
+    // tour dim shows. The pointer lock keeps backdrop clicks blocked, so the modal can't be
+    // dismissed through the transparent scrim. Returns the card's rect for the callout.
+    const tourElevateModalCard = (sel) => {
+      const card = document.querySelector(sel);
+      const backdrop = card ? card.closest('.modal-backdrop') : null;
+      if (backdrop) {
+        backdrop.setAttribute('data-tour-bg', backdrop.style.background || '');
+        backdrop.style.background = 'transparent';
+      }
+      elevateEls([backdrop || card].filter(Boolean));
+      return card ? [card.getBoundingClientRect()] : [];
+    };
+
+    // Light up a single column header cell. Header cells are children of the sticky
+    // matrix-header-row — a stacking context — so they can't be elevated individually, and the
+    // dim overlay would swallow their clicks. Elevate the row element itself (that works; only
+    // its children are trapped), then re-dim everything left and right of the cell with
+    // absolutely-positioned scrims inside the row, so they track the row through scrolling.
+    // Menus opened inside the cell rise with the row too. Returns the cell's rect.
+    const tourElevateHeaderCol = (colEl) => {
+      const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
+      if (!headerRow || !colEl) return elevateEls([colEl || headerRow].filter(Boolean));
+      elevateEls([headerRow]);
+      const hr = headerRow.getBoundingClientRect();
+      const cr = colEl.getBoundingClientRect();
+      // 1px slack on the outer edges so no bright hairline shows where scrims meet the page
+      // dim. z-index 5 beats the sibling cells (z auto) inside the row's stacking context but
+      // stays under the menu popover (z-40).
+      const mkScrim = (cssText) => {
+        const scrim = document.createElement('div');
+        scrim.className = 'tour-injected-scrim';
+        scrim.style.cssText = `position:absolute;z-index:5;pointer-events:none;background:rgba(0,0,0,0.62);top:-1px;bottom:-1px;${cssText}`;
+        headerRow.appendChild(scrim);
+      };
+      if (cr.left > hr.left) mkScrim(`left:-1px;width:${cr.left - hr.left + 1}px;`);
+      if (hr.right > cr.right) mkScrim(`left:${cr.right - hr.left}px;right:-1px;`);
+      return [cr];
+    };
+
+    // White backing injected INSIDE an elevated element so transparent containers read as lit
+    // above the dim. position:absolute at z -1 sits behind the element's children and scrolls
+    // with the content. Tagged .tour-injected-scrim so every topic's lock-clean removes it.
+    const tourInjectBacking = (el, bg = '#fff') => {
+      if (!el) return;
+      const d = document.createElement('div');
+      d.className = 'tour-injected-scrim';
+      d.style.cssText = `position:absolute;inset:0;z-index:-1;pointer-events:none;background:${bg};`;
+      el.appendChild(d);
+    };
+
     // Shared action-step bullet used across all tour topics.
     const actionBullet = (label) => (
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--card-border)' }}>
@@ -8767,6 +8823,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
     const CALLOUT_POSITIONS = {
       'upper-center':        { top: 88,    left: '50%',  transform: 'translateX(-50%)' },
+      'upper-left':          { top: 88,    left: 24 },
       'upper-center-flush':  { top: 12,    left: '50%',  transform: 'translateX(-50%)' },
       'upper-right':         { top: 88,    right: 24 },
       'center-right':        { top: 120,   left: '62%',  transform: 'translateX(-50%)', width: 290 },
@@ -10103,48 +10160,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const saRects = (...selectors) =>
         selectors.flat().map(sel => document.querySelector(`[data-tour="${sel}"]`)).filter(Boolean).map(el => el.getBoundingClientRect());
 
-      // The Add Audience modal card lives inside MobileSheetModal's .modal-backdrop — a stacking
-      // context below the dim — so elevating the card alone leaves the whole modal dimmed.
-      // Elevate the backdrop and drop its own scrim (restored via data-tour-bg in saLockClean)
-      // so only the tour dim shows. The pointer lock keeps backdrop clicks blocked, so the modal
-      // can't be dismissed through the transparent scrim. Returns the card's rect for the callout.
-      const saElevateModal = () => {
-        const card = document.querySelector('[data-tour="add-audience-modal"]');
-        const backdrop = card ? card.closest('.modal-backdrop') : null;
-        if (backdrop) {
-          backdrop.setAttribute('data-tour-bg', backdrop.style.background || '');
-          backdrop.style.background = 'transparent';
-        }
-        elevateEls([backdrop || card].filter(Boolean));
-        return card ? [card.getBoundingClientRect()] : [];
-      };
-
-      // Light up a single column header cell. Header cells are children of the sticky
-      // matrix-header-row — a stacking context — so they can't be elevated individually, and the
-      // dim overlay would swallow their clicks. Elevate the row element itself (that works; only
-      // its children are trapped), then re-dim everything left and right of the cell with
-      // absolutely-positioned scrims inside the row, so they track the row through scrolling.
-      // The kebab menu opens inside the cell, so it rises with the row too. Returns the cell's
-      // rect for the callout.
-      const saElevateHeaderCol = (colEl) => {
-        const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
-        if (!headerRow || !colEl) return elevateEls([colEl || headerRow].filter(Boolean));
-        elevateEls([headerRow]);
-        const hr = headerRow.getBoundingClientRect();
-        const cr = colEl.getBoundingClientRect();
-        // 1px slack on the outer edges so no bright hairline shows where scrims meet the page
-        // dim. z-index 5 beats the sibling cells (z auto) inside the row's stacking context but
-        // stays under the menu popover (z-40).
-        const mkScrim = (cssText) => {
-          const scrim = document.createElement('div');
-          scrim.className = 'tour-injected-scrim';
-          scrim.style.cssText = `position:absolute;z-index:5;pointer-events:none;background:rgba(0,0,0,0.62);top:-1px;bottom:-1px;${cssText}`;
-          headerRow.appendChild(scrim);
-        };
-        if (cr.left > hr.left) mkScrim(`left:-1px;width:${cr.left - hr.left + 1}px;`);
-        if (hr.right > cr.right) mkScrim(`left:${cr.right - hr.left}px;right:-1px;`);
-        return [cr];
-      };
+      // Shared elevation recipes (see tourElevateModalCard / tourElevateHeaderCol near
+      // elevateEls). The backdrop scrim swap is restored via data-tour-bg in saLockClean.
+      const saElevateModal = () => tourElevateModalCard('[data-tour="add-audience-modal"]');
+      const saElevateHeaderCol = tourElevateHeaderCol;
 
       const getMPRole = () => roles.find(r => r.name === mostPrivilegedName);
       const getLPRole = () => roles.find(r => r.name === lesserPrivilegedName);
@@ -10515,6 +10534,245 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       );
     };
 
+    // ===== Adding Contacts to Audiences Topic =====
+    const AddingContactsTopic = ({
+      onComplete, onCancel,
+      setActiveSection, setActiveMainTab,
+      roles, setRoles, perRole, setPerRole,
+      contacts, setContacts,
+    }) => {
+      const [phase, setPhase] = useState('intro');
+      const [highlightRects, setHighlightRects] = useState([]);
+      const [visible, setVisible] = useState(false);
+      const advancingRef = useRef(false);
+      const obsRef = useRef(null);
+      // Baseline contact count at phase entry, so re-entering a phase via Back can't
+      // auto-advance off a contact added earlier.
+      const contactsBaseRef = useRef(0);
+      const FADE = 160;
+      const ADVANCE_DELAY = 1000;
+      const TOTAL = 5;
+
+      const acLockClean = () => {
+        clearElevation();
+        document.body.classList.remove('tour-model-a-active');
+        document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
+        document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+        document.querySelectorAll('[data-tour-bg]').forEach(el => {
+          el.style.background = el.getAttribute('data-tour-bg') || '';
+          el.removeAttribute('data-tour-bg');
+        });
+        document.querySelectorAll('.tour-injected-scrim').forEach(el => el.remove());
+      };
+      const acLockAll = (...selectors) => {
+        acLockClean();
+        document.body.classList.add('tour-model-a-active');
+        selectors.flat().forEach(sel => {
+          const el = document.querySelector(`[data-tour="${sel}"]`);
+          if (el) el.setAttribute('data-tour-active-target', 'true');
+        });
+      };
+      const disconnectObs = () => { if (obsRef.current) { obsRef.current.disconnect(); obsRef.current = null; } };
+      const observeFor = (sel, onFound) => {
+        const obs = new MutationObserver(() => {
+          if (document.querySelector(sel)) {
+            obs.disconnect(); obsRef.current = null;
+            onFound();
+          }
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        obsRef.current = obs;
+      };
+
+      const advance = (toPhase) => {
+        if (advancingRef.current) return;
+        advancingRef.current = true;
+        disconnectObs();
+        acLockClean();
+        setVisible(false);
+        setTimeout(() => { advancingRef.current = false; setPhase(toPhase); }, FADE);
+      };
+
+      const goBack = (from) => {
+        disconnectObs(); acLockClean(); advancingRef.current = false; setVisible(false);
+        if (from === 1) { setPhase('intro'); return; }
+        if (from === 3) { setTimeout(() => setPhase(1), FADE); return; }
+        if (from === 4) { setActiveSection('features'); setTimeout(() => setPhase(3), FADE); return; }
+        setTimeout(() => setPhase(from - 1), FADE);
+      };
+
+      const handleCancel = () => { acLockClean(); disconnectObs(); onCancel(); };
+
+      // Phase setup
+      useEffect(() => {
+        if (phase === 'intro') {
+          acLockClean(); setHighlightRects([]);
+          setActiveMainTab('Settings'); setActiveSection('features');
+          // Demo state: Guest + Client plus a custom "Parents" audience, no contacts yet.
+          setRoles([
+            { id: 'everyone', name: 'Default', removable: false },
+            { id: 'tour-guest', name: 'Guest', removable: true, isCustom: false },
+            { id: 'tour-client', name: 'Client', removable: true, isCustom: false },
+            { id: 'tour-parents', name: 'Parents', removable: true, isCustom: true },
+          ]);
+          setPerRole({
+            everyone: buildEveryoneState(),
+            'tour-guest': buildRoleState('guest'),
+            'tour-client': buildRoleState('client'),
+            'tour-parents': buildRoleState('client'),
+          });
+          setContacts([]);
+          return;
+        }
+        disconnectObs();
+        const t = setTimeout(() => {
+          if (phase === 1) {
+            // Click the Parents name in the audience header. The name button is the first
+            // button in the cell (the kebab comes after it in DOM order).
+            const colEl = document.querySelector('[data-tour-col="tour-parents"]');
+            const nameBtn = colEl ? colEl.querySelector('button') : null;
+            acLockClean();
+            document.body.classList.add('tour-model-a-active');
+            if (nameBtn) nameBtn.setAttribute('data-tour-active-target', 'true');
+            setHighlightRects(tourElevateHeaderCol(colEl));
+            setVisible(true);
+            observeFor('[data-tour="add-contact-modal"]', () => setTimeout(() => advance(2), FADE));
+            return;
+          }
+          if (phase === 2) {
+            // The add-contact modal is open; wait a frame for it to render if needed.
+            const setup = () => {
+              const modal = document.querySelector('[data-tour="add-contact-modal"]');
+              if (!modal) { setTimeout(setup, 80); return; }
+              contactsBaseRef.current = contacts.length;
+              acLockAll('add-contact-modal');
+              setHighlightRects(tourElevateModalCard('[data-tour="add-contact-modal"]'));
+              setVisible(true);
+            };
+            setup();
+            return;
+          }
+          if (phase === 3) {
+            acLockAll('sidebar-contacts-card');
+            setHighlightRects(elevateEls(['[data-tour="sidebar-contacts-card"]']));
+            setVisible(true);
+            observeFor('[data-tour="contacts-main"]', () => setTimeout(() => advance(4), FADE));
+            return;
+          }
+          if (phase === 4) {
+            contactsBaseRef.current = contacts.length;
+            acLockAll('contacts-form-grid', 'contacts-add-buttons');
+            const grid = document.querySelector('[data-tour="contacts-form-grid"]');
+            const buttons = document.querySelector('[data-tour="contacts-add-buttons"]');
+            setHighlightRects(elevateEls([grid, buttons].filter(Boolean)));
+            // Both blocks are transparent — back them with the page color so they read as lit
+            // rather than showing the dim through the gaps between inputs.
+            [grid, buttons].filter(Boolean).forEach(el => tourInjectBacking(el, 'var(--bg, #F7F5F2)'));
+            setVisible(true);
+            return;
+          }
+          if (phase === 5) {
+            // Presentational: point out the other two add methods without walking through them.
+            acLockAll();
+            const tabs = document.querySelector('[data-tour="contacts-tabs"]');
+            setHighlightRects(elevateEls([tabs].filter(Boolean)));
+            if (tabs) tourInjectBacking(tabs, 'var(--bg, #F7F5F2)');
+            setVisible(true);
+            return;
+          }
+          if (phase === 6) {
+            // Recap — centered over the plain dim.
+            acLockClean();
+            setHighlightRects([]);
+            setVisible(true);
+            return;
+          }
+        }, 160);
+        return () => clearTimeout(t);
+      }, [phase]);
+
+      // Advance when a contact lands (phases 2 and 4)
+      useEffect(() => {
+        if ((phase !== 2 && phase !== 4) || advancingRef.current) return;
+        if (contacts.length > contactsBaseRef.current) {
+          const t = setTimeout(() => advance(phase === 2 ? 3 : 5), ADVANCE_DELAY);
+          return () => clearTimeout(t);
+        }
+      }, [phase, contacts]);
+
+      // Cleanup on unmount
+      useEffect(() => () => { acLockClean(); disconnectObs(); }, []);
+
+      const calloutStyle = useMemo(() => {
+        if (highlightRects.length === 0) return null;
+        if (phase === 1) return nearRect(highlightRects[0], 'below');
+        if (phase === 3) return nearRect(highlightRects[0]);
+        if (phase === 5) return nearRect(highlightRects[0], 'below');
+        return null;
+      }, [highlightRects, phase]);
+
+      const handleIntroNext = () => { setVisible(false); setPhase(1); };
+
+      if (phase === 'intro') {
+        return (
+          <CalloutModal
+            text={<>
+              <p style={{ margin: 0 }}>In this tour we'll cover the different ways to add contacts to your audiences. We've set this gallery up with <strong>Guest</strong> and <strong>Client</strong> audiences, plus a custom audience called <strong>Parents</strong> — added just for demonstration purposes.</p>
+            </>}
+            placement="center"
+            tourName="ADDING CONTACTS"
+            stepNum={null} totalSteps={TOTAL}
+            nextLabel="Next" onNext={() => handleIntroNext()}
+            onBack={null} onCancel={handleCancel}
+            opacity={1}
+          />
+        );
+      }
+
+      const CALLOUT_TEXT = {
+        1: (
+          <><p style={{ margin: 0 }}>The quickest way to add a contact to an audience is right from the permissions table. Clicking an audience's name in the header opens a window to add a contact to it — this works for any audience.</p>{actionBullet('Click Parents in the audience header.')}</>
+        ),
+        2: (
+          <><p style={{ margin: 0 }}>This adds a contact straight into the <strong>Parents</strong> audience. All that's required is an email.</p>{actionBullet('Enter an email, then click Add as Parents.')}</>
+        ),
+        3: (
+          <><p style={{ margin: 0 }}>Nice — your first contact is in. The Contacts section gives you more ways to add people and shows everyone on this gallery.</p>{actionBullet('Click Contacts in the sidebar.')}</>
+        ),
+        4: (
+          <><p style={{ margin: 0 }}>Here you can add a contact manually and pick which audience they join. The first two audiences get their own button; the rest — like <strong>Parents</strong> — live under the <strong>MORE AUDIENCES</strong> dropdown.</p>{actionBullet('Enter an email and add the contact to any audience.')}</>
+        ),
+        5: (
+          <><p style={{ margin: 0 }}>Two more options live up here: <strong>Add from Contacts</strong> pulls people from your existing contact list, and <strong>Import CSV</strong> brings in a whole spreadsheet at once — including an Audience column if you have one. We won't walk through those today.</p></>
+        ),
+        6: <span>That's how contacts and audiences work together — add people straight from the permissions table header, or manage everyone from the Contacts section. Every contact belongs to an audience, and that audience decides what they can do in your gallery.</span>,
+      };
+      const PLACEMENTS = { 2: 'upper-center', 4: 'upper-right', 6: 'center' };
+      const AUTO_ADVANCE = new Set([1, 2, 3, 4]);
+
+      const currentText = CALLOUT_TEXT[phase];
+      if (!currentText) return null;
+
+      return (
+        <>
+          <SpotlightOverlay opacity={visible ? 1 : 0} />
+          <CalloutModal
+            text={currentText}
+            posStyle={calloutStyle}
+            placement={PLACEMENTS[phase]}
+            tourName="ADDING CONTACTS"
+            stepNum={phase === 6 ? null : phase}
+            totalSteps={TOTAL}
+            nextLabel={AUTO_ADVANCE.has(phase) ? null : phase === 6 ? 'Done' : 'Next'}
+            onNext={AUTO_ADVANCE.has(phase) ? null : phase === 6 ? () => onComplete() : () => advance(phase + 1)}
+            onBack={phase === 2 ? null : () => goBack(phase)}
+            onCancel={handleCancel}
+            opacity={visible ? 1 : 0}
+          />
+        </>
+      );
+    };
+
     // Placeholder for topics not yet implemented — marks complete immediately.
     const TourTopicPlaceholder = ({ onComplete }) => {
       useEffect(() => { onComplete(); }, []);
@@ -10635,7 +10893,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     // Routes to the correct topic component. Unimplemented topics complete immediately.
     const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab, onSetContinueTour,
       roles, setRoles, perRole, setPerRole, openFeatures, setFeatureOpen, showModal, setShowModal,
-      openMenuRoleId, setOpenMenuRoleId, savedRoles, setAddModalMinSelect }) => {
+      openMenuRoleId, setOpenMenuRoleId, savedRoles, setAddModalMinSelect,
+      contacts, setContacts, completedTopics,
+      setShowGalleryRegistration, setCollectEmailEnabled, setCustomFormEnabled, setShowEditCustomForm }) => {
       if (topicId === 'overview') {
         return <GeneralOverviewTopic
           onComplete={onComplete} onCancel={onCancel}
@@ -10667,6 +10927,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           showModal={showModal} setShowModal={setShowModal}
           openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
           savedRoles={savedRoles} />;
+      }
+      if (topicId === 'contacts') {
+        return <AddingContactsTopic
+          onComplete={onComplete} onCancel={onCancel}
+          setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
+          roles={roles} setRoles={setRoles}
+          perRole={perRole} setPerRole={setPerRole}
+          contacts={contacts} setContacts={setContacts} />;
       }
       return <TourTopicPlaceholder onComplete={onComplete} />;
     };
@@ -11494,7 +11762,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const jsx = (
               <div className="fixed inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', zIndex: 300 }}
                 onClick={() => setPresetConfirm(null)}>
-                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ width: 500, maxWidth: 'calc(100vw - 32px)' }}
+                <div data-tour="preset-confirm-modal" className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ width: 500, maxWidth: 'calc(100vw - 32px)' }}
                   onClick={e => e.stopPropagation()}>
                   {/* Header */}
                   <div className="relative flex items-center justify-center px-6 py-5 border-b" style={{ borderColor: 'var(--card-border)' }}>
@@ -11535,7 +11803,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                       style={{ color: 'var(--text-primary)' }}>
                       Cancel
                     </button>
-                    <button onClick={() => { applyPreset(roleNames, presetName); setPresetConfirm(null); }}
+                    <button data-tour="preset-confirm-btn" onClick={() => { applyPreset(roleNames, presetName); setPresetConfirm(null); }}
                       className="px-8 py-3 rounded-xl text-[15px] font-semibold text-white"
                       style={{ background: 'var(--brand)' }}>
                       Confirm
@@ -11576,7 +11844,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             showModal={showModal} setShowModal={setShowModal}
             openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
             savedRoles={savedRoles}
-            setAddModalMinSelect={setAddModalMinSelect} />}
+            setAddModalMinSelect={setAddModalMinSelect}
+            contacts={contacts} setContacts={setContacts} completedTopics={completedTopics}
+            setShowGalleryRegistration={setShowGalleryRegistration}
+            setCollectEmailEnabled={setCollectEmailEnabled}
+            setCustomFormEnabled={setCustomFormEnabled}
+            setShowEditCustomForm={setShowEditCustomForm} />}
           {simulateMobile ? (
             <div style={{ flex:1, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'32px 24px', overflowY:'auto', background:'#DEDAD3' }}>
               <IPhoneFrame modals={_modals}>{_mV}</IPhoneFrame>
