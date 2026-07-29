@@ -8682,32 +8682,45 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
     // Full-screen overlay that dims everything and blocks all pointer events.
     // SVG mask cuts out transparent windows over highlighted rects.
-    const SpotlightOverlay = ({ rects, opacity = 1 }) => {
-      const [dims, setDims] = useState({ w: window.innerWidth, h: window.innerHeight });
-      useEffect(() => {
-        const onResize = () => setDims({ w: window.innerWidth, h: window.innerHeight });
-        window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
-      }, []);
-      const P = 8; // padding around each highlighted rect
-      const { w, h } = dims;
-      return ReactDOM.createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 540, pointerEvents: 'auto', cursor: 'default', opacity, transition: 'opacity 160ms ease' }}>
-          <svg width={w} height={h} style={{ display: 'block', position: 'absolute', inset: 0 }}>
-            <defs>
-              <mask id="tour-spotlight">
-                <rect width={w} height={h} fill="white" />
-                {rects.map((r, i) => (
-                  <rect key={i} x={r.x - P} y={r.y - P} width={r.width + P * 2} height={r.height + P * 2} rx="10" fill="black" />
-                ))}
-              </mask>
-            </defs>
-            <rect width={w} height={h} fill="rgba(0,0,0,0.62)" mask="url(#tour-spotlight)" />
-          </svg>
-        </div>,
-        document.body
-      );
+    // Single full-page dim overlay. Target elements are elevated above it via z-index.
+    const SpotlightOverlay = ({ opacity = 1 }) => ReactDOM.createPortal(
+      <div style={{ position: 'fixed', inset: 0, zIndex: 540, background: 'rgba(0,0,0,0.62)', opacity, transition: 'opacity 160ms ease', pointerEvents: opacity === 0 ? 'none' : 'auto' }} />,
+      document.body
+    );
+
+    // Elevation helpers — raise elements above the dim overlay (z-index 545).
+    let _tourElevated = [];
+    const elevateEls = (selectors) => {
+      clearElevation();
+      const rects = [];
+      for (const sel of (Array.isArray(selectors) ? selectors : [selectors])) {
+        const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
+        if (!el) continue;
+        const origPos = el.style.position;
+        const origZ = el.style.zIndex;
+        if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+        el.style.zIndex = '545';
+        _tourElevated.push({ el, origPos, origZ });
+        rects.push(el.getBoundingClientRect());
+      }
+      return rects;
     };
+    const clearElevation = () => {
+      for (const { el, origPos, origZ } of _tourElevated) {
+        el.style.position = origPos;
+        el.style.zIndex = origZ;
+      }
+      _tourElevated = [];
+    };
+
+    // Shared action-step bullet used across all tour topics.
+    const actionBullet = (label) => (
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--card-border)' }}>
+        <ul style={{ margin: 0, paddingLeft: 18 }}>
+          <li><strong>{label}</strong></li>
+        </ul>
+      </div>
+    );
 
     const CALLOUT_POSITIONS = {
       'upper-center':        { top: 88,    left: '50%',  transform: 'translateX(-50%)' },
@@ -8767,63 +8780,35 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [visible, setVisible] = useState(false);
       const FADE = 160;
 
+      const calloutStyle = useMemo(() => {
+        if (highlightRects.length === 0) return null;
+        return nearRect(highlightRects[0]);
+      }, [highlightRects]);
+
       const STEPS = [
         {
           navigate: () => { setActiveMainTab('Settings'); setActiveSection('access'); },
-          getHighlights: () => {
-            const card = document.querySelector('[data-tour="access-card"]');
-            const main = document.querySelector('[data-tour="access-main"]');
-            return [card, main].filter(Boolean).map(el => el.getBoundingClientRect());
-          },
-          placement: 'upper-center-flush',
+          selectors: ['[data-tour="access-card"]', '[data-tour="access-main"]'],
           text: "This is Gallery Access. It's where you set how your gallery can be accessed: Public, Password Protected, Invite Only (just the contacts you've added to the gallery), or Offline (visible only to you). It's also where you turn on features like gallery registration and choose whether the gallery can appear in search results.",
         },
         {
           navigate: () => setActiveSection('features'),
-          getHighlights: () => {
-            const a = document.querySelector('[data-tour="permissions-card"]');
-            const b = document.querySelector('.matrix-scroll');
-            return [a, b].filter(Boolean).map(el => el.getBoundingClientRect());
-          },
-          placement: 'upper-center',
+          selectors: ['[data-tour="permissions-card"]', '.matrix-scroll'],
           text: "This is Gallery Permissions. It's where you turn on and off the different permissions available in your gallery. For example, this is where you can turn on downloads, screenshot protection, or face finder, add a watermark, and more.",
         },
         {
-          navigate: () => {
-            document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
-          },
-          getHighlights: () => {
-            const el = document.querySelector('[data-tour="add-audience-btn"]');
-            return el ? [el.getBoundingClientRect()] : [];
-          },
-          placement: 'center-right',
+          navigate: () => { document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0); },
+          selectors: ['[data-tour="add-audience-btn"]'],
           text: "This is where you add an Audience. Think of an Audience as a permission set you can add contacts to. We'll go over this in more detail later in the tour.",
         },
         {
-          navigate: () => {
-            document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
-          },
-          getHighlights: () => {
-            const col = document.querySelector('[data-tour="default-col"]');
-            const matrix = document.querySelector('.matrix-scroll');
-            if (!col || !matrix) return [];
-            const c = col.getBoundingClientRect();
-            const m = matrix.getBoundingClientRect();
-            return [{ x: c.left, y: m.top, width: c.width, height: m.height }];
-          },
-          placement: 'center',
+          navigate: () => { document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0); },
+          selectors: ['[data-tour="default-col"]'],
           text: "This is the Default Audience. Think of it as your baseline gallery settings. Anyone who accesses your gallery who isn't in another Audience gets these Default settings. We'll cover this in more detail later in the tour.",
         },
         {
-          navigate: () => {
-            document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0);
-          },
-          getHighlights: () => {
-            const header = document.querySelector('[data-tour="matrix-header-row"]');
-            const rows = document.querySelector('[data-tour="per-audience-rows"]');
-            return [header, rows].filter(Boolean).map(el => el.getBoundingClientRect());
-          },
-          placement: 'upper-center',
+          navigate: () => { document.querySelector('.matrix-scroll') && (document.querySelector('.matrix-scroll').scrollTop = 0); },
+          selectors: ['[data-tour="matrix-header-row"]', '[data-tour="per-audience-rows"]'],
           text: "These are your permissions by Audience. Some permissions can be turned on or off per Audience, and even customized individually per Audience. We'll cover this in more detail later in the tour.",
         },
         {
@@ -8835,11 +8820,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               container.scrollTop += rel - 20;
             }
           },
-          getHighlights: () => {
-            const el = document.querySelector('[data-tour="full-gallery-section"]');
-            return el ? [el.getBoundingClientRect()] : [];
-          },
-          placement: 'center',
+          selectors: ['[data-tour="full-gallery-section"]'],
           text: "These are your full gallery permissions. When you turn one on, it applies to the whole gallery and everyone who accesses it, and it can't be customized by Audience.",
         },
       ];
@@ -8847,24 +8828,26 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const TOTAL = STEPS.length;
 
       useEffect(() => {
-        if (phase === 'intro') { setHighlightRects([]); return; }
+        if (phase === 'intro') { clearElevation(); setHighlightRects([]); return; }
         const step = STEPS[phase - 1];
         step.navigate();
         const timer = setTimeout(() => {
-          setHighlightRects(step.getHighlights());
+          setHighlightRects(elevateEls(step.selectors));
           setVisible(true);
         }, 120);
-        return () => clearTimeout(timer);
+        return () => { clearTimeout(timer); clearElevation(); };
       }, [phase]);
 
       const goNext = () => {
         if (phase === 'intro') { setPhase(1); return; }
-        if (phase === TOTAL) { onComplete(); return; }
+        if (phase === TOTAL) { clearElevation(); onComplete(); return; }
+        clearElevation();
         setVisible(false);
         setTimeout(() => setPhase(p => p + 1), FADE);
       };
       const goBack = () => {
         if (phase === 'intro') { onCancel(); return; }
+        clearElevation();
         if (phase === 1) { setHighlightRects([]); setVisible(false); setPhase('intro'); return; }
         setVisible(false);
         setTimeout(() => setPhase(p => p - 1), FADE);
@@ -8901,10 +8884,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const step = STEPS[phase - 1];
       return (
         <>
-          <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} />
+          <SpotlightOverlay opacity={visible ? 1 : 0} />
           <CalloutModal
             text={step.text}
-            placement={step.placement}
+            posStyle={calloutStyle}
             stepNum={phase}
             totalSteps={TOTAL}
             nextLabel={phase === TOTAL ? 'Done' : 'Next →'}
@@ -8976,6 +8959,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const FADE = 160;
 
       const lockCleanup = () => {
+        clearElevation();
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el =>
           el.removeAttribute('data-tour-active-target')
@@ -9019,8 +9003,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const t = setTimeout(() => {
           if (phase === 1) {
             const el = lockTarget('[data-tour="screenshot-protection-default-toggle"]');
-            const rect = el ? el.getBoundingClientRect() : null;
-            setHighlightRects(rect ? [rect] : []);
+            setHighlightRects(elevateEls([el].filter(Boolean)));
             setVisible(true);
             if (!el) return;
             const onClick = () => {
@@ -9037,8 +9020,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
           if (phase === 2) {
             const el = lockTarget('[data-tour="screenshot-protection-row"]');
-            const rect = el ? el.getBoundingClientRect() : null;
-            setHighlightRects(rect ? [rect] : []);
+            setHighlightRects(elevateEls([el].filter(Boolean)));
             setVisible(true);
             if (!el) return;
             const onClick = () => {
@@ -9055,8 +9037,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
           if (phase === 3) {
             const el = lockTarget('[data-tour="sharing-default-toggle"]');
-            const rect = el ? el.getBoundingClientRect() : null;
-            setHighlightRects(rect ? [rect] : []);
+            setHighlightRects(elevateEls([el].filter(Boolean)));
             setVisible(true);
             if (!el) return;
             const onClick = () => {
@@ -9073,8 +9054,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
           if (phase === 4) {
             const el = lockTarget('[data-tour="default-col"]');
-            const rect = el ? el.getBoundingClientRect() : null;
-            setHighlightRects(rect ? [rect] : []);
+            setHighlightRects(elevateEls([el].filter(Boolean)));
             setVisible(true);
             const btn = el ? el.querySelector('button') : null;
             if (!btn) return;
@@ -9089,8 +9069,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               const modal = document.querySelector('[data-tour="add-contact-modal"]');
               if (!modal) { setTimeout(setup, 80); return; }
               lockTarget('[data-tour="add-contact-modal"]');
-              const mRect = modal.getBoundingClientRect();
-              setHighlightRects([mRect]);
+              setHighlightRects(elevateEls([modal]));
               setVisible(true);
               const btn = document.querySelector('[data-tour="add-as-role-btn"]');
               if (!btn) return;
@@ -9107,7 +9086,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Cleanup on unmount
       useEffect(() => () => lockCleanup(), []);
 
-      const stepHighlights = (typeof phase === 'number') ? <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} /> : null;
+      const stepHighlights = (typeof phase === 'number') ? <SpotlightOverlay opacity={visible ? 1 : 0} /> : null;
 
       if (phase === 'intro') {
         const jsx = (
@@ -9129,14 +9108,6 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         );
         return ReactDOM.createPortal(jsx, document.body);
       }
-
-      const actionBullet = (label) => (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--card-border)' }}>
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
-            <li><strong>{label}</strong></li>
-          </ul>
-        </div>
-      );
 
       const callouts = {
         1: {
@@ -9232,6 +9203,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const ADVANCE_DELAY = 1000;
 
       const tourLockClean = () => {
+        clearElevation();
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
         document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
@@ -9344,91 +9316,80 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         }
         const t = setTimeout(() => {
           if (phase === 1) {
-            const rects = getRects('add-audience-btn');
-            setHighlightRects(rects);
             lockAll('add-audience-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-btn"]']));
             setVisible(true);
             return;
           }
           if (phase === 2) {
-            const rects = getRects('add-audience-modal');
-            setHighlightRects(rects);
             lockAll('add-audience-modal');
             overlayDisable('add-audience-create-own-card', 'add-audience-cancel-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
             setVisible(true);
             return;
           }
           if (phase === 3) {
-            const rects = getRects('matrix-header-row');
-            setHighlightRects(rects);
             tourLockClean();
+            setHighlightRects(elevateEls(['[data-tour="matrix-header-row"]']));
             setVisible(true);
             return;
           }
           if (phase === 4) {
             setActiveSection('features');
-            const rects = getRects('photo-downloads-row');
-            setHighlightRects(rects);
             lockAll('photo-downloads-row');
+            setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
             setVisible(true);
             return;
           }
           if (phase === 5) {
-            const rects = getRects('photo-downloads-row');
-            setHighlightRects(rects);
             tourLockClean();
+            setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
             setVisible(true);
             return;
           }
           if (phase === 6) {
-            const rects = getRects('photo-downloads-guest-toggle');
-            setHighlightRects(rects);
             lockAll('photo-downloads-guest-toggle');
+            setHighlightRects(elevateEls(['[data-tour="photo-downloads-guest-toggle"]']));
             setVisible(true);
             return;
           }
           if (phase === 7) {
             const matEl = document.querySelector('.matrix-scroll, [data-tour="per-audience-rows"]');
             if (matEl) matEl.scrollTop = 0;
-            const rects = getRects('photo-downloads-row');
-            setHighlightRects(rects);
             tourLockClean();
+            setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
             setVisible(true);
             return;
           }
           if (phase === 8) {
-            const rects = getRects('photo-downloads-guest-download-type');
-            setHighlightRects(rects);
             lockAll('photo-downloads-guest-download-type');
+            setHighlightRects(elevateEls(['[data-tour="photo-downloads-guest-download-type"]']));
             setVisible(true);
             return;
           }
           if (phase === 9) {
-            const rects = getRects('photo-downloads-guest-specific-amount');
-            setHighlightRects(rects.length ? rects : getRects('photo-downloads-guest-gallery-resolutions'));
             lockAll('photo-downloads-guest-specific-amount', 'photo-downloads-guest-gallery-resolutions');
+            const rects = elevateEls(['[data-tour="photo-downloads-guest-specific-amount"]', '[data-tour="photo-downloads-guest-gallery-resolutions"]']);
+            setHighlightRects(rects.length ? rects : getRects('photo-downloads-guest-gallery-resolutions'));
             setVisible(true);
             return;
           }
           if (phase === 10) {
-            const rects = getRects('photo-downloads-row');
-            setHighlightRects(rects);
             lockAll('photo-downloads-row');
+            setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
             setVisible(true);
             return;
           }
           if (phase === 11) {
             setFeatureOpen('favorites', true);
-            const rects = getRects('favorites-row');
-            setHighlightRects(rects);
             lockAll('favorites-default-toggle', 'favorites-guest-toggle', 'favorites-client-toggle');
+            setHighlightRects(elevateEls(['[data-tour="favorites-row"]']));
             setVisible(true);
             return;
           }
           if (phase === 12) {
-            const rects = getRects('sidebar-photo-downloads', 'sidebar-favorites');
-            setHighlightRects(rects);
             tourLockClean();
+            setHighlightRects(elevateEls(['[data-tour="sidebar-photo-downloads"]', '[data-tour="sidebar-favorites"]']));
             setVisible(true);
             return;
           }
@@ -9447,8 +9408,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       useEffect(() => {
         if (phase !== 2 || advancingRef.current) return;
-        const hasGuest = roles.some(r => r.id === 'guest');
-        const hasClient = roles.some(r => r.id === 'client');
+        const hasGuest = roles.some(r => r.name === 'Guest');
+        const hasClient = roles.some(r => r.name === 'Client');
         if (hasGuest && hasClient) {
           const t = setTimeout(() => advance(3), ADVANCE_DELAY);
           return () => clearTimeout(t);
@@ -9536,13 +9497,21 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           onNext: () => advance(1),
         },
         1: {
-          text: <>The <strong>Add Audience</strong> button lets you add preset audience types like Guest or Client, or create a custom one. Click it to open the audience picker.</>,
-          placement: 'upper-left',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Now let's add an audience to your gallery other than Default. For this tour we'll stick with the system audiences. Later on, you'll learn how to create a custom audience.</p>
+              {actionBullet('Click the Add Audience button.')}
+            </>
+          ),
           onNext: null,
         },
         2: {
-          text: <>Select <strong>Guest</strong> and <strong>Client</strong>, then click <strong>Add Audiences</strong> to add both to your gallery at once.</>,
-          placement: 'upper-center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>You can add multiple audiences at once from here.</p>
+              {actionBullet('Select both the Guest and Client audiences, then click Add Audiences.')}
+            </>
+          ),
           onNext: null,
         },
         3: {
@@ -9551,8 +9520,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           onNext: () => advance(4),
         },
         4: {
-          text: <>Click the <strong>Photo Downloads</strong> row to expand it and see per-audience settings.</>,
-          placement: 'center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Each permission row can be expanded to reveal its per-audience settings.</p>
+              {actionBullet('Click the Photo Downloads row to expand it.')}
+            </>
+          ),
           onNext: null,
         },
         5: {
@@ -9561,8 +9534,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           onNext: () => advance(6),
         },
         6: {
-          text: <>Toggle <strong>Photo Downloads on</strong> for the Guest audience.</>,
-          placement: 'center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Photo Downloads is off for Guest. Let's turn it on.</p>
+              {actionBullet('Toggle Photo Downloads on for the Guest audience.')}
+            </>
+          ),
           onNext: null,
         },
         7: {
@@ -9571,23 +9548,39 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           onNext: () => advance(8),
         },
         8: {
-          text: <>Change the <strong>Download Type</strong> for Guest to <strong>Specific Amount Download</strong> to limit how many photos they can download.</>,
-          placement: 'center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>You can limit how many photos Guests can download by changing the download type.</p>
+              {actionBullet('Change the Download Type for Guest to Specific Amount Download.')}
+            </>
+          ),
           onNext: null,
         },
         9: {
-          text: <>Set the <strong>number of images to 5</strong>, then change <strong>Gallery Allowed Resolutions</strong> — check <strong>Medium</strong> and uncheck <strong>Original</strong>.</>,
-          placement: 'center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Refine the download settings further.</p>
+              {actionBullet('Set the number of images to 5, then check Medium and uncheck Original under Gallery Allowed Resolutions.')}
+            </>
+          ),
           onNext: null,
         },
         10: {
-          text: <>Great configuration! Now collapse the <strong>Photo Downloads</strong> settings by clicking the row header again.</>,
-          placement: 'upper-center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Great configuration! Let's collapse Photo Downloads to keep things tidy.</p>
+              {actionBullet('Click the Photo Downloads row header to collapse its settings.')}
+            </>
+          ),
           onNext: null,
         },
         11: {
-          text: <>Now turn on <strong>Favorites</strong> for all three audiences using the toggles in the Favorites row.</>,
-          placement: 'center',
+          text: (
+            <>
+              <p style={{ margin: 0 }}>Let's turn on one more permission. Favorites lets visitors bookmark photos in your gallery.</p>
+              {actionBullet('Turn on the Favorites toggle for each audience in the Favorites row.')}
+            </>
+          ),
           onNext: null,
         },
         12: {
@@ -9621,10 +9614,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       return (
         <>
-          <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} />
+          <SpotlightOverlay opacity={visible ? 1 : 0} />
           <CalloutModal
             text={<>{currentCallout.text}{nudgeEl}</>}
-            placement={currentCallout.placement}
             posStyle={calloutStyle}
             stepNum={typeof phase === 'number' ? phase : null}
             totalSteps={TOTAL}
@@ -9670,6 +9662,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const ADVANCE_DELAY = 1000;
 
       const saLockClean = () => {
+        clearElevation();
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
         document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
@@ -9781,14 +9774,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         disconnectObs();
         const t = setTimeout(() => {
           if (phase === 1) {
-            setHighlightRects(saRects('add-audience-btn'));
             saLockAll('add-audience-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-btn"]']));
             setVisible(true); return;
           }
           if (phase === 2 || phase === 7) {
-            setHighlightRects(saRects('add-audience-modal'));
             saLockAll('add-audience-modal');
             saOverlay('add-audience-guest-card', 'add-audience-client-card', 'add-audience-cancel-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
             setVisible(true);
             const obs = new MutationObserver(() => {
               if (document.querySelector('[data-tour="audience-name-input"]')) {
@@ -9800,8 +9793,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             obsRef.current = obs; return;
           }
           if (phase === 3 || phase === 8) {
-            setHighlightRects(saRects('audience-name-input'));
+            // SCA3: elevate the whole naming modal, not just the input
             saLockAll('audience-name-input', 'audience-name-next-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
             setVisible(true);
             const obs = new MutationObserver(() => {
               if (document.querySelector('[data-tour="audience-create-btn"]')) {
@@ -9813,53 +9807,55 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             obsRef.current = obs; return;
           }
           if (phase === 4 || phase === 9) {
-            setHighlightRects(saRects('add-audience-modal'));
             saLockAll('add-audience-modal');
             saOverlay('audience-detail-cancel-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
             setVisible(true); return;
           }
           if (phase === 5 || phase === 10) {
-            setHighlightRects(saRects('matrix-header-row'));
             saLockClean();
+            setHighlightRects(elevateEls(['[data-tour="matrix-header-row"]']));
             setVisible(true); return;
           }
           if (phase === 6) {
-            setHighlightRects(saRects('add-audience-btn'));
             saLockAll('add-audience-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-btn"]']));
             setVisible(true); return;
           }
           if (phase === 11) {
             const r = getMPRole(); const rid = r?.id;
             const colEl = rid ? document.querySelector(`[data-tour-col="${rid}"]`) : null;
-            setHighlightRects(colEl ? [colEl.getBoundingClientRect()] : []);
+            const kebab = rid ? document.querySelector(`[data-tour-col-kebab="${rid}"]`) : null;
+            saLockClean();
             if (rid) {
-              saLockClean(); document.body.classList.add('tour-model-a-active');
-              const kebab = document.querySelector(`[data-tour-col-kebab="${rid}"]`);
+              document.body.classList.add('tour-model-a-active');
               if (kebab) kebab.setAttribute('data-tour-active-target', 'true');
             }
+            setHighlightRects(elevateEls([colEl].filter(Boolean)));
             setVisible(true); return;
           }
           if (phase === 12) {
             const r = getMPRole(); const rid = r?.id;
             const colEl = rid ? document.querySelector(`[data-tour-col="${rid}"]`) : null;
             const menuEl = document.querySelector('[data-tour="role-menu-save-later"]');
-            setHighlightRects(menuEl ? [menuEl.getBoundingClientRect()] : colEl ? [colEl.getBoundingClientRect()] : []);
             saLockClean(); document.body.classList.add('tour-model-a-active');
             if (colEl) colEl.setAttribute('data-tour-active-target', 'true');
             if (menuEl) menuEl.setAttribute('data-tour-active-target', 'true');
             saOverlay('role-menu-rename', 'role-menu-duplicate', 'role-menu-remove');
+            setHighlightRects(elevateEls([menuEl || colEl].filter(Boolean)));
             setVisible(true); return;
           }
           if (phase === 13) {
             setOpenMenuRoleId(null);
-            setHighlightRects(saRects('add-audience-btn'));
             saLockAll('add-audience-btn');
+            setHighlightRects(elevateEls(['[data-tour="add-audience-btn"]']));
             setVisible(true); return;
           }
           if (phase === 14) {
-            const rects = saRects('saved-audiences-section');
-            setHighlightRects(rects.length ? rects : saRects('add-audience-modal'));
-            saLockClean(); setVisible(true); return;
+            saLockClean();
+            const els = ['[data-tour="saved-audiences-section"]', '[data-tour="add-audience-modal"]'];
+            setHighlightRects(elevateEls(els));
+            setVisible(true); return;
           }
           if (phase === 15) {
             setShowModal(false); saLockClean(); setHighlightRects([]); setVisible(true); return;
@@ -9960,19 +9956,41 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       }
 
       const CALLOUT_TEXT = {
-        1: <>Let's create your first custom audience.<br /><br /><strong>Click the Add Audience button.</strong></>,
-        2: <>This is where you create a custom audience of your own.<br /><br /><strong>Click Create Your Own to create your first custom audience.</strong></>,
-        3: <>Let's name your most important group — the people who should have the most permissions. We suggest <strong>"{genre ? GENRE_NAMES[genre].most : ''}"</strong> — type it in or enter your own name.<br /><br /><strong>Enter a name for this audience and click NEXT.</strong></>,
-        4: <>Adding a contact to your custom audience is optional. You can add your first contact here, or just click <strong>Create Audience</strong> to create the audience.</>,
-        5: <>Nice, your <strong>{mpName}</strong> audience has been added to your Gallery Permissions. Go ahead and customize the permissions for this audience however you like. When you're done, click <strong>Continue Tour</strong> in the top right.</>,
-        6: <>Now let's create a second custom audience, this time for a group that should have less access than your <strong>{mpName}</strong> audience.<br /><br /><strong>Click the Add Audience button.</strong></>,
-        7: <>Let's create another custom audience.<br /><br /><strong>Click Create Your Own.</strong></>,
-        8: <>Now let's name your less privileged group — the people who should have less access. We suggest <strong>"{genre ? GENRE_NAMES[genre].lesser : ''}"</strong> — type it in or enter your own name.<br /><br /><strong>Enter a name for this audience and click NEXT.</strong></>,
-        9: <>Adding a contact is optional. You can add your first contact here, or just click <strong>Create Audience</strong> to create the audience.</>,
-        10: <>Your <strong>{lpName}</strong> audience has been added. Go ahead and customize its permissions — this group should have less access than your <strong>{mpName}</strong> audience. Click <strong>Continue Tour</strong> in the top right when you're done.</>,
-        11: <>Each audience has its own menu where you can manage it. Let's open the menu for your <strong>{mpName}</strong> audience.<br /><br /><strong>Click the three-dot menu on the {mpName} header.</strong></>,
-        12: <>From here you can rename an audience, save it for later, duplicate it, or remove it. Saving it for later adds it to your <strong>Saved Custom Audiences</strong> so you can reuse it on other galleries without building it again.<br /><br /><strong>Click Save for Later Use.</strong></>,
-        13: <>Your <strong>{mpName}</strong> audience is now saved. Let's open Add Audience again to see where your Saved Custom Audiences live.<br /><br /><strong>Click the Add Audience button.</strong></>,
+        1: (
+          <><p style={{ margin: 0 }}>Let's create your first custom audience.</p>{actionBullet('Click the Add Audience button.')}</>
+        ),
+        2: (
+          <><p style={{ margin: 0 }}>This is where you create a custom audience of your own.</p>{actionBullet('Click Create Your Own to create your first custom audience.')}</>
+        ),
+        3: (
+          <><p style={{ margin: 0 }}>Let's name your most important group — the people who should have the most permissions. We suggest <strong>"{genre ? GENRE_NAMES[genre].most : ''}"</strong> — type it in or enter your own name.</p>{actionBullet('Enter a name for this audience and click NEXT.')}</>
+        ),
+        4: (
+          <><p style={{ margin: 0 }}>Adding a contact to your custom audience is optional. You can add your first contact here, or skip ahead.</p>{actionBullet('Click Create Audience to create the audience.')}</>
+        ),
+        5: <>Nice, your <strong>{mpName}</strong> audience has been added to your Gallery Permissions. Go ahead and customize the permissions for this audience however you like. When you're done, click <strong>Customize</strong> below.</>,
+        6: (
+          <><p style={{ margin: 0 }}>Now let's create a second custom audience, this time for a group that should have less access than your <strong>{mpName}</strong> audience.</p>{actionBullet('Click the Add Audience button.')}</>
+        ),
+        7: (
+          <><p style={{ margin: 0 }}>Let's create another custom audience.</p>{actionBullet('Click Create Your Own.')}</>
+        ),
+        8: (
+          <><p style={{ margin: 0 }}>Now let's name your less privileged group — the people who should have less access. We suggest <strong>"{genre ? GENRE_NAMES[genre].lesser : ''}"</strong> — type it in or enter your own name.</p>{actionBullet('Enter a name for this audience and click NEXT.')}</>
+        ),
+        9: (
+          <><p style={{ margin: 0 }}>Adding a contact is optional. You can add your first contact here, or skip ahead.</p>{actionBullet('Click Create Audience to create the audience.')}</>
+        ),
+        10: <>Your <strong>{lpName}</strong> audience has been added. Go ahead and customize its permissions — this group should have less access than your <strong>{mpName}</strong> audience. Click <strong>Customize</strong> below when you're done.</>,
+        11: (
+          <><p style={{ margin: 0 }}>Each audience has its own menu where you can manage it. Let's open the menu for your <strong>{mpName}</strong> audience.</p>{actionBullet(`Click the three-dot menu on the ${mpName} header.`)}</>
+        ),
+        12: (
+          <><p style={{ margin: 0 }}>From here you can rename an audience, save it for later, duplicate it, or remove it. Saving it adds it to your <strong>Saved Custom Audiences</strong> so you can reuse it on other galleries without building it again.</p>{actionBullet('Click Save for Later Use.')}</>
+        ),
+        13: (
+          <><p style={{ margin: 0 }}>Your <strong>{mpName}</strong> audience is now saved. Let's open Add Audience again to see where your Saved Custom Audiences live.</p>{actionBullet('Click the Add Audience button.')}</>
+        ),
         14: <>This is your <strong>Saved Custom Audiences</strong> section. Any custom audience you save for later shows up here, so you can add it to any gallery without building it again. Your <strong>{mpName}</strong> audience is here now, and since it's already on this gallery, it shows as already added. You can also delete a Saved Custom Audience from this list — that removes it from your saved list but won't remove it from any gallery it's already been added to.</>,
         15: <>Nicely done. You created two custom audiences for your work, customized their permissions, and saved one to your Saved Custom Audiences so you can reuse it on any gallery. Custom audiences let you give exactly the right access to each group you photograph.</>,
       };
@@ -9980,7 +9998,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const NO_BACK = new Set([6, 11]);
       const AUTO_ADVANCE = new Set([1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13]);
 
-      const resolvedNextLabel = AUTO_ADVANCE.has(phase) ? null : (phase === 5 || phase === 10) ? 'Start Customizing Audience Permissions' : phase === 15 ? 'Done' : 'Next';
+      const resolvedNextLabel = AUTO_ADVANCE.has(phase) ? null : (phase === 5 || phase === 10) ? 'Customize' : phase === 15 ? 'Done' : 'Next';
       const resolvedOnNext = AUTO_ADVANCE.has(phase) ? null : (phase === 5 || phase === 10) ? () => parkModelB(phase + 1) : phase === 14 ? () => advance(15) : phase === 15 ? () => onComplete() : null;
 
       const nudgeEl = nudge ? (
@@ -9989,10 +10007,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       return (
         <>
-          <SpotlightOverlay rects={highlightRects} opacity={visible ? 1 : 0} />
+          <SpotlightOverlay opacity={visible ? 1 : 0} />
           <CalloutModal
             text={<>{CALLOUT_TEXT[phase]}{nudgeEl}</>}
-            placement={PLACEMENTS[phase] || 'center'}
             posStyle={calloutStyle}
             stepNum={typeof phase === 'number' ? phase : null}
             totalSteps={TOTAL}
@@ -11036,7 +11053,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           {tourPhase === 'running' && activeTopic && <TourTopicRunner
             topicId={activeTopic} onComplete={completeTopic} onCancel={cancelTopic}
             setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
-            onSetContinueTour={setContinueTourFn}
+            onSetContinueTour={(fn) => setContinueTourFn(() => fn)}
             roles={roles} setRoles={setRoles}
             perRole={perRole} setPerRole={setPerRole}
             openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
