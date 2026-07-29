@@ -3794,6 +3794,7 @@
                 return (
                   <div key={r.id} className="flex justify-center"
                     data-tour={tourAttr}
+                    data-tour-col-cell={r.id}
                     data-enabled={enabled ? 'true' : 'false'}>
                     <Toggle size="sm" checked={enabled}
                       onChange={() => onToggleEnabled(r.id)} />
@@ -8829,13 +8830,28 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       useEffect(() => {
         if (phase === 'intro') { clearElevation(); setHighlightRects([]); return; }
+        document.body.classList.add('tour-model-a-active');
         const step = STEPS[phase - 1];
         step.navigate();
         const timer = setTimeout(() => {
-          setHighlightRects(elevateEls(step.selectors));
+          let rects;
+          if (phase === 4) {
+            // Break sticky header's stacking context so default-col child can exceed overlay z-index
+            const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
+            if (headerRow) headerRow.style.zIndex = 'auto';
+            rects = elevateEls(['[data-tour="default-col"]', '[data-tour-col-cell="everyone"]']);
+            if (headerRow) _tourElevated.push({ el: headerRow, origPos: '', origZ: '' });
+          } else {
+            rects = elevateEls(step.selectors);
+          }
+          setHighlightRects(rects);
           setVisible(true);
         }, 120);
-        return () => { clearTimeout(timer); clearElevation(); };
+        return () => {
+          clearTimeout(timer);
+          clearElevation();
+          document.body.classList.remove('tour-model-a-active');
+        };
       }, [phase]);
 
       const goNext = () => {
