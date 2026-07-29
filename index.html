@@ -785,7 +785,7 @@
           { id: 'download-type', type: 'select', label: 'Download Type Allowed', sheetTitle: 'Choose Download Type', subRow: true,
             options: ['All photos and individual download', 'All photos', 'Specific amount download', 'Individual download only'],
             def: 'All photos and individual download',
-            tooltip: 'Below are the following download types and how they function.\n\nAll photos — The all photo download mode will allow a download of the entire gallery that will be downloaded as a ZIP file.\n\nIndividual download — Allows photos to be downloaded one at a time rather than in bulk.\n\nSpecific amount download — Allows you to set how many photos are allowed to be downloaded per person in a specific role.' },
+            tooltip: 'Below are the following download types and how they function.\n\nAll photos — The all photo download mode will allow a download of the entire gallery that will be downloaded as a ZIP file.\n\nIndividual download — Allows photos to be downloaded one at a time rather than in bulk.\n\nSpecific amount download — Allows you to set how many photos are allowed to be downloaded per person in a specific audience.' },
           { id: 'specific-amount', type: 'number', label: 'Number of images allowed',
             placeholder: 'e.g. 25', def: 10, min: 1,
             dependsOn: { settingId: 'download-type', values: ['Specific amount download'] } },
@@ -809,7 +809,7 @@
           { id: 'video-download-type', type: 'select', label: 'Video Download Type', sheetTitle: 'Choose Download Type', subRow: true,
             options: ['All videos and individual download', 'All videos', 'Specific amount download', 'Individual download only'],
             def: 'All videos and individual download',
-            tooltip: 'Below are the following download types and how they function.\n\nAll videos — The all video download mode will allow a download of the entire gallery that will be downloaded as a ZIP file.\n\nIndividual download — Allows videos to be downloaded one at a time rather than in bulk.\n\nSpecific amount download — Allows you to set how many videos are allowed to be downloaded per person in a specific role.' },
+            tooltip: 'Below are the following download types and how they function.\n\nAll videos — The all video download mode will allow a download of the entire gallery that will be downloaded as a ZIP file.\n\nIndividual download — Allows videos to be downloaded one at a time rather than in bulk.\n\nSpecific amount download — Allows you to set how many videos are allowed to be downloaded per person in a specific audience.' },
           { id: 'video-specific-amount', type: 'number', label: 'Number of videos allowed',
             placeholder: 'e.g. 5', def: 5, min: 1,
             dependsOn: { settingId: 'video-download-type', values: ['Specific amount download'] } },
@@ -1520,7 +1520,7 @@
         return (
           <span className={base + " justify-center"}
             style={{ ...common, background: 'var(--brand)', color: '#fff', padding: '2px 6px' }}
-            title="On for all roles">ON</span>
+            title="On for all audiences">ON</span>
         );
       }
       if (s === 'some') {
@@ -1551,7 +1551,7 @@
       return (
         <span className={base + " justify-center"}
           style={{ ...common, background: 'var(--off-bg)', color: 'var(--off-text)', padding: '2px 6px' }}
-          title="Off for all roles">OFF</span>
+          title="Off for all audiences">OFF</span>
       );
     };
 
@@ -1988,8 +1988,8 @@
                               style={{ borderColor: 'rgba(242,107,58,0.28)', background: 'var(--orange-soft)' }}>
                               <p className="text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>
                                 <strong style={{ color: 'var(--text-primary)' }}>Gallery limit reached.</strong>{' '}
-                                Professional allows up to 2 Custom Roles per gallery.<br/>
-                                Upgrade to <strong style={{ color: 'var(--text-primary)' }}>Advanced</strong> for up to 10 Custom Roles per gallery.{' '}
+                                Professional allows up to 2 Custom Audiences per gallery.<br/>
+                                Upgrade to <strong style={{ color: 'var(--text-primary)' }}>Advanced</strong> for up to 10 Custom Audiences per gallery.{' '}
                                 <a href="#" onClick={e => { e.preventDefault(); onOpenPlans && onOpenPlans(); }} style={{ color: 'var(--brand)', fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: '2px' }}>View Plans</a>
                               </p>
                               <button onClick={() => onOpenPlans && onOpenPlans()}
@@ -2082,7 +2082,7 @@
                                       )}
                                       <span
                                         onClick={e => { e.stopPropagation(); setPendingDelete([saved.id]); }}
-                                        title="Delete saved role"
+                                        title="Delete saved audience"
                                         className="flex items-center justify-center rounded-md transition-colors"
                                         style={{ width: 22, height: 22, color: 'var(--text-tertiary)', cursor: 'pointer' }}
                                         onMouseEnter={e => e.currentTarget.style.color = '#e53935'}
@@ -2128,7 +2128,7 @@
                       className="w-full text-[14px] px-3 py-2.5 rounded-[10px] border bg-white outline-none"
                       style={{ borderColor: (nameTaken || isReserved) ? 'var(--brand)' : 'var(--card-border)', color: 'var(--text-primary)' }} />
                     {nameTaken && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>A {roleLabel.toLowerCase()} named "{trimmed}" already exists.</p>}
-                    {isReserved && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>"{trimmed}" is a system role and cannot be used to create a custom {roleLabel.toLowerCase()}.</p>}
+                    {isReserved && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>"{trimmed}" is a system audience and cannot be used to create a custom {roleLabel.toLowerCase()}.</p>}
                   </div>
                 )}
                 {step === 'detail' && (
@@ -2219,8 +2219,8 @@
                             style={{ borderColor: 'rgba(242,107,58,0.28)', background: 'var(--orange-soft)' }}>
                             <p className="text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>
                               <strong style={{ color: 'var(--text-primary)' }}>Gallery limit reached.</strong>{' '}
-                              Professional allows up to 2 Custom Roles per gallery.<br/>
-                              Upgrade to <strong style={{ color: 'var(--text-primary)' }}>Advanced</strong> for up to 10 Custom Roles per gallery.{' '}
+                              Professional allows up to 2 Custom Audiences per gallery.<br/>
+                              Upgrade to <strong style={{ color: 'var(--text-primary)' }}>Advanced</strong> for up to 10 Custom Audiences per gallery.{' '}
                               <a href="#" onClick={e => { e.preventDefault(); onOpenPlans && onOpenPlans(); }} style={{ color: 'var(--brand)', fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: '2px' }}>View Plans</a>
                             </p>
                             <button onClick={() => onOpenPlans && onOpenPlans()}
@@ -2313,7 +2313,7 @@
                                     )}
                                     <span
                                       onClick={e => { e.stopPropagation(); setPendingDelete([saved.id]); }}
-                                      title="Delete saved role"
+                                      title="Delete saved audience"
                                       className="flex items-center justify-center rounded-md transition-colors"
                                       style={{ width: 22, height: 22, color: 'var(--text-tertiary)', cursor: 'pointer' }}
                                       onMouseEnter={e => e.currentTarget.style.color = '#e53935'}
@@ -2408,7 +2408,7 @@
                     className="w-full text-[14px] px-3 py-2.5 rounded-[10px] border bg-white outline-none"
                     style={{ borderColor: (nameTaken || isReserved) ? 'var(--brand)' : 'var(--card-border)', color: 'var(--text-primary)' }} />
                   {nameTaken && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>A {roleLabel.toLowerCase()} named "{trimmed}" already exists.</p>}
-                  {isReserved && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>"{trimmed}" is a system role and cannot be used to create a custom {roleLabel.toLowerCase()}.</p>}
+                  {isReserved && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>"{trimmed}" is a system audience and cannot be used to create a custom {roleLabel.toLowerCase()}.</p>}
                   {isMobile ? (
                     <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
                       <button onClick={() => setStep('choose')} style={{ flex: 1, padding: '12px 0', borderRadius: 9999, background: '#1B1C1F', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Back</button>
@@ -2486,7 +2486,7 @@
                     : `This will permanently remove these access groups from your saved Custom ${roleLabel}s.`}
                 </p>
                 <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  {count === 1 ? 'This role' : 'These roles'} will <strong>not</strong> be removed from any galleries where {count === 1 ? 'it has' : 'they have'} already been added.
+                  {count === 1 ? 'This audience' : 'These audiences'} will <strong>not</strong> be removed from any galleries where {count === 1 ? 'it has' : 'they have'} already been added.
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 12, padding: '16px 20px 20px' }}>
@@ -2515,7 +2515,7 @@
                       </svg>
                     </span>
                     <h3 className="text-[13px] font-bold tracking-wider" style={{ color: 'var(--text-primary)' }}>
-                      DELETE {count === 1 ? 'SAVED ROLE' : `${count} SAVED ROLES`}
+                      DELETE {count === 1 ? 'SAVED AUDIENCE' : `${count} SAVED AUDIENCES`}
                     </h3>
                   </div>
                   <button onClick={() => setPendingDelete(null)} aria-label="Close"
@@ -2534,7 +2534,7 @@
                     : `This will permanently remove these access groups from your saved Custom ${roleLabel}s.`}
                 </p>
                 <p className="text-[13px] leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
-                  {count === 1 ? 'This role' : 'These roles'} will <strong>not</strong> be removed from any galleries where {count === 1 ? 'it has' : 'they have'} already been added. To remove {count === 1 ? 'it' : 'them'} from a gallery, you'll need to do that manually in the gallery's features table.
+                  {count === 1 ? 'This audience' : 'These audiences'} will <strong>not</strong> be removed from any galleries where {count === 1 ? 'it has' : 'they have'} already been added. To remove {count === 1 ? 'it' : 'them'} from a gallery, you'll need to do that manually in the gallery's features table.
                 </p>
                 {/* Actions */}
                 <div className="flex justify-end gap-3">
@@ -2546,7 +2546,7 @@
                   <button onClick={confirmDelete}
                     className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full text-white transition-all"
                     style={{ background: '#e53935' }}>
-                    DELETE {count === 1 ? 'ROLE' : `${count} ROLES`}
+                    DELETE {count === 1 ? 'AUDIENCE' : `${count} AUDIENCES`}
                   </button>
                 </div>
               </div>
@@ -2723,7 +2723,7 @@
                 onKeyDown={e => { if (e.key === 'Enter' && canSave) { onCommit(trimmed); } }}
                 className="w-full text-[14px] px-3 py-2.5 rounded-[10px] border bg-white outline-none"
                 style={{ borderColor: taken ? 'var(--brand)' : 'var(--card-border)', color: 'var(--text-primary)' }} />
-              {taken && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>A role named "{trimmed}" already exists.</p>}
+              {taken && <p className="text-[12px] mt-2" style={{ color: 'var(--brand-deep)' }}>An audience named "{trimmed}" already exists.</p>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12, padding: '8px 20px 20px' }}>
@@ -3665,7 +3665,7 @@
                   {feature.name}
                 </div>
                 {(feature.appliesToAll || feature.sharedToggle) && (
-                  <div className="text-[12px] italic" style={{ color: 'var(--text-tertiary)' }}>Applies to all roles</div>
+                  <div className="text-[12px] italic" style={{ color: 'var(--text-tertiary)' }}>Applies to all audiences</div>
                 )}
                 {SUMMARY_FEATURES.has(feature.id) && (() => {
                   const lines = buildMobileFeatureStatusLines(feature, roles, perRole);
@@ -3968,7 +3968,7 @@
                   Compare All — every feature across roles
                 </h2>
                 <span className="text-[12px] ml-2" style={{ color: 'var(--text-secondary)' }}>
-                  {features.length} feature{features.length === 1 ? '' : 's'} · {roles.length} role{roles.length === 1 ? '' : 's'}
+                  {features.length} feature{features.length === 1 ? '' : 's'} · {roles.length} audience{roles.length === 1 ? '' : 's'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -4074,7 +4074,7 @@
                               {feature.name}
                             </span>
                             {feature.appliesToAll && (
-                              <div className="text-[11px] italic" style={{ color: 'var(--text-tertiary)' }}>Applies to all roles</div>
+                              <div className="text-[11px] italic" style={{ color: 'var(--text-tertiary)' }}>Applies to all audiences</div>
                             )}
                           </div>
                         </div>
@@ -4158,7 +4158,7 @@
                               <div className="compare-cell flex items-center gap-3" style={{ padding: '8px 16px', width: 400, minWidth: 0 }}>
                                 <SettingControl s={s} value={value} onChange={(v) => onUpdateShared(feature.id, s.id, v)} compact />
                                 <span className="text-[11px] italic shrink-0" style={{ color: 'var(--text-tertiary)' }}>
-                                  Applies to all roles
+                                  Applies to all audiences
                                 </span>
                               </div>
                             </div>
@@ -5298,7 +5298,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     }
 
     // Detect the base field type for a CSV column (header + preview signal).
-    // includeRole: also detect "Role" columns (used when option 3 is selected).
+    // includeRole: also detect "Audience" columns (used when option 3 is selected).
     const detectFieldType = (header, preview, includeRole) => {
       const h = header.toLowerCase();
       const p = (preview || '').toLowerCase();
@@ -5307,7 +5307,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       if ((h.includes('last') && h.includes('name')) || h === 'last name') return 'Last Name';
       if ((h.includes('full') && h.includes('name')) || h === 'full name' || h === 'fullname') return 'Full Name';
       if (h.includes('phone') || h.includes('mobile') || h.includes('cell')) return 'Mobile Phone';
-      if (includeRole && h.includes('role')) return 'Role';
+      if (includeRole && (h.includes('role') || h.includes('audience'))) return 'Audience';
       return null;
     };
 
@@ -5330,9 +5330,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     // Generate grouped dropdown options from the current mappings.
     // Groups by contact number (Contact 1, Contact 2, …), with all field types per contact.
     // Number of contacts = number of email columns detected + 1 (to allow adding another).
-    // includeRole adds "Role (N)" options when option 3 is selected.
+    // includeRole adds "Audience (N)" options when option 3 is selected.
     const generateFieldOptions = (mappings, includeRole) => {
-      const types = includeRole ? [...BASE_FIELD_TYPES, 'Role'] : BASE_FIELD_TYPES;
+      const types = includeRole ? [...BASE_FIELD_TYPES, 'Audience'] : BASE_FIELD_TYPES;
       const maxCounts = {};
       Object.values(mappings).forEach(v => {
         const match = v && v.match(/^(.+) \((\d+)\)$/);
@@ -5628,7 +5628,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             else if (meta.type === 'Last Name') groups[n].last = val;
             else if (meta.type === 'Full Name') groups[n].fullName = val;
             else if (meta.type === 'Mobile Phone') groups[n].mobile = val;
-            else if (meta.type === 'Role') groups[n].csvRoleName = val;
+            else if (meta.type === 'Audience') groups[n].csvRoleName = val;
           });
           Object.values(groups).forEach(g => { if (g.email) allContacts.push(g); });
         });
@@ -5921,7 +5921,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                   ))}
                 </div>
                 {csvRows.filter(row => {
-                  const isRole = detectFieldType(row.header, row.preview, true) === 'Role';
+                  const isRole = detectFieldType(row.header, row.preview, true) === 'Audience';
                   return !isRole || roleConfigOption === 'csvColumn';
                 }).map((row) => {
                   const val = mappings[row.header] || '';
@@ -6364,7 +6364,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                                 <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{r.name}</span>
                               </label>
                             ))}
-                            {roles.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No roles on this gallery yet.</p>}
+                            {roles.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No audiences on this gallery yet.</p>}
                           </div>
                         )}
                       </React.Fragment>
@@ -6423,7 +6423,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [moreOpen, setMoreOpen] = useState(false);
       const [page, setPage] = useState(0);
 
-      // Close MORE ROLES dropdown on outside click
+      // Close MORE AUDIENCES dropdown on outside click
       useEffect(() => {
         if (!moreOpen) return;
         const handler = () => setMoreOpen(false);
@@ -6532,7 +6532,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                       disabled={!canAdd}
                       className="flex items-center gap-2 text-[12px] font-bold tracking-wider px-4 py-2.5 rounded-full border bg-white disabled:opacity-40 transition-all hover:bg-[var(--orange-soft)]"
                       style={{ borderColor: 'var(--brand)', color: 'var(--brand)' }}>
-                      MORE ROLES <ChevronDown size={11} />
+                      MORE AUDIENCES <ChevronDown size={11} />
                     </button>
                     {moreOpen && canAdd && (
                       <div onClick={e => e.stopPropagation()}
@@ -8124,7 +8124,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                   </>
                 )}
                 <div className="mt-4">
-                  <p className="text-[12px] mb-2" style={{ color: 'var(--text-3)' }}>When someone books this service, what role should they be added to the gallery as?</p>
+                  <p className="text-[12px] mb-2" style={{ color: 'var(--text-3)' }}>When someone books this service, what audience should they be added to the gallery as?</p>
                   <select value={effectiveBookingRole} onChange={e => setBookingRole(e.target.value)}
                     className="w-full border rounded px-3 py-2 text-[12px]" style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}>
                     {(() => {
@@ -8241,7 +8241,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             </div>
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {roles.length === 0
-                ? <div style={{ padding: '20px 20px', fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center' }}>No roles available for the selected galleries.</div>
+                ? <div style={{ padding: '20px 20px', fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center' }}>No audiences available for the selected galleries.</div>
                 : roles.map(r => (
                 <label key={r} onClick={() => toggle(r)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--card-border)', cursor: 'pointer' }}>
                   <span className={`check-box ${checked.has(r) ? 'is-on' : ''}`} />
@@ -8362,7 +8362,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (mode === 'selected' && appliesToMode === 'selected-roles' && selectedRoles.length > 0) {
           const rolesToLose = selectedGalleries.length > 0 ? getRolesToLose(selectedGalleries) : [];
           const msg = rolesToLose.length > 0
-            ? `Switching to "Selected Galleries Only" will remove ${rolesToLose.length} selected role${rolesToLose.length > 1 ? 's' : ''} not available in your current galleries: ${rolesToLose.join(', ')}.`
+            ? `Switching to "Selected Galleries Only" will remove ${rolesToLose.length} selected audience${rolesToLose.length > 1 ? 's' : ''} not available in your current galleries: ${rolesToLose.join(', ')}.`
             : `Switching to "Selected Galleries Only" means role availability will be limited to your selected galleries. Your selected role${selectedRoles.length > 1 ? 's' : ''} (${selectedRoles.join(', ')}) may be affected as you add or remove galleries.`;
           setGalleryWarning({
             message: msg,
@@ -8386,7 +8386,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         withConflictCheck(
           newGalleries,
           () => setSelectedGalleries(newGalleries),
-          roles => `Removing "${g}" will also remove ${roles.length} selected role${roles.length > 1 ? 's' : ''} only available through this gallery: ${roles.join(', ')}.`
+          roles => `Removing "${g}" will also remove ${roles.length} selected audience${roles.length > 1 ? 's' : ''} only available through this gallery: ${roles.join(', ')}.`
         );
       };
 
@@ -8394,7 +8394,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         withConflictCheck(
           gals,
           () => { setSelectedGalleries(gals); setShowGalleriesPicker(false); },
-          roles => `This gallery selection removes access to ${roles.length} currently selected role${roles.length > 1 ? 's' : ''}: ${roles.join(', ')}.`
+          roles => `This gallery selection removes access to ${roles.length} currently selected audience${roles.length > 1 ? 's' : ''}: ${roles.join(', ')}.`
         );
         // close picker even when warning is shown; it re-opens if user cancels warning
         if (getRolesToLose(gals).length > 0) setShowGalleriesPicker(false);
@@ -10949,7 +10949,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const trimmed = (newName || '').trim();
         if (!trimmed) { setRenamingRoleId(null); return; }
         if (roles.some(r => r.id !== roleId && r.name.toLowerCase() === trimmed.toLowerCase())) {
-          showToast(`A role named "${trimmed}" already exists`);
+          showToast(`An audience named "${trimmed}" already exists`);
           setRenamingRoleId(null);
           return;
         }
@@ -11155,7 +11155,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                         <button onClick={() => setCompareAllOpen(true)}
                           className="compare-all-btn flex items-center gap-2 text-[11px] font-bold tracking-wider px-4 py-2 rounded-full whitespace-nowrap border bg-white transition-colors"
                           style={{ color: 'var(--brand)', borderColor: 'var(--brand)', letterSpacing: '0.05em' }}
-                          title="Open a side-by-side comparison of every feature across all roles">
+                          title="Open a side-by-side comparison of every feature across all audiences">
                           <CompareIcon size={13} stroke={2} /> COMPARE ALL
                         </button>
                       )}
@@ -11390,8 +11390,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                     Remove "{role?.name}"?
                   </div>
                   <p className="text-[14px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    {count} {count === 1 ? 'contact has' : 'contacts have'} been added to this gallery in the <strong>{role?.name}</strong> role.
-                    Removing this role will move {count === 1 ? 'that contact' : 'all of those contacts'} to the <strong>General</strong> role.
+                    {count} {count === 1 ? 'contact has' : 'contacts have'} been added to this gallery in the <strong>{role?.name}</strong> audience.
+                    Removing this audience will move {count === 1 ? 'that contact' : 'all of those contacts'} to the <strong>Default</strong> audience.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 12, padding: '16px 20px 20px' }}>
@@ -11401,7 +11401,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                   </button>
                   <button onClick={() => { removeRole(removeConfirm); setRemoveConfirm(null); }}
                     style={{ flex: 1, padding: '12px', borderRadius: 9999, border: 'none', background: '#E53E3E', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                    Remove Role
+                    Remove Audience
                   </button>
                 </div>
               </MobileSheetModal>
@@ -11415,8 +11415,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                     Remove "{role?.name}"?
                   </h2>
                   <p className="text-[14px] leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    {count} {count === 1 ? 'contact has' : 'contacts have'} been added to this gallery in the <strong>{role?.name}</strong> role.
-                    Removing this role will move {count === 1 ? 'that contact' : 'all of those contacts'} to the <strong>General</strong> role.
+                    {count} {count === 1 ? 'contact has' : 'contacts have'} been added to this gallery in the <strong>{role?.name}</strong> audience.
+                    Removing this audience will move {count === 1 ? 'that contact' : 'all of those contacts'} to the <strong>Default</strong> audience.
                   </p>
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setRemoveConfirm(null)}
@@ -11427,7 +11427,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                     <button onClick={() => { removeRole(removeConfirm); setRemoveConfirm(null); }}
                       className="px-4 py-2 rounded-lg text-[14px] font-semibold text-white"
                       style={{ background: '#E53E3E' }}>
-                      Remove Role
+                      Remove Audience
                     </button>
                   </div>
                 </div>
@@ -11449,9 +11449,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 <strong>{n}</strong>
               </React.Fragment>
             ));
-            const rw = (n) => n === 1 ? 'role' : 'roles';
+            const rw = (n) => n === 1 ? 'audience' : 'audiences';
             const cw = (n) => n === 1 ? 'contact' : 'contacts';
-            const tw = (n) => n === 1 ? 'this role' : 'these roles';
+            const tw = (n) => n === 1 ? 'this audience' : 'these audiences';
             const activeCount = [rolesToAdd.length > 0, rolesToUpdate.length > 0, rolesToRemove.length > 0].filter(Boolean).length;
             const changeWord = activeCount === 1 ? 'change' : 'changes';
             if (isMobile) return (
@@ -11474,7 +11474,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                     {rolesToRemove.length > 0 && (
                       <p>
                         The following {rw(rolesToRemove.length)} will be removed: {fmtList(rolesToRemove)}.{' '}
-                        {affectedContacts} {cw(affectedContacts)} will be moved to the Default access group.
+                        {affectedContacts} {cw(affectedContacts)} will be moved to the Default audience.
                       </p>
                     )}
                   </div>
@@ -11516,14 +11516,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                         <p>
                           The settings may be updated for the following {rw(rolesToUpdate.length)}: {fmtList(rolesToUpdate)}.
                           {!hasRemovals && (
-                            <> Since no roles are being removed, any contacts you've added to {tw(rolesToUpdate.length)} will remain in their {rw(rolesToUpdate.length)}, but their experience may change.</>
+                            <> Since no audiences are being removed, any contacts you've added to {tw(rolesToUpdate.length)} will remain in their {rw(rolesToUpdate.length)}, but their experience may change.</>
                           )}
                         </p>
                       )}
                       {rolesToRemove.length > 0 && (
                         <p>
                           The following {rw(rolesToRemove.length)} will be removed: {fmtList(rolesToRemove)}.{' '}
-                          {affectedContacts} {cw(affectedContacts)} assigned to removed {rw(rolesToRemove.length)} will be moved to the Default access group.
+                          {affectedContacts} {cw(affectedContacts)} assigned to removed {rw(rolesToRemove.length)} will be moved to the Default audience.
                         </p>
                       )}
                     </div>
