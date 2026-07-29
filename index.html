@@ -9379,6 +9379,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
         document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+        document.querySelectorAll('.modal-backdrop[data-tour-bg]').forEach(el => {
+          el.style.background = '';
+          el.removeAttribute('data-tour-bg');
+        });
       };
 
       const lockAll = (...selectors) => {
@@ -9473,7 +9477,17 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       const calloutStyle = useMemo(() => {
         if (highlightRects.length === 0) return null;
-        if ([2, 3, 5, 7, 10, 12].includes(phase)) return null;
+        if (phase === 2) {
+          // Sit above the Add Audience modal so the Guest/Client cards stay visible
+          const r = highlightRects[0];
+          const vw = window.innerWidth;
+          const w = 340;
+          return {
+            top: Math.max(16, Math.round(r.top) - 236),
+            left: Math.min(Math.max(16, Math.round(r.left + r.width / 2 - w / 2)), vw - w - 16),
+          };
+        }
+        if ([3, 5, 7, 10, 12].includes(phase)) return null;
         if (phase === 1) return nearRect(highlightRects[0], 'below');
         if (phase === 4) return nearRect(highlightRects[0], 'below');
         return nearRect(highlightRects[0]);
@@ -9497,7 +9511,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             setAddModalMinSelect(2);
             lockAll('add-audience-modal');
             overlayDisable('add-audience-create-own-card', 'add-audience-cancel-btn');
-            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
+            // [data-tour="add-audience-modal"] is the .modal-card inside MobileSheetModal's
+            // .modal-backdrop at zIndex 100 — a stacking context below the dim (540), so
+            // elevating the card alone leaves the whole modal dimmed. Elevate the backdrop and
+            // drop its own scrim so only the tour dim shows.
+            const card = document.querySelector('[data-tour="add-audience-modal"]');
+            const backdrop = card ? card.closest('.modal-backdrop') : null;
+            if (backdrop) {
+              backdrop.setAttribute('data-tour-bg', 'true');
+              backdrop.style.background = 'transparent';
+            }
+            elevateEls([backdrop || card].filter(Boolean));
+            // Rect comes from the card, not the full-viewport backdrop, so the callout lands right
+            setHighlightRects(card ? [card.getBoundingClientRect()] : []);
             setVisible(true);
             return;
           }
