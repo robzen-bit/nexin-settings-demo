@@ -9557,7 +9557,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             left: Math.min(Math.max(16, Math.round(r.left + r.width / 2 - w / 2)), vw - w - 16),
           };
         }
-        if ([3, 7, 10, 12].includes(phase)) return null;
+        if ([3, 7, 10].includes(phase)) return null;
+        if (phase === 12) {
+          // Over the dimmed matrix's feature-name column, clear of the elevated sidebar rows.
+          const vw = window.innerWidth;
+          return { top: 230, left: Math.max(25, Math.min(290, vw - 365)) };
+        }
         if (phase === 5) {
           // Park it in the gap above the expanded settings so the whole block stays readable
           const vw = window.innerWidth;
@@ -9756,7 +9761,23 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
           if (phase === 12) {
             tourLockClean();
-            setHighlightRects(elevateEls(['[data-tour="sidebar-photo-downloads"]', '[data-tour="sidebar-favorites"]']));
+            const items = ['sidebar-photo-downloads', 'sidebar-favorites']
+              .map(sel => document.querySelector(`[data-tour="${sel}"]`))
+              .filter(Boolean);
+            // The sidebar li rows are transparent — elevated alone they read as unlit text on the
+            // dimmed sidebar card. White backing makes the indicator pill + label pop together.
+            items.forEach(el => {
+              el.setAttribute('data-tour-bg', el.style.background || '');
+              el.style.background = '#fff';
+            });
+            setHighlightRects(elevateEls(items));
+            setVisible(true);
+            return;
+          }
+          if (phase === 13) {
+            // Recap — nothing highlighted, centered modal over the plain dim.
+            tourLockClean();
+            setHighlightRects([]);
             setVisible(true);
             return;
           }
@@ -9873,7 +9894,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // displayed number is shifted down past the gap.
       const TOTAL = 10;
       // Phases 6 and 7 are retired, so everything from 8 up shows two lower than its phase number.
-      const displayStep = (p) => (typeof p === 'number' ? (p > 6 ? p - 2 : p) : null);
+      // Phase 13 is the recap — no step counter, like the intro.
+      const displayStep = (p) => (typeof p === 'number' ? (p === 13 ? null : (p > 6 ? p - 2 : p)) : null);
 
       const callouts = {
         intro: {
@@ -9967,8 +9989,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           onNext: null,
         },
         12: {
-          text: <>Notice how the sidebar now reflects your configuration — <strong>Photo Downloads</strong> and <strong>Favorites</strong> both show as active. The sidebar is a quick summary of your gallery's feature status.</>,
+          text: <>Take a look at the sidebar. <strong>Photo Downloads</strong> is on for only two of your three audiences, so its indicator is partially lit. <strong>Favorites</strong> is on for all three, so its indicator is fully lit. It's a quick way to see at a glance which permissions are on for all of your audiences and which are on for only some.</>,
+          onNext: () => advance(13),
+        },
+        13: {
+          text: <span>Great — you've now learned how to set up and use audiences. Next, check out the <strong>Saved Custom Audiences</strong> tour to learn how to create and save custom audiences you can reuse.</span>,
           placement: 'center',
+          nextLabel: 'Done',
           onNext: () => onComplete(),
         },
       };
