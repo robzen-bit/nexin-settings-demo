@@ -9684,15 +9684,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               // background comes from React's style prop, so save/restore via data-tour-bg.
               dtRow.setAttribute('data-tour-bg', dtRow.style.background || '');
               dtRow.style.background = '#fff';
-              // 1px slack on the outer edges so no bright hairline shows between these scrims and
-              // the page dim where they meet.
-              [[br.top - 1, bandTop], [bandBottom, br.bottom + 1]].forEach(([top, bottom]) => {
-                if (bottom - top <= 0) return;
+              // The scrims live INSIDE the elevated block, absolutely positioned, so they scroll
+              // with the content — fixed-position scrims stay pinned to the viewport and light up
+              // the wrong rows the moment the page scrolls. The block is position:sticky (a
+              // positioned ancestor), so absolute children anchor to it. 1px slack on the outer
+              // edges so no bright hairline shows where the scrims meet the page dim.
+              const mkScrim = (cssText) => {
                 const scrim = document.createElement('div');
                 scrim.className = 'tour-injected-scrim';
-                scrim.style.cssText = `position:fixed;z-index:546;pointer-events:none;top:${top}px;left:${br.left - 1}px;width:${br.width + 2}px;height:${bottom - top}px;background:rgba(0,0,0,0.62);`;
-                document.body.appendChild(scrim);
-              });
+                scrim.style.cssText = `position:absolute;z-index:546;pointer-events:none;background:rgba(0,0,0,0.62);left:-1px;right:-1px;${cssText}`;
+                block.appendChild(scrim);
+              };
+              if (bandTop > br.top) mkScrim(`top:-1px;height:${bandTop - br.top + 1}px;`);
+              if (br.bottom > bandBottom) mkScrim(`top:${bandBottom - br.top}px;bottom:-1px;`);
             }
             setVisible(true);
             return;
