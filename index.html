@@ -8810,13 +8810,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           L = Math.min(L, r.left); T = Math.min(T, r.top);
           R = Math.max(R, r.right); B = Math.max(B, r.bottom);
         }
+        // Step 1 spotlights both sidebar + access-main producing a very tall union rect;
+        // nearRect would place the modal off-screen below. Pin it to the upper-right instead.
+        if (phase === 1) {
+          const vw = window.innerWidth;
+          return { top: 80, left: Math.min(Math.max(25, Math.round(vw * 0.55 - 170)), vw - 365) };
+        }
         return nearRect({ left: L, top: T, right: R, bottom: B, width: R - L, height: B - T });
-      }, [highlightRects]);
+      }, [highlightRects, phase]);
 
       const STEPS = [
         {
           navigate: () => { setActiveMainTab('Settings'); setActiveSection('access'); },
-          selectors: ['[data-tour="access-main"]'],
+          selectors: ['[data-tour="access-card"]', '[data-tour="access-main"]'],
           text: "This is Gallery Access. It's where you set how your gallery can be accessed: Public, Password Protected, Invite Only (just the contacts you've added to the gallery), or Offline (visible only to you). It's also where you turn on features like gallery registration and choose whether the gallery can appear in search results.",
         },
         {
