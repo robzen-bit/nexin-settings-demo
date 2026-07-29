@@ -9735,7 +9735,15 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
           if (phase === 10) {
             lockAll('photo-downloads-row');
-            setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
+            const row = document.querySelector('[data-tour="photo-downloads-row"]');
+            const wrapper = row ? row.closest('.border-t') : null;
+            setHighlightRects(elevateEls([wrapper, row].filter(Boolean)));
+            // Elevated-but-transparent reads as not elevated — the dim shows through the row band.
+            // White backing like steps 4/5, via data-tour-bg since the background is React-managed.
+            [wrapper, row].filter(Boolean).forEach(el => {
+              el.setAttribute('data-tour-bg', el.style.background || '');
+              el.style.background = '#fff';
+            });
             setVisible(true);
             return;
           }
