@@ -9459,6 +9459,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             ...prev,
             guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'], enabled: false } },
           }));
+          // Phase 6 is retired, so step 7 steps back to 5
+          setTimeout(() => setPhase(5), FADE);
+          return;
         }
         if (from === 8) {
           setPerRole(prev => ({
@@ -9607,7 +9610,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return;
           }
           if (phase === 5) {
-            tourLockClean();
+            // Reactive step: the Guest toggle is the only live control, and flipping it on
+            // advances. (Phase 6 used to ask for this separately and was redundant.)
+            lockAll('photo-downloads-guest-toggle');
             // Elevate the row and its expanded settings block together — the block is a sibling
             // of the row's .border-t wrapper, not a child, so it needs elevating separately.
             // Both carry their own opaque --soft-bg, so no white backing is needed.
@@ -9618,12 +9623,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             setVisible(true);
             return;
           }
-          if (phase === 6) {
-            lockAll('photo-downloads-guest-toggle');
-            setHighlightRects(elevateEls(['[data-tour="photo-downloads-guest-toggle"]']));
-            setVisible(true);
-            return;
-          }
+          // Phase 6 is retired — step 5 now covers turning Photo Downloads on for Guest.
           if (phase === 7) {
             const matEl = document.querySelector('.matrix-scroll, [data-tour="per-audience-rows"]');
             if (matEl) matEl.scrollTop = 0;
@@ -9696,7 +9696,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       }, [phase, openFeatures]);
 
       useEffect(() => {
-        if (phase !== 6 || advancingRef.current) return;
+        if (phase !== 5 || advancingRef.current) return;
         if (perRole['guest']?.['photo-downloads']?.enabled) {
           const t = setTimeout(() => advance(7), ADVANCE_DELAY);
           return () => clearTimeout(t);
@@ -9758,7 +9758,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       useEffect(() => { return () => { tourLockClean(); setAddModalMinSelect(0); }; }, []);
 
-      const TOTAL = 12;
+      // Phase 6 was merged into 5, so there are 11 steps across phases 1–12. Internal phase
+      // numbers are left alone (watchers, goBack and callouts all key off them) and only the
+      // displayed number is shifted down past the gap.
+      const TOTAL = 11;
+      const displayStep = (p) => (typeof p === 'number' ? (p > 6 ? p - 1 : p) : null);
 
       const callouts = {
         intro: {
@@ -9807,14 +9811,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           onNext: null,
         },
         5: {
-          text: <>Photo Downloads is now expanded. Notice that <strong>Default</strong> and <strong>Guest</strong> show the settings as grayed out — that means the feature is off for those audiences. Let's turn it on for Guest.</>,
-          placement: 'center',
-          onNext: () => advance(6),
-        },
-        6: {
           text: (
             <>
-              <p style={{ margin: 0 }}>Photo Downloads is off for Guest. Let's turn it on.</p>
+              <p style={{ margin: 0 }}>Photo Downloads is now expanded. Notice that <strong>Default</strong> and <strong>Guest</strong> show the settings as grayed out — that means the permission is off for those audiences. Let's turn it on for Guest.</p>
               {actionBullet('Toggle Photo Downloads on for the Guest audience.')}
             </>
           ),
@@ -9898,7 +9897,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             text={<>{currentCallout.text}{nudgeEl}</>}
             posStyle={calloutStyle}
             tourName="USING AUDIENCES"
-            stepNum={typeof phase === 'number' ? phase : null}
+            stepNum={displayStep(phase)}
             totalSteps={TOTAL}
             nextLabel={currentCallout.nextLabel !== undefined ? currentCallout.nextLabel : (currentCallout.onNext ? 'Next' : null)}
             onNext={currentCallout.onNext || null}
