@@ -9591,6 +9591,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             setActiveSection('features');
             lockAll('photo-downloads-row');
             setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
+            // The row is transparent when collapsed, so the dim showed through everything but
+            // the toggles. White backing brings the whole row forward.
+            const pdRow = document.querySelector('[data-tour="photo-downloads-row"]');
+            if (pdRow) {
+              pdRow.setAttribute('data-tour-bg', 'true');
+              pdRow.style.background = '#fff';
+            }
             setVisible(true);
             return;
           }
@@ -9782,7 +9789,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         4: {
           text: (
             <>
-              <p style={{ margin: 0 }}>Each permission row can be expanded to reveal its per-audience settings.</p>
+              <p style={{ margin: 0 }}>Some permissions can be expanded to reveal their per-audience settings.</p>
               {actionBullet('Click the Photo Downloads row to expand it.')}
             </>
           ),
