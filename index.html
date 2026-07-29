@@ -10326,7 +10326,28 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [continueTourFn, setContinueTourFn] = useState(null);
       const openTourMenu = () => { setContinueTourFn(null); setTourPhase('menu'); };
       const closeTourMenu = () => setTourPhase('idle');
-      const startTopic = (topicId) => { setActiveTopic(topicId); setTourPhase('running'); };
+      const resetPrototypeState = () => {
+        setRoles([{ id: 'everyone', name: 'Default', removable: false }]);
+        setPerRole({ everyone: buildEveryoneState() });
+        setOpenFeatures(new Set());
+        setContacts([]);
+        setContactRoleId(null);
+        setOpenMenuRoleId(null);
+        setRenamingRoleId(null);
+        setMobileEditFeatureId(null);
+        setCompareAllOpen(false);
+        setShowModal(false);
+        setAddModalMinSelect(0);
+        setActiveSection('access');
+        setActiveMainTab('Settings');
+        setTimeout(() => {
+          const ms = document.querySelector('.matrix-scroll');
+          if (ms) { ms.scrollTop = 0; ms.scrollLeft = 0; }
+          const mp = document.querySelector('.main-pane');
+          if (mp) mp.scrollTop = 0;
+        }, 50);
+      };
+      const startTopic = (topicId) => { resetPrototypeState(); setActiveTopic(topicId); setTourPhase('running'); };
       const completeTopic = () => {
         setContinueTourFn(null);
         setCompletedTopics(prev => { const next = new Set(prev); next.add(activeTopic); return next; });
