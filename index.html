@@ -8681,14 +8681,33 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
     // ===== WALKTHROUGH TOUR TOPIC COMPONENTS =====
 
-    // Full-screen overlay that dims everything and blocks all pointer events.
-    // SVG mask cuts out transparent windows over highlighted rects.
-    // Single full-page dim overlay. Target elements are elevated above it via z-index.
-    const SpotlightOverlay = ({ opacity = 1 }) => ReactDOM.createPortal(
-      <div style={{ position: 'fixed', inset: 0, zIndex: 540, background: 'rgba(0,0,0,0.62)', opacity, transition: 'opacity 160ms ease', pointerEvents: opacity === 0 ? 'none' : 'auto' }} />,
-      document.body
-    );
-
+    // Four-panel cutout overlay: dims the page with a hole over spotRects.
+    // When spotRects is empty, renders a solid full-page dim.
+    // Bypasses all z-index/stacking-context issues for matrix content.
+    const SpotlightOverlay = ({ opacity = 1, spotRects = [] }) => {
+      const dim = 'rgba(0,0,0,0.62)';
+      const base = { position: 'fixed', zIndex: 540, background: dim, opacity, transition: 'opacity 160ms ease', pointerEvents: opacity === 0 ? 'none' : 'auto' };
+      if (spotRects.length === 0) {
+        return ReactDOM.createPortal(<div style={{ ...base, inset: 0 }} />, document.body);
+      }
+      let L = Infinity, T = Infinity, R = -Infinity, B = -Infinity;
+      for (const r of spotRects) {
+        if (!r || r.width <= 0 || r.height <= 0) continue;
+        L = Math.min(L, r.left); T = Math.min(T, r.top);
+        R = Math.max(R, r.right); B = Math.max(B, r.bottom);
+      }
+      if (L === Infinity) return ReactDOM.createPortal(<div style={{ ...base, inset: 0 }} />, document.body);
+      const W = window.innerWidth, H = window.innerHeight;
+      return ReactDOM.createPortal(
+        <>
+          {T > 0 && <div style={{ ...base, top: 0, left: 0, right: 0, height: T }} />}
+          {B < H && <div style={{ ...base, top: B, left: 0, right: 0, bottom: 0 }} />}
+          {L > 0 && <div style={{ ...base, top: T, left: 0, width: L, height: B - T }} />}
+          {R < W && <div style={{ ...base, top: T, left: R, right: 0, height: B - T }} />}
+        </>,
+        document.body
+      );
+    };
     // Elevation helpers — raise elements above the dim overlay (z-index 545).
     let _tourElevated = [];
     const elevateEls = (selectors) => {
@@ -8783,13 +8802,18 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       const calloutStyle = useMemo(() => {
         if (highlightRects.length === 0) return null;
-        return nearRect(highlightRects[0]);
+        let L = Infinity, T = Infinity, R = -Infinity, B = -Infinity;
+        for (const r of highlightRects) {
+          L = Math.min(L, r.left); T = Math.min(T, r.top);
+          R = Math.max(R, r.right); B = Math.max(B, r.bottom);
+        }
+        return nearRect({ left: L, top: T, right: R, bottom: B, width: R - L, height: B - T });
       }, [highlightRects]);
 
       const STEPS = [
         {
           navigate: () => { setActiveMainTab('Settings'); setActiveSection('access'); },
-          selectors: ['[data-tour="access-card"]', '[data-tour="access-main"]'],
+          selectors: ['[data-tour="access-main"]'],
           text: "This is Gallery Access. It's where you set how your gallery can be accessed: Public, Password Protected, Invite Only (just the contacts you've added to the gallery), or Offline (visible only to you). It's also where you turn on features like gallery registration and choose whether the gallery can appear in search results.",
         },
         {
@@ -8829,27 +8853,26 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const TOTAL = STEPS.length;
 
       useEffect(() => {
-        if (phase === 'intro') { clearElevation(); setHighlightRects([]); return; }
+        if (phase === 'intro') { setHighlightRects([]); return; }
         document.body.classList.add('tour-model-a-active');
         const step = STEPS[phase - 1];
         step.navigate();
         const timer = setTimeout(() => {
-          let rects;
-          if (phase === 4) {
-            // Break sticky header's stacking context so default-col child can exceed overlay z-index
-            const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
-            if (headerRow) headerRow.style.zIndex = 'auto';
-            rects = elevateEls(['[data-tour="default-col"]', '[data-tour-col-cell="everyone"]']);
-            if (headerRow) _tourElevated.push({ el: headerRow, origPos: '', origZ: '' });
-          } else {
-            rects = elevateEls(step.selectors);
+          const sels = phase === 4
+            ? ['[data-tour="default-col"]', '[data-tour-col-cell="everyone"]']
+            : step.selectors;
+          const rects = [];
+          for (const sel of sels) {
+            document.querySelectorAll(sel).forEach(el => {
+              const r = el.getBoundingClientRect();
+              if (r.width > 0 && r.height > 0) rects.push(r);
+            });
           }
           setHighlightRects(rects);
           setVisible(true);
         }, 120);
         return () => {
           clearTimeout(timer);
-          clearElevation();
           document.body.classList.remove('tour-model-a-active');
         };
       }, [phase]);
@@ -8900,7 +8923,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const step = STEPS[phase - 1];
       return (
         <>
-          <SpotlightOverlay opacity={visible ? 1 : 0} />
+          <SpotlightOverlay opacity={visible ? 1 : 0} spotRects={highlightRects} />
           <CalloutModal
             text={step.text}
             posStyle={calloutStyle}
