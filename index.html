@@ -8871,19 +8871,26 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (phase === 4) {
             // elevateEls uses querySelector (first match only); manually elevate ALL Default column cells
             clearElevation();
+            const hdr = document.querySelector('[data-tour="default-col"]');
+            const cells = Array.from(document.querySelectorAll('[data-tour-col-cell="everyone"]'));
             const rects = [];
-            [
-              document.querySelector('[data-tour="default-col"]'),
-              ...document.querySelectorAll('[data-tour-col-cell="everyone"]'),
-            ].filter(Boolean).forEach(el => {
+            [hdr, ...cells].filter(Boolean).forEach(el => {
               const origPos = el.style.position;
               const origZ = el.style.zIndex;
               if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
               el.style.zIndex = '545';
-              el.style.background = '#fff';
               _tourElevated.push({ el, origPos, origZ });
               rects.push(el.getBoundingClientRect());
             });
+            // Inject a single white bar covering the full column height so gaps between rows don't show dim
+            if (hdr && cells.length > 0) {
+              const hdrRect = hdr.getBoundingClientRect();
+              const lastRect = cells[cells.length - 1].getBoundingClientRect();
+              const colBg = document.createElement('div');
+              colBg.id = 'tour-col-bg';
+              colBg.style.cssText = `position:fixed;z-index:543;background:#fff;pointer-events:none;top:${hdrRect.top}px;left:${hdrRect.left}px;width:${hdrRect.width}px;height:${lastRect.bottom - hdrRect.top}px;`;
+              document.body.appendChild(colBg);
+            }
             setHighlightRects(rects);
           } else {
             setHighlightRects(elevateEls(step.selectors));
@@ -8900,11 +8907,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           clearElevation();
           const accessMain = document.querySelector('[data-tour="access-main"]');
           if (accessMain) accessMain.style.background = '';
-          const colHdr = document.querySelector('[data-tour="default-col"]');
-          if (colHdr) colHdr.style.background = '';
-          document.querySelectorAll('[data-tour-col-cell="everyone"]').forEach(el => {
-            el.style.background = '';
-          });
+          const colBg = document.getElementById('tour-col-bg');
+          if (colBg) colBg.remove();
           document.body.classList.remove('tour-model-a-active');
         };
       }, [phase]);
