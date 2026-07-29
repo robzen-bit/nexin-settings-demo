@@ -9386,6 +9386,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           el.style.background = '';
           el.removeAttribute('data-tour-bg');
         });
+        const fgScrim = document.getElementById('tour-fg-scrim');
+        if (fgScrim) fgScrim.remove();
       };
 
       const lockAll = (...selectors) => {
@@ -9540,6 +9542,18 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               main.style.background = '#fff';
             }
             setHighlightRects(elevateEls([main || document.querySelector('[data-tour="matrix-header-row"]')].filter(Boolean)));
+            // This step is about the per-audience permissions, so hold the Full Gallery
+            // Permissions section back. It's a descendant of the elevated .main-pane and can't
+            // be un-elevated, so lay a scrim over it matching the dim's rgba(0,0,0,0.62).
+            const fg = document.querySelector('[data-tour="full-gallery-section"]');
+            if (fg) {
+              const r = fg.getBoundingClientRect();
+              const scrim = document.createElement('div');
+              scrim.id = 'tour-fg-scrim';
+              scrim.style.cssText = `position:fixed;z-index:546;pointer-events:none;opacity:0;transition:opacity 160ms ease;top:${r.top}px;left:${r.left}px;width:${r.width}px;height:${r.height}px;background:rgba(0,0,0,0.62);border-bottom-left-radius:12px;border-bottom-right-radius:12px;`;
+              document.body.appendChild(scrim);
+              requestAnimationFrame(() => { scrim.style.opacity = '1'; });
+            }
             setVisible(true);
             return;
           }
