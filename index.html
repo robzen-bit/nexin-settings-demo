@@ -8862,7 +8862,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const TOTAL = STEPS.length;
 
       useEffect(() => {
-        if (phase === 'intro') { setHighlightRects([]); return; }
+        if (phase === 'intro') { clearElevation(); setHighlightRects([]); return; }
         document.body.classList.add('tour-model-a-active');
         const step = STEPS[phase - 1];
         step.navigate();
@@ -8870,18 +8870,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           const sels = phase === 4
             ? ['[data-tour="default-col"]', '[data-tour-col-cell="everyone"]']
             : step.selectors;
-          const rects = [];
-          for (const sel of sels) {
-            document.querySelectorAll(sel).forEach(el => {
-              const r = el.getBoundingClientRect();
-              if (r.width > 0 && r.height > 0) rects.push(r);
-            });
-          }
-          setHighlightRects(rects);
+          setHighlightRects(elevateEls(sels));
           setVisible(true);
         }, 120);
         return () => {
           clearTimeout(timer);
+          clearElevation();
           document.body.classList.remove('tour-model-a-active');
         };
       }, [phase]);
@@ -8932,7 +8926,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const step = STEPS[phase - 1];
       return (
         <>
-          <SpotlightOverlay opacity={visible ? 1 : 0} spotRects={highlightRects} />
+          <SpotlightOverlay opacity={visible ? 1 : 0} />
           <CalloutModal
             text={step.text}
             posStyle={calloutStyle}
