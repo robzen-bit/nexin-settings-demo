@@ -8810,6 +8810,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           L = Math.min(L, r.left); T = Math.min(T, r.top);
           R = Math.max(R, r.right); B = Math.max(B, r.bottom);
         }
+        // *** LOCKED — do not change steps 1 or 2 modal position ***
         // Steps 1 & 2 elevate tall sections; nearRect places the modal off-screen below.
         if (phase === 1 || phase === 2) {
           const vw = window.innerWidth;
