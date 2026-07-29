@@ -8869,34 +8869,34 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const timer = setTimeout(() => {
           if (phase === 4) {
             clearElevation();
-            // The sticky header row has position:sticky + zIndex:10, creating a page-level
-            // stacking context at z-index 10 (below the dim at 540). Clearing its z-index
-            // breaks that stacking context so children can compete at page level directly.
-            const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
-            if (headerRow) {
-              _tourElevated.push({ el: headerRow, origPos: headerRow.style.position, origZ: headerRow.style.zIndex });
-              headerRow.style.zIndex = '';
-            }
             const hdr = document.querySelector('[data-tour="default-col"]');
             const cells = Array.from(document.querySelectorAll('[data-tour-col-cell="everyone"]'));
-            const rects = [];
-            [hdr, ...cells].filter(Boolean).forEach(el => {
+            // Elevate Default column cells above the dim
+            cells.forEach(el => {
               const origPos = el.style.position;
               const origZ = el.style.zIndex;
               if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
               el.style.zIndex = '545';
               _tourElevated.push({ el, origPos, origZ });
-              rects.push(el.getBoundingClientRect());
             });
-            // White background spanning header top → last cell bottom
-            if (rects.length > 0) {
-              const hdrRect = hdr ? hdr.getBoundingClientRect() : rects[0];
-              const lastRect = rects[rects.length - 1];
+            // Inject white column bg with "DEFAULT (0)" label at top (header elevation is blocked
+            // by the sticky row's stacking context; injecting the label is simpler and more reliable)
+            if (hdr && cells.length > 0) {
+              const hdrRect = hdr.getBoundingClientRect();
+              const lastRect = cells[cells.length - 1].getBoundingClientRect();
               const colBg = document.createElement('div');
               colBg.id = 'tour-col-bg';
-              colBg.style.cssText = `position:fixed;z-index:543;background:#fff;pointer-events:none;top:${hdrRect.top}px;left:${hdrRect.left}px;width:${hdrRect.width}px;height:${lastRect.bottom - hdrRect.top}px;`;
+              colBg.style.cssText = `position:fixed;z-index:543;pointer-events:none;top:${hdrRect.top}px;left:${hdrRect.left}px;width:${hdrRect.width}px;height:${lastRect.bottom - hdrRect.top}px;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;`;
+              const labelDiv = document.createElement('div');
+              labelDiv.style.cssText = `height:${Math.round(hdrRect.height)}px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:4px;background:var(--soft-bg);`;
+              labelDiv.innerHTML = '<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-secondary)">DEFAULT</span><span style="font-size:11px;font-weight:600;color:var(--text-tertiary)">(0)</span>';
+              const whiteBg = document.createElement('div');
+              whiteBg.style.cssText = 'flex:1;background:#fff;';
+              colBg.appendChild(labelDiv);
+              colBg.appendChild(whiteBg);
               document.body.appendChild(colBg);
             }
+            const rects = [hdr, ...cells].filter(Boolean).map(el => el.getBoundingClientRect());
             setHighlightRects(rects);
           } else {
             setHighlightRects(elevateEls(step.selectors));
