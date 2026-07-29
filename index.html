@@ -10078,6 +10078,12 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
         document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+        // Restore the inline background we replaced, not '' — blanking a React-committed value
+        // leaves the element transparent until React's own style prop changes.
+        document.querySelectorAll('[data-tour-bg]').forEach(el => {
+          el.style.background = el.getAttribute('data-tour-bg') || '';
+          el.removeAttribute('data-tour-bg');
+        });
       };
       const saLockAll = (...selectors) => {
         saLockClean();
@@ -10095,6 +10101,22 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       };
       const saRects = (...selectors) =>
         selectors.flat().map(sel => document.querySelector(`[data-tour="${sel}"]`)).filter(Boolean).map(el => el.getBoundingClientRect());
+
+      // The Add Audience modal card lives inside MobileSheetModal's .modal-backdrop — a stacking
+      // context below the dim — so elevating the card alone leaves the whole modal dimmed.
+      // Elevate the backdrop and drop its own scrim (restored via data-tour-bg in saLockClean)
+      // so only the tour dim shows. The pointer lock keeps backdrop clicks blocked, so the modal
+      // can't be dismissed through the transparent scrim. Returns the card's rect for the callout.
+      const saElevateModal = () => {
+        const card = document.querySelector('[data-tour="add-audience-modal"]');
+        const backdrop = card ? card.closest('.modal-backdrop') : null;
+        if (backdrop) {
+          backdrop.setAttribute('data-tour-bg', backdrop.style.background || '');
+          backdrop.style.background = 'transparent';
+        }
+        elevateEls([backdrop || card].filter(Boolean));
+        return card ? [card.getBoundingClientRect()] : [];
+      };
 
       const getMPRole = () => roles.find(r => r.name === mostPrivilegedName);
       const getLPRole = () => roles.find(r => r.name === lesserPrivilegedName);
@@ -10192,8 +10214,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
           if (phase === 2 || phase === 7) {
             saLockAll('add-audience-modal');
+            // Guest/Client tiles and Cancel are held back — Create Your Own is the only option.
             saOverlay('add-audience-guest-card', 'add-audience-client-card', 'add-audience-cancel-btn');
-            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
+            setHighlightRects(saElevateModal());
             setVisible(true);
             const obs = new MutationObserver(() => {
               if (document.querySelector('[data-tour="audience-name-input"]')) {
@@ -10207,7 +10230,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (phase === 3 || phase === 8) {
             // SCA3: elevate the whole naming modal, not just the input
             saLockAll('audience-name-input', 'audience-name-next-btn');
-            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
+            setHighlightRects(saElevateModal());
             setVisible(true);
             const obs = new MutationObserver(() => {
               if (document.querySelector('[data-tour="audience-create-btn"]')) {
@@ -10221,7 +10244,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (phase === 4 || phase === 9) {
             saLockAll('add-audience-modal');
             saOverlay('audience-detail-cancel-btn');
-            setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
+            setHighlightRects(saElevateModal());
             setVisible(true); return;
           }
           if (phase === 5 || phase === 10) {
@@ -10424,6 +10447,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <CalloutModal
             text={<>{CALLOUT_TEXT[phase]}{nudgeEl}</>}
             posStyle={calloutStyle}
+            placement={PLACEMENTS[phase]}
             tourName="SAVED AUDIENCES"
             stepNum={typeof phase === 'number' ? phase : null}
             totalSteps={TOTAL}
