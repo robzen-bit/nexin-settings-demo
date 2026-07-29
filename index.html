@@ -10084,6 +10084,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           el.style.background = el.getAttribute('data-tour-bg') || '';
           el.removeAttribute('data-tour-bg');
         });
+        document.querySelectorAll('.tour-injected-scrim').forEach(el => el.remove());
       };
       const saLockAll = (...selectors) => {
         saLockClean();
@@ -10116,6 +10117,33 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         }
         elevateEls([backdrop || card].filter(Boolean));
         return card ? [card.getBoundingClientRect()] : [];
+      };
+
+      // Light up a single column header cell. Header cells are children of the sticky
+      // matrix-header-row — a stacking context — so they can't be elevated individually, and the
+      // dim overlay would swallow their clicks. Elevate the row element itself (that works; only
+      // its children are trapped), then re-dim everything left and right of the cell with
+      // absolutely-positioned scrims inside the row, so they track the row through scrolling.
+      // The kebab menu opens inside the cell, so it rises with the row too. Returns the cell's
+      // rect for the callout.
+      const saElevateHeaderCol = (colEl) => {
+        const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
+        if (!headerRow || !colEl) return elevateEls([colEl || headerRow].filter(Boolean));
+        elevateEls([headerRow]);
+        const hr = headerRow.getBoundingClientRect();
+        const cr = colEl.getBoundingClientRect();
+        // 1px slack on the outer edges so no bright hairline shows where scrims meet the page
+        // dim. z-index 5 beats the sibling cells (z auto) inside the row's stacking context but
+        // stays under the menu popover (z-40).
+        const mkScrim = (cssText) => {
+          const scrim = document.createElement('div');
+          scrim.className = 'tour-injected-scrim';
+          scrim.style.cssText = `position:absolute;z-index:5;pointer-events:none;background:rgba(0,0,0,0.62);top:-1px;bottom:-1px;${cssText}`;
+          headerRow.appendChild(scrim);
+        };
+        if (cr.left > hr.left) mkScrim(`left:-1px;width:${cr.left - hr.left + 1}px;`);
+        if (hr.right > cr.right) mkScrim(`left:${cr.right - hr.left}px;right:-1px;`);
+        return [cr];
       };
 
       const getMPRole = () => roles.find(r => r.name === mostPrivilegedName);
@@ -10284,7 +10312,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               document.body.classList.add('tour-model-a-active');
               if (kebab) kebab.setAttribute('data-tour-active-target', 'true');
             }
-            setHighlightRects(elevateEls([colEl].filter(Boolean)));
+            setHighlightRects(saElevateHeaderCol(colEl));
             setVisible(true); return;
           }
           if (phase === 12) {
@@ -10295,7 +10323,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             if (colEl) colEl.setAttribute('data-tour-active-target', 'true');
             if (menuEl) menuEl.setAttribute('data-tour-active-target', 'true');
             saOverlay('role-menu-rename', 'role-menu-duplicate', 'role-menu-remove');
-            setHighlightRects(elevateEls([menuEl || colEl].filter(Boolean)));
+            // The menu popover renders inside the header cell (not portaled), so it's trapped in
+            // the sticky row's stacking context like the cell — elevate via the row, same as
+            // phase 11. The menu hangs below the row, clear of the in-row scrims. Anchor the
+            // callout to the open menu when it's there.
+            const colRects = saElevateHeaderCol(colEl);
+            const menuBox = menuEl ? menuEl.closest('.menu-pop') : null;
+            setHighlightRects(menuBox ? [menuBox.getBoundingClientRect()] : colRects);
             setVisible(true); return;
           }
           if (phase === 13) {
