@@ -9612,17 +9612,29 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (phase === 5) {
             // Reactive step: the Guest toggle is the only live control, and flipping it on
             // advances. (Phase 6 used to ask for this separately and was redundant.)
-            lockAll('photo-downloads-guest-toggle');
-            // Elevate the row wrapper and its expanded settings block together — the block is a
-            // sibling of the .border-t wrapper, not a child, so it needs elevating separately.
-            // Both carry their own opaque --soft-bg, so no white backing is needed.
             const row = document.querySelector('[data-tour="photo-downloads-row"]');
             const wrapper = row ? row.closest('.border-t') : null;
+            // The settings block is a sibling of the .border-t wrapper, not a child, so it has to
+            // be elevated separately.
             const settings = wrapper ? wrapper.nextElementSibling : null;
-            // The Guest toggle cell is elevated in its own right and listed last, so it stays the
-            // topmost of the equal-z-index elevations and can't end up under a sibling.
             const guestToggle = document.querySelector('[data-tour="photo-downloads-guest-toggle"]');
-            setHighlightRects(elevateEls([wrapper || row, settings, guestToggle].filter(Boolean)));
+            // Lock to the toggle cell directly rather than by selector, and fall back to the whole
+            // row if the cell isn't there, so the step can never end up with nothing clickable.
+            tourLockClean();
+            document.body.classList.add('tour-model-a-active');
+            const target = guestToggle || row;
+            if (target) target.setAttribute('data-tour-active-target', 'true');
+            // Toggle cell listed last: everything here shares z-index 545 and ties break on DOM
+            // order, so this keeps it topmost.
+            setHighlightRects(elevateEls([wrapper, row, settings, guestToggle].filter(Boolean)));
+            // White backing on the row band. It can't be left to the row's own --soft-bg: step 4
+            // sets an inline white background on this row, and clearing that on the way in wipes
+            // the value React had committed, leaving the row transparent with the dim showing
+            // through — which reads as the row not being elevated at all.
+            [wrapper, row].filter(Boolean).forEach(el => {
+              el.setAttribute('data-tour-bg', 'true');
+              el.style.background = '#fff';
+            });
             setVisible(true);
             return;
           }
@@ -9695,6 +9707,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (openFeatures.has('photo-downloads')) {
           const t = setTimeout(() => advance(5), ADVANCE_DELAY);
           return () => clearTimeout(t);
+        }
+      }, [phase, openFeatures]);
+
+      useEffect(() => {
+        // A click landing in the toggle cell's padding rather than on the toggle itself bubbles to
+        // the row, whose onClick collapses it — that would strand step 5 with no settings block.
+        if (phase === 5 && !openFeatures.has('photo-downloads')) {
+          setFeatureOpen('photo-downloads', true);
         }
       }, [phase, openFeatures]);
 
