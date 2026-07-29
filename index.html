@@ -9083,6 +9083,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (spSettings) spSettings.style.background = '';
         const shRow = document.querySelector('[data-tour="sharing-row"]');
         if (shRow) shRow.style.background = '';
+        const hdrProxy = document.getElementById('tour-default-hdr-proxy');
+        if (hdrProxy) hdrProxy.remove();
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el =>
           el.removeAttribute('data-tour-active-target')
@@ -9190,14 +9192,30 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
 
           if (phase === 4) {
-            const el = lockTarget('[data-tour="default-col"]');
-            setHighlightRects(elevateEls([el].filter(Boolean)));
+            // The Default header cell lives inside [data-tour="matrix-header-row"], which is
+            // position:sticky/zIndex:10 — a stacking context below the dim (540). Elevating the
+            // cell can't lift it above the dim, so overlay a clickable proxy of the header
+            // button instead and forward its click to the real one.
+            lockCleanup();
+            document.body.classList.add('tour-model-a-active');
+            const hdr = document.querySelector('[data-tour="default-col"]');
+            const realBtn = hdr ? hdr.querySelector('button') : null;
+            if (!hdr) return;
+            const r = hdr.getBoundingClientRect();
+            const proxy = document.createElement('div');
+            proxy.id = 'tour-default-hdr-proxy';
+            proxy.setAttribute('data-tour-active-target', 'true');
+            proxy.style.cssText = `position:fixed;z-index:546;cursor:pointer;top:${r.top}px;left:${r.left}px;width:${r.width}px;height:${r.height}px;display:flex;align-items:center;justify-content:center;gap:4px;background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.14);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-secondary);`;
+            proxy.innerHTML = realBtn ? realBtn.innerHTML : 'Default';
+            document.body.appendChild(proxy);
+            setHighlightRects([r]);
             setVisible(true);
-            const btn = el ? el.querySelector('button') : null;
-            if (!btn) return;
-            const onClick = () => advance(5);
-            btn.addEventListener('click', onClick);
-            return () => btn.removeEventListener('click', onClick);
+            const onClick = () => {
+              if (realBtn) realBtn.click();
+              advance(5);
+            };
+            proxy.addEventListener('click', onClick);
+            return () => { proxy.removeEventListener('click', onClick); proxy.remove(); };
           }
 
           if (phase === 5) {
