@@ -9442,6 +9442,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           return;
         }
         if (from === 3) {
+          // Same cleanup as step 3's Next — otherwise a row expanded during free play stays open
+          // and step 4's "expand Photo Downloads" watcher fires the moment it loads.
+          openFeatures.forEach(id => setFeatureOpen(id, false));
+          const mat = document.querySelector('.matrix-scroll');
+          if (mat) { mat.scrollTop = 0; mat.scrollLeft = 0; }
           setRoles([{ id: 'everyone', name: 'Default', removable: false }]);
           setPerRole(prev => ({ everyone: prev.everyone }));
           setShowModal(true);
@@ -9543,7 +9548,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return;
           }
           if (phase === 3) {
-            tourLockClean();
+            // Free play inside the per-audience rows only — toggles and expandable settings stay
+            // live, but the lock keeps tabs, sidebar, Preview/Share and Add Audience out of reach
+            // so they can't navigate off the page mid-step.
+            lockAll('per-audience-rows');
             // Elevate the whole permissions page, not just the header row.
             const main = document.querySelector('.main-pane');
             setHighlightRects(elevateEls([main || document.querySelector('[data-tour="matrix-header-row"]')].filter(Boolean)));
@@ -9565,9 +9573,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             // be un-elevated, so lay a scrim over it matching the dim's rgba(0,0,0,0.62).
             if (fg) {
               const r = fg.getBoundingClientRect();
+              // Size from the matrix card, not the section: the card's 1px border and rounded
+              // bottom sit outside the section's box and would show as a pale outline around
+              // the scrimmed area. 1px of slack on each side absorbs subpixel layout.
+              const cardEl = fg.closest('.rounded-xl');
+              const cr = cardEl ? cardEl.getBoundingClientRect() : r;
               const scrim = document.createElement('div');
               scrim.id = 'tour-fg-scrim';
-              scrim.style.cssText = `position:fixed;z-index:546;pointer-events:none;opacity:0;transition:opacity 160ms ease;top:${r.top}px;left:${r.left}px;width:${r.width}px;height:${r.height}px;background:rgba(0,0,0,0.62);border-bottom-left-radius:12px;border-bottom-right-radius:12px;`;
+              scrim.style.cssText = `position:fixed;z-index:546;pointer-events:none;opacity:0;transition:opacity 160ms ease;top:${r.top}px;left:${cr.left - 1}px;width:${cr.width + 2}px;height:${Math.max(0, cr.bottom + 1 - r.top)}px;background:rgba(0,0,0,0.62);border-bottom-left-radius:13px;border-bottom-right-radius:13px;`;
               document.body.appendChild(scrim);
               requestAnimationFrame(() => { scrim.style.opacity = '1'; });
             }
@@ -9757,7 +9770,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         3: {
           text: <>The matrix now shows a column for each audience. Each row is a permission — you can control whether it's on or off per audience, and adjust its settings independently.</>,
           placement: 'center',
-          onNext: () => advance(4),
+          // This step lets them poke around, so hand step 4 a clean matrix: collapse anything
+          // they expanded and put the scroll position back where it started.
+          onNext: () => {
+            openFeatures.forEach(id => setFeatureOpen(id, false));
+            const mat = document.querySelector('.matrix-scroll');
+            if (mat) { mat.scrollTop = 0; mat.scrollLeft = 0; }
+            advance(4);
+          },
         },
         4: {
           text: (
