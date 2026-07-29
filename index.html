@@ -1834,7 +1834,7 @@
       );
     };
 
-    const AddRoleModal = ({ onClose, onSelect, onSelectBulk, onDeleteSaved, onOpenPlans, existingNames, viewMode, customRoleCount = 0, savedRoles = [] }) => {
+    const AddRoleModal = ({ onClose, onSelect, onSelectBulk, onDeleteSaved, onOpenPlans, existingNames, viewMode, customRoleCount = 0, savedRoles = [], minSelect = 0 }) => {
       const isMobile = useIsMobile();
       const { roleLabel } = useTerms();
       const [step, setStep] = useState('choose');
@@ -2150,7 +2150,10 @@
                       <button onClick={handleDelete} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'#e53935', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Delete</button>
                     )}
                     {selectedCards.size > 0 && (
-                      <button data-tour="add-audience-modal-add-btn" onClick={handleAddRoles} style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>
+                      <button data-tour="add-audience-modal-add-btn"
+                        onClick={handleAddRoles}
+                        disabled={minSelect > 0 && selectedCards.size < minSelect}
+                        style={{ flex:1, padding:'12px 0', borderRadius:9999, background:'var(--brand)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor: (minSelect > 0 && selectedCards.size < minSelect) ? 'default' : 'pointer', opacity: (minSelect > 0 && selectedCards.size < minSelect) ? 0.4 : 1 }}>
                         {selectedCards.size === 1 ? `Add ${roleLabel}` : `Add ${selectedCards.size} ${roleLabel}s`}
                       </button>
                     )}
@@ -8753,7 +8756,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       'center':              { top: '50%', left: '50%',  transform: 'translate(-50%, -50%)' },
     };
 
-    const CalloutModal = ({ text, placement, posStyle: posStyleProp, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel, opacity = 1 }) => {
+    const CalloutModal = ({ text, placement, posStyle: posStyleProp, stepNum, totalSteps, nextLabel, onNext, onBack, onCancel, opacity = 1, tourName }) => {
       const pos = CALLOUT_POSITIONS[placement] || CALLOUT_POSITIONS['center'];
       const { width: posWidth, ...namedPos } = pos;
       const resolvedPos = posStyleProp || namedPos;
@@ -8764,7 +8767,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0' }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--brand)', opacity: 0.75 }}>
-                STEP {stepNum} OF {totalSteps}
+                {[tourName, stepNum != null && `STEP ${stepNum} OF ${totalSteps}`].filter(Boolean).join(' · ')}
               </span>
               <button onClick={onCancel}
                 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: 'var(--text-tertiary, #aaa)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>
@@ -8927,6 +8930,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <CalloutModal
             text={step.text}
             posStyle={calloutStyle}
+            tourName="GENERAL OVERVIEW"
             stepNum={phase}
             totalSteps={TOTAL}
             nextLabel={phase === TOTAL ? 'Done' : 'Next →'}
@@ -9212,6 +9216,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             text={currentCallout.text}
             placement={currentCallout.placement}
             posStyle={calloutStyle}
+            tourName="DEFAULT AUDIENCE"
             stepNum={phase}
             totalSteps={6}
             nextLabel={currentCallout.nextLabel || null}
@@ -9232,6 +9237,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       perRole, setPerRole,
       openFeatures, setFeatureOpen,
       showModal, setShowModal,
+      setAddModalMinSelect = () => {},
     }) => {
       const [phase, setPhase] = useState('intro');
       const [highlightRects, setHighlightRects] = useState([]);
@@ -9361,6 +9367,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return;
           }
           if (phase === 2) {
+            setAddModalMinSelect(2);
             lockAll('add-audience-modal');
             overlayDisable('add-audience-create-own-card', 'add-audience-cancel-btn');
             setHighlightRects(elevateEls(['[data-tour="add-audience-modal"]']));
@@ -9433,7 +9440,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return;
           }
         }, 160);
-        return () => clearTimeout(t);
+        return () => { clearTimeout(t); setAddModalMinSelect(0); };
       }, [phase]);
 
       // Validated advance watchers
@@ -9524,7 +9531,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         }
       }, [phase, perRole, roles]);
 
-      useEffect(() => { return () => tourLockClean(); }, []);
+      useEffect(() => { return () => { tourLockClean(); setAddModalMinSelect(0); }; }, []);
 
       const TOTAL = 12;
 
@@ -9636,6 +9643,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         return (
           <CalloutModal
             text={c.text} placement={c.placement}
+            tourName="USING AUDIENCES"
             stepNum={null} totalSteps={TOTAL}
             nextLabel={c.nextLabel} onNext={c.onNext}
             onBack={null} onCancel={handleCancel}
@@ -9657,6 +9665,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <CalloutModal
             text={<>{currentCallout.text}{nudgeEl}</>}
             posStyle={calloutStyle}
+            tourName="USING AUDIENCES"
             stepNum={typeof phase === 'number' ? phase : null}
             totalSteps={TOTAL}
             nextLabel={currentCallout.nextLabel !== undefined ? currentCallout.nextLabel : (currentCallout.onNext ? 'Next' : null)}
@@ -9971,6 +9980,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         ];
         return (
           <CalloutModal
+            tourName="SAVED AUDIENCES"
             text={<>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Saved Custom Audiences</div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>
@@ -10050,6 +10060,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           <CalloutModal
             text={<>{CALLOUT_TEXT[phase]}{nudgeEl}</>}
             posStyle={calloutStyle}
+            tourName="SAVED AUDIENCES"
             stepNum={typeof phase === 'number' ? phase : null}
             totalSteps={TOTAL}
             nextLabel={resolvedNextLabel}
@@ -10182,7 +10193,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     // Routes to the correct topic component. Unimplemented topics complete immediately.
     const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab, onSetContinueTour,
       roles, setRoles, perRole, setPerRole, openFeatures, setFeatureOpen, showModal, setShowModal,
-      openMenuRoleId, setOpenMenuRoleId, savedRoles }) => {
+      openMenuRoleId, setOpenMenuRoleId, savedRoles, setAddModalMinSelect }) => {
       if (topicId === 'overview') {
         return <GeneralOverviewTopic
           onComplete={onComplete} onCancel={onCancel}
@@ -10200,7 +10211,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           roles={roles} setRoles={setRoles}
           perRole={perRole} setPerRole={setPerRole}
           openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
-          showModal={showModal} setShowModal={setShowModal} />;
+          showModal={showModal} setShowModal={setShowModal}
+          setAddModalMinSelect={setAddModalMinSelect} />;
       }
       if (topicId === 'saved-audiences') {
         return <SavedAudiencesTopic
@@ -10230,6 +10242,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [features, setFeatures] = useState(initialFeatures);
       const [openFeatures, setOpenFeatures] = useState(new Set());
       const [showModal, setShowModal] = useState(false);
+      const [addModalMinSelect, setAddModalMinSelect] = useState(0);
       const [contactRoleId, setContactRoleId] = useState(null);
       const [openMenuRoleId, setOpenMenuRoleId] = useState(null);
       const [renamingRoleId, setRenamingRoleId] = useState(null);
@@ -10845,7 +10858,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             <AddRoleModal onClose={() => setShowModal(false)}
               onSelect={addRole} onSelectBulk={addRoles} onDeleteSaved={deleteSavedRoles}
               existingNames={existingNames} viewMode={viewMode}
-              customRoleCount={roles.filter(r => r.isCustom).length} savedRoles={savedRoles} />
+              customRoleCount={roles.filter(r => r.isCustom).length} savedRoles={savedRoles}
+              minSelect={addModalMinSelect} />
           )}
 
           {permModalPhotoId && (
@@ -11098,7 +11112,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
             showModal={showModal} setShowModal={setShowModal}
             openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
-            savedRoles={savedRoles} />}
+            savedRoles={savedRoles}
+            setAddModalMinSelect={setAddModalMinSelect} />}
           {simulateMobile ? (
             <div style={{ flex:1, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'32px 24px', overflowY:'auto', background:'#DEDAD3' }}>
               <IPhoneFrame modals={_modals}>{_mV}</IPhoneFrame>
