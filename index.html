@@ -9085,6 +9085,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (shRow) shRow.style.background = '';
         const hdrProxy = document.getElementById('tour-default-hdr-proxy');
         if (hdrProxy) hdrProxy.remove();
+        document.querySelectorAll('.modal-backdrop[data-tour-bg]').forEach(el => {
+          el.style.background = '';
+          el.removeAttribute('data-tour-bg');
+        });
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el =>
           el.removeAttribute('data-tour-active-target')
@@ -9223,8 +9227,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const setup = () => {
               const modal = document.querySelector('[data-tour="add-contact-modal"]');
               if (!modal) { setTimeout(setup, 80); return; }
+              // The modal renders inside MobileSheetModal's .modal-backdrop at zIndex 50 — a
+              // stacking context below the dim (540), so elevating the inner panel does nothing.
+              // Elevate the backdrop itself and drop its own scrim so only the tour dim shows.
+              // Active target stays on the inner panel so clicking the scrim can't close it.
               lockTarget('[data-tour="add-contact-modal"]');
-              setHighlightRects(elevateEls([modal]));
+              const backdrop = modal.closest('.modal-backdrop');
+              if (backdrop) {
+                backdrop.setAttribute('data-tour-bg', 'true');
+                backdrop.style.background = 'transparent';
+              }
+              elevateEls([backdrop || modal]);
+              // Position the callout off the inner panel, not the full-viewport backdrop
+              setHighlightRects([modal.getBoundingClientRect()]);
               setVisible(true);
               const btn = document.querySelector('[data-tour="add-as-role-btn"]');
               if (!btn) return;
