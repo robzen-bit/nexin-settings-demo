@@ -8868,22 +8868,30 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const step = STEPS[phase - 1];
         step.navigate();
         const timer = setTimeout(() => {
-          const sels = phase === 4
-            ? ['[data-tour="default-col"]', '[data-tour-col-cell="everyone"]']
-            : step.selectors;
-          setHighlightRects(elevateEls(sels));
-          // access-main has no background; dim bleeds through without one
-          if (phase === 1) {
-            const el = document.querySelector('[data-tour="access-main"]');
-            if (el) el.style.background = '#fff';
-          }
-          // default-col header and toggle cells have no background; dim bleeds through as pink
           if (phase === 4) {
-            const hdr = document.querySelector('[data-tour="default-col"]');
-            if (hdr) hdr.style.background = '#fff';
-            document.querySelectorAll('[data-tour-col-cell="everyone"]').forEach(el => {
+            // elevateEls uses querySelector (first match only); manually elevate ALL Default column cells
+            clearElevation();
+            const rects = [];
+            [
+              document.querySelector('[data-tour="default-col"]'),
+              ...document.querySelectorAll('[data-tour-col-cell="everyone"]'),
+            ].filter(Boolean).forEach(el => {
+              const origPos = el.style.position;
+              const origZ = el.style.zIndex;
+              if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+              el.style.zIndex = '545';
               el.style.background = '#fff';
+              _tourElevated.push({ el, origPos, origZ });
+              rects.push(el.getBoundingClientRect());
             });
+            setHighlightRects(rects);
+          } else {
+            setHighlightRects(elevateEls(step.selectors));
+            // access-main has no background; dim bleeds through without one
+            if (phase === 1) {
+              const el = document.querySelector('[data-tour="access-main"]');
+              if (el) el.style.background = '#fff';
+            }
           }
           setVisible(true);
         }, 120);
