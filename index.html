@@ -9417,6 +9417,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (fgScrim) fgScrim.remove();
         const pageBg = document.getElementById('tour-page-bg');
         if (pageBg) pageBg.remove();
+        document.querySelectorAll('.tour-injected-scrim').forEach(el => el.remove());
       };
 
       const lockAll = (...selectors) => {
@@ -9663,18 +9664,36 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           // Phases 6 and 7 are retired — step 5 covers turning Photo Downloads on for Guest, and
           // step 8 now carries the "settings are independent per audience" point itself.
           if (phase === 8) {
-            // Only the Guest panel's title and its Download Type row come forward — the Default and
-            // Client panels stay dimmed. The dropdown row is the sole active target.
+            // Only the Guest panel's title and its Download Type row should read as active — but
+            // elevating those rows directly does nothing: MultiRoleSettingsBlock's root is
+            // position:sticky, a stacking context, so a z-index set inside it can never rise above
+            // the dim (same trap as the matrix header row). Instead elevate the sticky settings
+            // block itself (which is what makes step 5 work), then re-dim everything in it except
+            // the Guest title + Download Type band with scrims matching the 0.62 dim.
             lockAll('photo-downloads-guest-download-type');
             const dtTitle = document.querySelector('[data-tour="photo-downloads-guest-panel-title"]');
             const dtRow = document.querySelector('[data-tour="photo-downloads-guest-download-type"]');
-            setHighlightRects(elevateEls([dtTitle, dtRow].filter(Boolean)));
-            // Both carry a React-managed background (#fff on the title, --soft-bg on the row); the
-            // white backing is what keeps them opaque over the dim.
-            [dtTitle, dtRow].filter(Boolean).forEach(el => {
-              el.setAttribute('data-tour-bg', el.style.background || '');
-              el.style.background = '#fff';
-            });
+            const block = dtTitle ? dtTitle.closest('.multi-panel-body')?.parentElement : null;
+            setHighlightRects(elevateEls([block || dtRow || dtTitle].filter(Boolean)));
+            if (dtTitle && dtRow && block) {
+              setHighlightRects([dtTitle.getBoundingClientRect(), dtRow.getBoundingClientRect()]);
+              const br = block.getBoundingClientRect();
+              const bandTop = dtTitle.getBoundingClientRect().top;
+              const bandBottom = dtRow.getBoundingClientRect().bottom;
+              // White backing on the row so the highlighted band reads white like steps 4/5. The
+              // background comes from React's style prop, so save/restore via data-tour-bg.
+              dtRow.setAttribute('data-tour-bg', dtRow.style.background || '');
+              dtRow.style.background = '#fff';
+              // 1px slack on the outer edges so no bright hairline shows between these scrims and
+              // the page dim where they meet.
+              [[br.top - 1, bandTop], [bandBottom, br.bottom + 1]].forEach(([top, bottom]) => {
+                if (bottom - top <= 0) return;
+                const scrim = document.createElement('div');
+                scrim.className = 'tour-injected-scrim';
+                scrim.style.cssText = `position:fixed;z-index:546;pointer-events:none;top:${top}px;left:${br.left - 1}px;width:${br.width + 2}px;height:${bottom - top}px;background:rgba(0,0,0,0.62);`;
+                document.body.appendChild(scrim);
+              });
+            }
             setVisible(true);
             return;
           }
