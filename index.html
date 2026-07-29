@@ -9058,8 +9058,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const calloutStyle = useMemo(() => {
         if (highlightRects.length === 0) return null;
         if (phase === 2) {
+          // Park the modal in the empty gutter above the settings block — clear of the
+          // collapse chevron on the left and the advanced-settings panel on the right
           const vw = window.innerWidth;
-          return { top: 80, left: Math.min(Math.max(25, Math.round(vw * 0.04)), vw - 365) };
+          return { top: 40, left: Math.min(Math.max(25, Math.round(vw * 0.37)), vw - 365) };
         }
         return nearRect(highlightRects[0]);
       }, [highlightRects, phase]);
