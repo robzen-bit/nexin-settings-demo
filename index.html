@@ -3478,7 +3478,7 @@
                 </div>
                 {/* Main setting as a sub-row */}
                 <div className="role-row per-role-row grid items-center child-row"
-                  data-tour={featureId === 'photo-downloads' && r.id === 'guest' && s.id === 'download-type' ? 'photo-downloads-guest-download-type' : undefined}
+                  data-tour={featureId === 'photo-downloads' && r.name === 'Guest' && s.id === 'download-type' ? 'photo-downloads-guest-download-type' : undefined}
                   style={{
                     gridTemplateColumns: '1fr auto',
                     padding: '8px 14px 8px 28px',
@@ -3500,7 +3500,7 @@
                   return (
                     <div key={c.id}
                       className="role-row per-role-row grid items-start child-row"
-                      data-tour={featureId === 'photo-downloads' && r.id === 'guest' && c.id === 'specific-amount' ? 'photo-downloads-guest-specific-amount' : featureId === 'photo-downloads' && r.id === 'guest' && c.id === 'gallery-resolutions' ? 'photo-downloads-guest-gallery-resolutions' : undefined}
+                      data-tour={featureId === 'photo-downloads' && r.name === 'Guest' && c.id === 'specific-amount' ? 'photo-downloads-guest-specific-amount' : featureId === 'photo-downloads' && r.name === 'Guest' && c.id === 'gallery-resolutions' ? 'photo-downloads-guest-gallery-resolutions' : undefined}
                       style={{
                         gridTemplateColumns: c.type === 'multicheck' ? '1fr' : '1fr auto',
                         padding: '8px 14px 8px 28px',
@@ -3796,15 +3796,18 @@
             ) : (
               roles.map(r => {
                 const enabled = !!perRole[r.id]?.[feature.id]?.enabled;
+                // Keyed on role NAME, not id: roles added through the bulk path get generated ids
+                // (`role-<ts>-<i>`), so an `r.id === 'guest'` gate never matches and the tour hook
+                // silently never renders.
                 const tourAttr =
                   (feature.id === 'screenshot-protection' && r.id === 'everyone') ? 'screenshot-protection-default-toggle' :
                   (feature.id === 'sharing' && r.id === 'everyone') ? 'sharing-default-toggle' :
                   (feature.id === 'photo-downloads' && r.id === 'everyone') ? 'photo-downloads-default-toggle' :
-                  (feature.id === 'photo-downloads' && r.id === 'guest') ? 'photo-downloads-guest-toggle' :
-                  (feature.id === 'photo-downloads' && r.id === 'client') ? 'photo-downloads-client-toggle' :
+                  (feature.id === 'photo-downloads' && r.name === 'Guest') ? 'photo-downloads-guest-toggle' :
+                  (feature.id === 'photo-downloads' && r.name === 'Client') ? 'photo-downloads-client-toggle' :
                   (feature.id === 'favorites' && r.id === 'everyone') ? 'favorites-default-toggle' :
-                  (feature.id === 'favorites' && r.id === 'guest') ? 'favorites-guest-toggle' :
-                  (feature.id === 'favorites' && r.id === 'client') ? 'favorites-client-toggle' : undefined;
+                  (feature.id === 'favorites' && r.name === 'Guest') ? 'favorites-guest-toggle' :
+                  (feature.id === 'favorites' && r.name === 'Client') ? 'favorites-client-toggle' : undefined;
                 return (
                   <div key={r.id} className="flex justify-center"
                     data-tour={tourAttr}
@@ -9384,6 +9387,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const advancingRef = useRef(false);
       const FADE = 160;
       const ADVANCE_DELAY = 1000;
+      // Longer beat after the Guest toggle flips, so the Guest settings below are visibly seen
+      // coming out of their grayed-out state before the step moves on.
+      const REVEAL_DELAY = 2400;
+
+      // Roles added through the modal's bulk path get generated ids (`role-<ts>-<i>`), so the
+      // Guest role can't be looked up as perRole['guest'] — resolve it by name.
+      const guestId = (roles.find(r => r.name === 'Guest') || {}).id;
 
       const tourLockClean = () => {
         clearElevation();
@@ -9457,7 +9467,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (from === 7) {
           setPerRole(prev => ({
             ...prev,
-            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'], enabled: false } },
+            [guestId]: { ...prev[guestId], 'photo-downloads': { ...prev[guestId]['photo-downloads'], enabled: false } },
           }));
           // Phase 6 is retired, so step 7 steps back to 5
           setTimeout(() => setPhase(5), FADE);
@@ -9466,16 +9476,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (from === 8) {
           setPerRole(prev => ({
             ...prev,
-            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'],
-              values: { ...prev.guest['photo-downloads'].values, 'download-type': 'All photos and individual download' },
+            [guestId]: { ...prev[guestId], 'photo-downloads': { ...prev[guestId]['photo-downloads'],
+              values: { ...prev[guestId]['photo-downloads'].values, 'download-type': 'All photos and individual download' },
             }},
           }));
         }
         if (from === 9) {
           setPerRole(prev => ({
             ...prev,
-            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'],
-              values: { ...prev.guest['photo-downloads'].values, 'download-type': 'All photos and individual download' },
+            [guestId]: { ...prev[guestId], 'photo-downloads': { ...prev[guestId]['photo-downloads'],
+              values: { ...prev[guestId]['photo-downloads'].values, 'download-type': 'All photos and individual download' },
             }},
           }));
         }
@@ -9483,8 +9493,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           setFeatureOpen('photo-downloads', true);
           setPerRole(prev => ({
             ...prev,
-            guest: { ...prev.guest, 'photo-downloads': { ...prev.guest['photo-downloads'],
-              values: { ...prev.guest['photo-downloads'].values, 'specific-amount': 10, 'gallery-resolutions': ['Original'] },
+            [guestId]: { ...prev[guestId], 'photo-downloads': { ...prev[guestId]['photo-downloads'],
+              values: { ...prev[guestId]['photo-downloads'].values, 'specific-amount': 10, 'gallery-resolutions': ['Original'] },
             }},
           }));
         }
@@ -9617,7 +9627,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             // The settings block is a sibling of the .border-t wrapper, not a child, so it has to
             // be elevated separately.
             const settings = wrapper ? wrapper.nextElementSibling : null;
-            const guestToggle = document.querySelector('[data-tour="photo-downloads-guest-toggle"]');
+            const guestToggle = document.querySelector('[data-tour="photo-downloads-guest-toggle"]')
+              || (row && guestId ? row.querySelector(`[data-tour-col-cell="${guestId}"]`) : null);
             // Lock to the toggle cell directly rather than by selector, and fall back to the whole
             // row if the cell isn't there, so the step can never end up with nothing clickable.
             tourLockClean();
@@ -9720,15 +9731,15 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       useEffect(() => {
         if (phase !== 5 || advancingRef.current) return;
-        if (perRole['guest']?.['photo-downloads']?.enabled) {
-          const t = setTimeout(() => advance(7), ADVANCE_DELAY);
+        if (perRole[guestId]?.['photo-downloads']?.enabled) {
+          const t = setTimeout(() => advance(7), REVEAL_DELAY);
           return () => clearTimeout(t);
         }
       }, [phase, perRole]);
 
       useEffect(() => {
         if (phase !== 8 || advancingRef.current) return;
-        const dt = perRole['guest']?.['photo-downloads']?.values?.['download-type'];
+        const dt = perRole[guestId]?.['photo-downloads']?.values?.['download-type'];
         if (dt === 'Specific amount download') {
           const t = setTimeout(() => advance(9), ADVANCE_DELAY);
           return () => clearTimeout(t);
@@ -9741,7 +9752,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       useEffect(() => {
         if (phase !== 9 || advancingRef.current) return;
-        const vals = perRole['guest']?.['photo-downloads']?.values;
+        const vals = perRole[guestId]?.['photo-downloads']?.values;
         const amount = Number(vals?.['specific-amount'] ?? 10);
         const res = vals?.['gallery-resolutions'] || ['Original'];
         if (amount === 5 && res.includes('Medium') && !res.includes('Original')) {
@@ -9769,7 +9780,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           const t = setTimeout(() => advance(12), ADVANCE_DELAY);
           return () => clearTimeout(t);
         } else {
-          const guestOn = !!perRole['guest']?.['favorites']?.enabled;
+          const guestOn = !!perRole[guestId]?.['favorites']?.enabled;
           const clientOn = !!perRole['client']?.['favorites']?.enabled;
           if (!guestOn || !clientOn) {
             setNudge('Turn on the Favorites toggle for all three audiences to advance.');
