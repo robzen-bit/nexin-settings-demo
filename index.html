@@ -9464,22 +9464,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           return;
         }
         if (from === 5) { setFeatureOpen('photo-downloads', false); }
-        if (from === 7) {
-          setPerRole(prev => ({
-            ...prev,
-            [guestId]: { ...prev[guestId], 'photo-downloads': { ...prev[guestId]['photo-downloads'], enabled: false } },
-          }));
-          // Phase 6 is retired, so step 7 steps back to 5
-          setTimeout(() => setPhase(5), FADE);
-          return;
-        }
         if (from === 8) {
+          // Phases 6 and 7 are retired (folded into 5 and 8), so step 8 steps back to 5. Reset the
+          // download type AND switch Photo Downloads back off for Guest — otherwise step 5's
+          // watcher sees it already enabled and immediately advances again.
           setPerRole(prev => ({
             ...prev,
             [guestId]: { ...prev[guestId], 'photo-downloads': { ...prev[guestId]['photo-downloads'],
+              enabled: false,
               values: { ...prev[guestId]['photo-downloads'].values, 'download-type': 'All photos and individual download' },
             }},
           }));
+          setTimeout(() => setPhase(5), FADE);
+          return;
         }
         if (from === 9) {
           setPerRole(prev => ({
@@ -9649,18 +9646,17 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             setVisible(true);
             return;
           }
-          // Phase 6 is retired — step 5 now covers turning Photo Downloads on for Guest.
-          if (phase === 7) {
-            const matEl = document.querySelector('.matrix-scroll, [data-tour="per-audience-rows"]');
-            if (matEl) matEl.scrollTop = 0;
-            tourLockClean();
-            setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
-            setVisible(true);
-            return;
-          }
+          // Phases 6 and 7 are retired — step 5 covers turning Photo Downloads on for Guest, and
+          // step 8 now carries the "settings are independent per audience" point itself.
           if (phase === 8) {
             lockAll('photo-downloads-guest-download-type');
-            setHighlightRects(elevateEls(['[data-tour="photo-downloads-guest-download-type"]']));
+            const dtRow = document.querySelector('[data-tour="photo-downloads-guest-download-type"]');
+            setHighlightRects(elevateEls([dtRow].filter(Boolean)));
+            // The settings sub-row is transparent, so it needs a white backing to read as lifted.
+            if (dtRow) {
+              dtRow.setAttribute('data-tour-bg', 'true');
+              dtRow.style.background = '#fff';
+            }
             setVisible(true);
             return;
           }
@@ -9732,7 +9728,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       useEffect(() => {
         if (phase !== 5 || advancingRef.current) return;
         if (perRole[guestId]?.['photo-downloads']?.enabled) {
-          const t = setTimeout(() => advance(7), REVEAL_DELAY);
+          const t = setTimeout(() => advance(8), REVEAL_DELAY);
           return () => clearTimeout(t);
         }
       }, [phase, perRole]);
@@ -9795,8 +9791,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Phase 6 was merged into 5, so there are 11 steps across phases 1–12. Internal phase
       // numbers are left alone (watchers, goBack and callouts all key off them) and only the
       // displayed number is shifted down past the gap.
-      const TOTAL = 11;
-      const displayStep = (p) => (typeof p === 'number' ? (p > 6 ? p - 1 : p) : null);
+      const TOTAL = 10;
+      // Phases 6 and 7 are retired, so everything from 8 up shows two lower than its phase number.
+      const displayStep = (p) => (typeof p === 'number' ? (p > 6 ? p - 2 : p) : null);
 
       const callouts = {
         intro: {
@@ -9853,16 +9850,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           ),
           onNext: null,
         },
-        7: {
-          text: <>Now Guest has Photo Downloads on, with their own settings to customize. Scroll down if needed to see the Guest and Client columns — each audience's settings are fully independent.</>,
-          placement: 'upper-center',
-          onNext: () => advance(8),
-        },
         8: {
           text: (
             <>
-              <p style={{ margin: 0 }}>You can limit how many photos Guests can download by changing the download type.</p>
-              {actionBullet('Change the Download Type for Guest to Specific Amount Download.')}
+              <p style={{ margin: 0 }}>Now that you've turned on downloads for Guests, you can set the download settings independently per audience. Let's set Guest to only be able to download a specific amount of photos.</p>
+              {actionBullet('Change the Download Type Allowed for Guest to Specific Amount Download.')}
             </>
           ),
           onNext: null,
