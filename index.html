@@ -2416,7 +2416,7 @@
                     </div>
                   ) : (
                     <div className="flex justify-end gap-2 mt-5">
-                      <button onClick={() => setStep('choose')}
+                      <button data-tour="audience-name-back-btn" onClick={() => setStep('choose')}
                         className="text-[12px] font-bold tracking-wider px-4 py-2 rounded-full border bg-white transition-all hover:bg-[var(--bg)]"
                         style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}>BACK</button>
                       <button data-tour="audience-name-next-btn" disabled={!trimmed || nameTaken || isReserved}
@@ -10228,8 +10228,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             obsRef.current = obs; return;
           }
           if (phase === 3 || phase === 8) {
-            // SCA3: elevate the whole naming modal, not just the input
+            // SCA3: elevate the whole naming modal, not just the input. Only the input and NEXT
+            // are live; the modal's BACK button is held back so it also reads as disabled.
             saLockAll('audience-name-input', 'audience-name-next-btn');
+            saOverlay('audience-name-back-btn');
             setHighlightRects(saElevateModal());
             setVisible(true);
             const obs = new MutationObserver(() => {
