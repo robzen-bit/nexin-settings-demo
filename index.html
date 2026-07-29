@@ -8869,24 +8869,34 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const timer = setTimeout(() => {
           if (phase === 4) {
             clearElevation();
-            // The sticky header row (zIndex:10) creates a stacking context below the dim (540).
-            // Elevating individual cells inside it does nothing — must elevate matrix-scroll itself.
-            const matrixEl = document.querySelector('.matrix-scroll');
-            if (matrixEl) {
-              const origPos = matrixEl.style.position;
-              const origZ = matrixEl.style.zIndex;
-              if (getComputedStyle(matrixEl).position === 'static') matrixEl.style.position = 'relative';
-              matrixEl.style.zIndex = '545';
-              _tourElevated.push({ el: matrixEl, origPos, origZ });
+            // The sticky header row has position:sticky + zIndex:10, creating a page-level
+            // stacking context at z-index 10 (below the dim at 540). Clearing its z-index
+            // breaks that stacking context so children can compete at page level directly.
+            const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
+            if (headerRow) {
+              _tourElevated.push({ el: headerRow, origPos: headerRow.style.position, origZ: headerRow.style.zIndex });
+              headerRow.style.zIndex = '';
             }
-            // Dim non-Default columns; cleaned up by removing style tag in return()
-            const dimStyle = document.createElement('style');
-            dimStyle.id = 'tour-col-dim';
-            dimStyle.textContent = '[data-tour-col]:not([data-tour-col="everyone"]){opacity:0.2!important}[data-tour-col-cell]:not([data-tour-col-cell="everyone"]){opacity:0.2!important}';
-            document.head.appendChild(dimStyle);
-            // Only need header rect for callout positioning
             const hdr = document.querySelector('[data-tour="default-col"]');
-            const rects = hdr ? [hdr.getBoundingClientRect()] : [];
+            const cells = Array.from(document.querySelectorAll('[data-tour-col-cell="everyone"]'));
+            const rects = [];
+            [hdr, ...cells].filter(Boolean).forEach(el => {
+              const origPos = el.style.position;
+              const origZ = el.style.zIndex;
+              if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+              el.style.zIndex = '545';
+              _tourElevated.push({ el, origPos, origZ });
+              rects.push(el.getBoundingClientRect());
+            });
+            // White background spanning header top → last cell bottom
+            if (rects.length > 0) {
+              const hdrRect = hdr ? hdr.getBoundingClientRect() : rects[0];
+              const lastRect = rects[rects.length - 1];
+              const colBg = document.createElement('div');
+              colBg.id = 'tour-col-bg';
+              colBg.style.cssText = `position:fixed;z-index:543;background:#fff;pointer-events:none;top:${hdrRect.top}px;left:${hdrRect.left}px;width:${hdrRect.width}px;height:${lastRect.bottom - hdrRect.top}px;`;
+              document.body.appendChild(colBg);
+            }
             setHighlightRects(rects);
           } else {
             setHighlightRects(elevateEls(step.selectors));
