@@ -176,8 +176,11 @@
     /* Black overlay for elements explicitly disabled during a tour step */
     [data-tour-overlay] { position: relative !important; overflow: hidden !important; }
     [data-tour-overlay]::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.42); border-radius: inherit; pointer-events: none; z-index: 2; }
-    /* Ensure overlay elements stay non-interactive even inside an active-target container */
-    body.tour-model-a-active [data-tour-overlay] { pointer-events: none !important; }
+    /* Ensure overlay elements stay non-interactive even inside an active-target container.
+       The descendant rule is required: [data-tour-active-target] * above re-enables pointer
+       events on every child, and matches the children of an overlaid card too. */
+    body.tour-model-a-active [data-tour-overlay],
+    body.tour-model-a-active [data-tour-overlay] * { pointer-events: none !important; }
     /* Compare-roles modal — uses the same scrollbar styling as the matrix when the grid
        grows wider than the modal viewport (many roles). */
     .compare-grid-scroll { overflow-x: auto; overflow-y: visible; }
