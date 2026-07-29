@@ -181,6 +181,11 @@
        events on every child, and matches the children of an overlaid card too. */
     body.tour-model-a-active [data-tour-overlay],
     body.tour-model-a-active [data-tour-overlay] * { pointer-events: none !important; }
+    /* Select popovers render through a portal on document.body, so they fall outside the active
+       target's subtree and the blanket lock would swallow every option click. Must stay after the
+       overlay rule above to win the specificity tie. */
+    body.tour-model-a-active .v5-select-menu,
+    body.tour-model-a-active .v5-select-menu * { pointer-events: auto !important; }
     /* Compare-roles modal — uses the same scrollbar styling as the matrix when the grid
        grows wider than the modal viewport (many roles). */
     .compare-grid-scroll { overflow-x: auto; overflow-y: visible; }
@@ -3467,6 +3472,7 @@
               <React.Fragment key={r.id}>
                 {/* Role name — card section header */}
                 <div className="flex items-center gap-2 px-4 py-2.5"
+                  data-tour={featureId === 'photo-downloads' && r.name === 'Guest' && s.id === 'download-type' ? 'photo-downloads-guest-panel-title' : undefined}
                   style={{
                     borderTop: idx > 0 ? '1px solid var(--card-border)' : 'none',
                     background: '#fff',
@@ -9100,7 +9106,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const hdrProxy = document.getElementById('tour-default-hdr-proxy');
         if (hdrProxy) hdrProxy.remove();
         document.querySelectorAll('.modal-backdrop[data-tour-bg]').forEach(el => {
-          el.style.background = '';
+          el.style.background = el.getAttribute('data-tour-bg') || '';
           el.removeAttribute('data-tour-bg');
         });
         document.body.classList.remove('tour-model-a-active');
@@ -9248,7 +9254,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               lockTarget('[data-tour="add-contact-modal"]');
               const backdrop = modal.closest('.modal-backdrop');
               if (backdrop) {
-                backdrop.setAttribute('data-tour-bg', 'true');
+                backdrop.setAttribute('data-tour-bg', backdrop.style.background || '');
                 backdrop.style.background = 'transparent';
               }
               elevateEls([backdrop || modal]);
@@ -9400,8 +9406,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         document.body.classList.remove('tour-model-a-active');
         document.querySelectorAll('[data-tour-active-target]').forEach(el => el.removeAttribute('data-tour-active-target'));
         document.querySelectorAll('[data-tour-overlay]').forEach(el => el.removeAttribute('data-tour-overlay'));
+        // Restore the inline background we replaced, not ''. These rows get their background from
+        // React's style prop, and blanking it drops a value React already committed — React won't
+        // re-apply until its own style prop changes, leaving the row transparent for later steps.
         document.querySelectorAll('[data-tour-bg]').forEach(el => {
-          el.style.background = '';
+          el.style.background = el.getAttribute('data-tour-bg') || '';
           el.removeAttribute('data-tour-bg');
         });
         const fgScrim = document.getElementById('tour-fg-scrim');
@@ -9523,6 +9532,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           const vw = window.innerWidth;
           return { top: 100, left: Math.min(Math.max(25, Math.round(vw * 0.39)), vw - 365) };
         }
+        if (phase === 8) {
+          // High in the page: nearRect would drop it onto the Guest panel it's pointing at
+          const vw = window.innerWidth;
+          return { top: 215, left: Math.min(Math.max(25, Math.round(vw * 0.40)), vw - 365) };
+        }
         if (phase === 1) return nearRect(highlightRects[0], 'below');
         if (phase === 4) return nearRect(highlightRects[0], 'below');
         return nearRect(highlightRects[0]);
@@ -9553,7 +9567,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             const card = document.querySelector('[data-tour="add-audience-modal"]');
             const backdrop = card ? card.closest('.modal-backdrop') : null;
             if (backdrop) {
-              backdrop.setAttribute('data-tour-bg', 'true');
+              backdrop.setAttribute('data-tour-bg', backdrop.style.background || '');
               backdrop.style.background = 'transparent';
             }
             elevateEls([backdrop || card].filter(Boolean));
@@ -9610,7 +9624,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             // the toggles. White backing brings the whole row forward.
             const pdRow = document.querySelector('[data-tour="photo-downloads-row"]');
             if (pdRow) {
-              pdRow.setAttribute('data-tour-bg', 'true');
+              pdRow.setAttribute('data-tour-bg', pdRow.style.background || '');
               pdRow.style.background = '#fff';
             }
             setVisible(true);
@@ -9640,7 +9654,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             // the value React had committed, leaving the row transparent with the dim showing
             // through — which reads as the row not being elevated at all.
             [wrapper, row].filter(Boolean).forEach(el => {
-              el.setAttribute('data-tour-bg', 'true');
+              el.setAttribute('data-tour-bg', el.style.background || '');
               el.style.background = '#fff';
             });
             setVisible(true);
@@ -9649,14 +9663,18 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           // Phases 6 and 7 are retired — step 5 covers turning Photo Downloads on for Guest, and
           // step 8 now carries the "settings are independent per audience" point itself.
           if (phase === 8) {
+            // Only the Guest panel's title and its Download Type row come forward — the Default and
+            // Client panels stay dimmed. The dropdown row is the sole active target.
             lockAll('photo-downloads-guest-download-type');
+            const dtTitle = document.querySelector('[data-tour="photo-downloads-guest-panel-title"]');
             const dtRow = document.querySelector('[data-tour="photo-downloads-guest-download-type"]');
-            setHighlightRects(elevateEls([dtRow].filter(Boolean)));
-            // The settings sub-row is transparent, so it needs a white backing to read as lifted.
-            if (dtRow) {
-              dtRow.setAttribute('data-tour-bg', 'true');
-              dtRow.style.background = '#fff';
-            }
+            setHighlightRects(elevateEls([dtTitle, dtRow].filter(Boolean)));
+            // Both carry a React-managed background (#fff on the title, --soft-bg on the row); the
+            // white backing is what keeps them opaque over the dim.
+            [dtTitle, dtRow].filter(Boolean).forEach(el => {
+              el.setAttribute('data-tour-bg', el.style.background || '');
+              el.style.background = '#fff';
+            });
             setVisible(true);
             return;
           }
