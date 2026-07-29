@@ -9649,7 +9649,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             if (target) target.setAttribute('data-tour-active-target', 'true');
             // Toggle cell listed last: everything here shares z-index 545 and ties break on DOM
             // order, so this keeps it topmost.
-            setHighlightRects(elevateEls([wrapper, row, settings, guestToggle].filter(Boolean)));
+            // The column header row comes up too so Default/Guest/Client labels stay readable —
+            // appended after the toggle so highlightRects[0] stays the wrapper (callout anchor).
+            // The row element itself CAN be elevated (only its children are trapped by its sticky
+            // stacking context). It stays non-interactive: the lock only opens the toggle cell.
+            const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
+            setHighlightRects(elevateEls([wrapper, row, settings, guestToggle, headerRow].filter(Boolean)));
+            // One notch above the rows (546) so scrolled content still slides under the sticky
+            // header instead of painting over it. elevateEls already recorded the original
+            // inline z-index (10), so cleanup restores correctly.
+            if (headerRow) headerRow.style.zIndex = '546';
             // White backing on the row band. It can't be left to the row's own --soft-bg: step 4
             // sets an inline white background on this row, and clearing that on the way in wipes
             // the value React had committed, leaving the row transparent with the dim showing
