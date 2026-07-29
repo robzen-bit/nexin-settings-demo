@@ -10137,7 +10137,23 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         saLockClean();
         setHighlightRects([]);
         setVisible(false);
-        onSetContinueTour(() => { saLockClean(); onSetContinueTour(null); advance(nextPhase); });
+        onSetContinueTour(() => {
+          saLockClean();
+          onSetContinueTour(null);
+          // Free play may have wandered to other tabs or sections — bring the page back to the
+          // permissions matrix in its default position (nothing removed, nothing collapsed) so
+          // the next step's target sits where the highlight expects it. The scroll reset waits a
+          // beat for the section to re-render if they navigated away; the next phase's own setup
+          // captures rects ~320ms out, after this has settled.
+          setActiveMainTab('Settings');
+          setActiveSection('features');
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+            const ms = document.querySelector('.matrix-scroll');
+            if (ms) { ms.scrollTop = 0; ms.scrollLeft = 0; }
+          }, 60);
+          advance(nextPhase);
+        });
       };
 
       const closeAndGoto = (nextPhase) => {
