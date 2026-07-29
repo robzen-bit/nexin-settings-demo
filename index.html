@@ -10339,9 +10339,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             setVisible(true); return;
           }
           if (phase === 14) {
-            saLockClean();
-            const els = ['[data-tour="saved-audiences-section"]', '[data-tour="add-audience-modal"]'];
-            setHighlightRects(elevateEls(els));
+            // Presentational step — Next advances. Lock with no targets so the whole page,
+            // including the now-transparent backdrop (whose click would close the modal), stays
+            // inert while the modal itself reads fully lit.
+            saLockAll();
+            setHighlightRects(saElevateModal());
             setVisible(true); return;
           }
           if (phase === 15) {
