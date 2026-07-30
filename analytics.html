@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Tour Analytics — Gallery Permissions Prototype</title>
+  <script src="analytics-config.js"></script>
+  <style>
+    :root {
+      --brand: #C75B39; --brand-cream: #FFF1E6;
+      --text-1: #1B1C1F; --text-2: #6B6E76; --text-3: #9DA0A8;
+      --bg: #F7F5F2; --card-border: #E7E4DE; --green: #3E7C4F; --danger: #C0392B;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text-1); padding: 32px 24px 80px; }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: var(--brand); margin-bottom: 4px; }
+    .sub { font-size: 13px; color: var(--text-2); margin-bottom: 24px; }
+    .card { background: #fff; border: 1px solid var(--card-border); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; }
+    .card h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 14px; }
+    .filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .filters label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+    .filters input[type="date"] { font-size: 13px; padding: 6px 8px; border: 1px solid var(--card-border); border-radius: 8px; color: var(--text-1); background: #fff; }
+    .filters button, .refresh { font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--card-border); background: #fff; color: var(--text-1); cursor: pointer; }
+    .filters button.active { border-color: var(--brand); background: var(--brand-cream); color: var(--brand); }
+    .refresh { border-color: var(--brand); color: var(--brand); }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .tile { background: #fff; border: 1px solid var(--card-border); border-radius: 14px; padding: 14px 16px; }
+    .tile .n { font-size: 24px; font-weight: 800; }
+    .tile .l { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-2); margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); padding: 8px 10px; border-bottom: 1px solid var(--card-border); }
+    td { padding: 9px 10px; border-bottom: 1px solid var(--card-border); }
+    tr.tour-row { cursor: pointer; }
+    tr.tour-row:hover { background: var(--brand-cream); }
+    tr.tour-row.selected { background: var(--brand-cream); }
+    .rate-good { color: var(--green); font-weight: 700; }
+    .rate-bad { color: var(--danger); font-weight: 700; }
+    .muted { color: var(--text-3); }
+    .bars { display: flex; align-items: flex-end; gap: 3px; height: 140px; padding-top: 6px; overflow-x: auto; }
+    .bar-col { display: flex; flex-direction: column-reverse; justify-content: flex-start; width: 22px; min-width: 14px; flex: 1 0 auto; max-width: 34px; }
+    .bar-seg { width: 100%; }
+    .bar-lbl { font-size: 9px; color: var(--text-3); text-align: center; margin-top: 4px; white-space: nowrap; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--text-2); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    .funnel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
+    .funnel-step { width: 64px; color: var(--text-2); font-weight: 600; flex-shrink: 0; }
+    .funnel-track { flex: 1; background: var(--bg); border-radius: 6px; height: 22px; position: relative; }
+    .funnel-fill { height: 100%; border-radius: 6px; background: var(--brand); opacity: 0.85; }
+    .funnel-n { width: 130px; flex-shrink: 0; color: var(--text-1); }
+    .notice { padding: 40px 20px; text-align: center; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+    .notice code { background: #fff; border: 1px solid var(--card-border); border-radius: 6px; padding: 2px 6px; font-size: 12px; }
+    .err { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Tour Analytics</h1>
+    <div class="sub">Gallery Permissions prototype — anonymous tour usage. All times local. <span id="loaded-note" class="muted"></span></div>
+
+    <div id="app"></div>
+  </div>
+
+  <script>
+    const CFG = window.TOUR_ANALYTICS_CONFIG || { url: '', anonKey: '' };
+    const TOURS = [
+      { id: 'overview',         label: 'General Overview' },
+      { id: 'default-audience', label: 'Using the Default Audience' },
+      { id: 'audiences',        label: 'Using Audiences' },
+      { id: 'saved-audiences',  label: 'Saved Custom Audiences' },
+      { id: 'contacts',         label: 'Adding Contacts to Audiences' },
+      { id: 'presets',          label: 'Saving and Using Presets' },
+      { id: 'registration',     label: 'Using Audiences with Registration' },
+    ];
+    const COLORS = ['#C75B39', '#3E7C4F', '#4A6FA5', '#B08C2E', '#7B5EA7', '#3B8E8C', '#A5556F'];
+    const tourLabel = (id) => (TOURS.find(t => t.id === id) || { label: id || 'unknown' }).label;
+    const tourColor = (id) => COLORS[Math.max(0, TOURS.findIndex(t => t.id === id)) % COLORS.length];
+
+    const app = document.getElementById('app');
+    const fmtDur = (s) => {
+      if (s == null || isNaN(s)) return '—';
+      const m = Math.floor(s / 60), sec = Math.round(s % 60);
+      return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+    };
+    const fmtPct = (x) => (x == null || isNaN(x)) ? '—' : `${Math.round(x * 100)}%`;
+    const esc = (t) => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const dstr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    if (!CFG.url || !CFG.anonKey) {
+      app.innerHTML = `<div class="card notice">Analytics isn't configured yet.<br/>
+        Fill in the Supabase project URL and anon key in <code>analytics-config.js</code>
+        (after running <code>analytics-setup.sql</code> in the Supabase SQL editor), then reload this page.</div>`;
+    } else {
+      boot();
+    }
+
+    let state = { from: null, to: null, events: [], selectedTour: null, preset: 30 };
+
+    function boot() {
+      const today = new Date();
+      const from = new Date(today); from.setDate(from.getDate() - 29);
+      state.from = dstr(from); state.to = dstr(today);
+      render(true);
+      load();
+    }
+
+    async function fetchEvents(fromIso, toIso) {
+      const all = [];
+      const page = 1000;
+      const base = `${CFG.url}/rest/v1/tour_events?select=created_at,event,session_id,tour_id,step,duration_s` +
+        `&created_at=gte.${encodeURIComponent(fromIso)}&created_at=lt.${encodeURIComponent(toIso)}&order=created_at.asc`;
+      for (let offset = 0; offset < 200000; offset += page) {
+        const res = await fetch(base, {
+          headers: { apikey: CFG.anonKey, Authorization: `Bearer ${CFG.anonKey}`, 'Range-Unit': 'items', Range: `${offset}-${offset + page - 1}` },
+        });
+        if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
+        const rows = await res.json();
+        all.push(...rows);
+        if (rows.length < page) break;
+      }
+      return all;
+    }
+
+    async function load() {
+      const note = document.getElementById('loaded-note');
+      note.textContent = 'Loading…';
+      try {
+        const fromIso = new Date(`${state.from}T00:00:00`).toISOString();
+        const toEx = new Date(`${state.to}T00:00:00`); toEx.setDate(toEx.getDate() + 1);
+        state.events = await fetchEvents(fromIso, toEx.toISOString());
+        note.textContent = `${state.events.length.toLocaleString()} events loaded · ${new Date().toLocaleTimeString()}`;
+        render(false);
+      } catch (e) {
+        note.innerHTML = `<span class="err">Couldn't load events (${esc(e.message)}). Check the config values and the Supabase policies.</span>`;
+      }
+    }
+
+    // ---- Aggregation ----
+    function aggregate(events) {
+      const perTour = new Map();
+      const forTour = (id) => {
+        if (!perTour.has(id)) perTour.set(id, { started: new Set(), completed: new Set(), durations: [], steps: new Map(), cancelSteps: [] });
+        return perTour.get(id);
+      };
+      const byDay = new Map();
+      for (const ev of events) {
+        const t = ev.tour_id || 'unknown';
+        const rec = forTour(t);
+        if (ev.event === 'tour_started') rec.started.add(ev.session_id);
+        else if (ev.event === 'tour_completed') {
+          rec.completed.add(ev.session_id);
+          if (ev.duration_s != null) rec.durations.push(ev.duration_s);
+          const day = dstr(new Date(ev.created_at));
+          if (!byDay.has(day)) byDay.set(day, new Map());
+          const dm = byDay.get(day);
+          dm.set(t, (dm.get(t) || 0) + 1);
+        } else if (ev.event === 'step_reached' && ev.step != null) {
+          if (!rec.steps.has(ev.session_id)) rec.steps.set(ev.session_id, new Set());
+          rec.steps.get(ev.session_id).add(ev.step);
+        } else if (ev.event === 'tour_cancelled' && ev.step != null) {
+          rec.cancelSteps.push(ev.step);
+        }
+      }
+      return { perTour, byDay };
+    }
+    const median = (a) => {
+      if (!a.length) return null;
+      const s = [...a].sort((x, y) => x - y);
+      const m = Math.floor(s.length / 2);
+      return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+    };
+    const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+
+    // ---- Rendering ----
+    function render(initialOnly) {
+      const { perTour, byDay } = aggregate(state.events);
+      const tourIds = TOURS.map(t => t.id).filter(id => perTour.has(id))
+        .concat([...perTour.keys()].filter(id => !TOURS.some(t => t.id === id)));
+
+      let totStartSessions = new Set(), totCompletions = 0, totAttempts = 0, totCompleted = 0;
+      let best = null, worst = null;
+      for (const id of tourIds) {
+        const r = perTour.get(id);
+        r.started.forEach(s => totStartSessions.add(s));
+        totCompletions += r.completed.size;
+        totAttempts += r.started.size;
+        totCompleted += r.completed.size;
+        const rate = r.started.size ? r.completed.size / r.started.size : null;
+        if (rate != null && r.started.size >= 3) {
+          if (!best || rate > best.rate) best = { id, rate };
+          if (!worst || rate < worst.rate) worst = { id, rate };
+        }
+      }
+      const overallRate = totAttempts ? totCompleted / totAttempts : null;
+
+      const presets = [7, 30, 90, 0];
+      const presetLbl = { 7: '7 days', 30: '30 days', 90: '90 days', 0: 'All time' };
+
+      app.innerHTML = `
+        <div class="card">
+          <div class="filters">
+            <label>From <input type="date" id="f-from" value="${state.from}"></label>
+            <label>To <input type="date" id="f-to" value="${state.to}"></label>
+            ${presets.map(p => `<button data-preset="${p}" class="${state.preset === p ? 'active' : ''}">${presetLbl[p]}</button>`).join('')}
+            <button class="refresh" id="f-refresh">Refresh</button>
+          </div>
+        </div>
+
+        <div class="tiles" style="margin-bottom:18px">
+          <div class="tile"><div class="n">${totStartSessions.size.toLocaleString()}</div><div class="l">Unique visitors starting a tour</div></div>
+          <div class="tile"><div class="n">${totCompletions.toLocaleString()}</div><div class="l">Tour completions</div></div>
+          <div class="tile"><div class="n">${fmtPct(overallRate)}</div><div class="l">Overall completion rate</div></div>
+          <div class="tile"><div class="n" style="font-size:15px;padding-top:6px">${best ? esc(tourLabel(best.id)) + ' (' + fmtPct(best.rate) + ')' : '—'}</div><div class="l">Best completion rate</div></div>
+          <div class="tile"><div class="n" style="font-size:15px;padding-top:6px">${worst ? esc(tourLabel(worst.id)) + ' (' + fmtPct(worst.rate) + ')' : '—'}</div><div class="l">Most dropped</div></div>
+        </div>
+
+        <div class="card">
+          <h2>Per-tour performance <span class="muted" style="text-transform:none;font-weight:500">— click a row for its step funnel</span></h2>
+          <table>
+            <thead><tr><th>Tour</th><th>Started</th><th>Completed</th><th>Completion rate</th><th>Drop rate</th><th>Avg time</th><th>Median time</th></tr></thead>
+            <tbody>
+              ${tourIds.length ? tourIds.map(id => {
+                const r = perTour.get(id);
+                const rate = r.started.size ? r.completed.size / r.started.size : null;
+                return `<tr class="tour-row ${state.selectedTour === id ? 'selected' : ''}" data-tour="${esc(id)}">
+                  <td><span class="sw" style="background:${tourColor(id)};margin-right:7px"></span>${esc(tourLabel(id))}</td>
+                  <td>${r.started.size}</td>
+                  <td>${r.completed.size}</td>
+                  <td class="${rate != null && rate >= 0.5 ? 'rate-good' : rate != null ? 'rate-bad' : ''}">${fmtPct(rate)}</td>
+                  <td>${rate != null ? fmtPct(1 - rate) : '—'}</td>
+                  <td>${fmtDur(avg(r.durations))}</td>
+                  <td>${fmtDur(median(r.durations))}</td>
+                </tr>`;
+              }).join('') : `<tr><td colspan="7" class="muted">No events in this date range yet.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Completions by date</h2>
+          ${renderDailyChart(byDay)}
+        </div>
+
+        <div class="card">
+          <h2>Step funnel ${state.selectedTour ? '— ' + esc(tourLabel(state.selectedTour)) : ''}</h2>
+          ${state.selectedTour ? renderFunnel(perTour.get(state.selectedTour)) : '<div class="muted" style="font-size:13px">Click a tour row above to see how far people get, step by step.</div>'}
+        </div>
+      `;
+
+      document.getElementById('f-refresh').onclick = () => { readDates(); state.preset = null; load(); };
+      document.getElementById('f-from').onchange = readDates;
+      document.getElementById('f-to').onchange = readDates;
+      app.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => {
+        const p = parseInt(b.dataset.preset, 10);
+        state.preset = p;
+        const today = new Date();
+        const from = new Date(today);
+        if (p === 0) from.setFullYear(2024, 0, 1); else from.setDate(from.getDate() - (p - 1));
+        state.from = dstr(from); state.to = dstr(today);
+        load();
+      });
+      app.querySelectorAll('.tour-row').forEach(tr => tr.onclick = () => {
+        state.selectedTour = state.selectedTour === tr.dataset.tour ? null : tr.dataset.tour;
+        render(false);
+      });
+      function readDates() {
+        state.from = document.getElementById('f-from').value || state.from;
+        state.to = document.getElementById('f-to').value || state.to;
+      }
+    }
+
+    function renderDailyChart(byDay) {
+      const days = [];
+      const start = new Date(`${state.from}T00:00:00`), end = new Date(`${state.to}T00:00:00`);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) days.push(dstr(d));
+      if (days.length > 120) return '<div class="muted" style="font-size:13px">Range too wide for the daily chart — narrow it to 120 days or fewer.</div>';
+      let max = 1;
+      for (const day of days) {
+        const dm = byDay.get(day);
+        if (dm) max = Math.max(max, [...dm.values()].reduce((a, b) => a + b, 0));
+      }
+      const usedTours = new Set();
+      const cols = days.map(day => {
+        const dm = byDay.get(day) || new Map();
+        const total = [...dm.values()].reduce((a, b) => a + b, 0);
+        const segs = [...dm.entries()].map(([t, n]) => {
+          usedTours.add(t);
+          return `<div class="bar-seg" style="height:${(n / max) * 120}px;background:${tourColor(t)}" title="${esc(tourLabel(t))}: ${n}"></div>`;
+        }).join('');
+        const lbl = day.slice(5).replace('-', '/');
+        return `<div style="display:flex;flex-direction:column;align-items:center" title="${day}: ${total} completion${total === 1 ? '' : 's'}">
+          <div class="bar-col">${segs}</div><div class="bar-lbl">${days.length <= 40 ? lbl : ''}</div></div>`;
+      }).join('');
+      const legend = [...usedTours].map(t => `<span><span class="sw" style="background:${tourColor(t)}"></span>${esc(tourLabel(t))}</span>`).join('');
+      return `<div class="bars">${cols}</div><div class="legend">${legend}</div>`;
+    }
+
+    function renderFunnel(rec) {
+      if (!rec || rec.steps.size === 0) return '<div class="muted" style="font-size:13px">No step data for this tour in range.</div>';
+      let maxStep = 0;
+      rec.steps.forEach(set => set.forEach(s => { if (s > maxStep) maxStep = s; }));
+      const rows = [];
+      let base = null;
+      for (let s = 1; s <= maxStep; s++) {
+        let n = 0;
+        rec.steps.forEach(set => { let reached = false; set.forEach(x => { if (x >= s) reached = true; }); if (reached) n++; });
+        if (base == null) base = n || 1;
+        rows.push({ s, n });
+      }
+      const cancelNote = rec.cancelSteps.length
+        ? `<div class="muted" style="font-size:12px;margin-top:10px">${rec.cancelSteps.length} explicit cancel${rec.cancelSteps.length === 1 ? '' : 's'} recorded (most common at step ${median(rec.cancelSteps) != null ? Math.round(median(rec.cancelSteps)) : '—'}).</div>`
+        : '';
+      return rows.map(({ s, n }) => `
+        <div class="funnel-row">
+          <div class="funnel-step">Step ${s}</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:${Math.max(2, (n / base) * 100)}%"></div></div>
+          <div class="funnel-n">${n} session${n === 1 ? '' : 's'} · ${fmtPct(n / base)}</div>
+        </div>`).join('') + cancelNote;
+    }
+  </script>
+</body>
+</html>

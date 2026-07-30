@@ -13,6 +13,7 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="analytics-config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* =====================================================================
@@ -1349,6 +1350,54 @@
         </div>
       </div>
     );
+
+    // ===== Tour analytics beacon =====
+    // Sends anonymous usage events (tour started / step reached / completed / cancelled) to the
+    // Supabase project configured in analytics-config.js. Inert until that config is filled in,
+    // and every failure is swallowed — analytics can never break the demo. No PII: sessions are
+    // identified by a random per-browser id so unique counts and rates can be computed.
+    const ANALYTICS_CFG = window.TOUR_ANALYTICS_CONFIG || { url: '', anonKey: '' };
+    const ANALYTICS_SESSION_ID = (() => {
+      try {
+        const KEY = 'nexin-settings-demo:session-id';
+        let id = window.localStorage.getItem(KEY);
+        if (!id) {
+          id = 'anon-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
+          window.localStorage.setItem(KEY, id);
+        }
+        return id;
+      } catch (e) {
+        return 'anon-ephemeral-' + Math.random().toString(36).slice(2, 10);
+      }
+    })();
+    const trackTourEvent = (event, { tourId = null, step = null, durationS = null } = {}) => {
+      if (!ANALYTICS_CFG.url || !ANALYTICS_CFG.anonKey) return;
+      try {
+        fetch(`${ANALYTICS_CFG.url}/rest/v1/tour_events`, {
+          method: 'POST',
+          keepalive: true,
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: ANALYTICS_CFG.anonKey,
+            Authorization: `Bearer ${ANALYTICS_CFG.anonKey}`,
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ event, session_id: ANALYTICS_SESSION_ID, tour_id: tourId, step, duration_s: durationS }),
+        }).catch(() => {});
+      } catch (e) { /* analytics must never break the demo */ }
+    };
+    // CalloutModal reports steps by display name; events store topic ids.
+    const TOURNAME_TO_ID = {
+      'GENERAL OVERVIEW': 'overview',
+      'DEFAULT AUDIENCE': 'default-audience',
+      'USING AUDIENCES': 'audiences',
+      'SAVED AUDIENCES': 'saved-audiences',
+      'ADDING CONTACTS': 'contacts',
+      'SETTING PRESETS': 'presets',
+      'AUDIENCES + REGISTRATION': 'registration',
+    };
+    // Last step seen, so a cancel can report where the user bailed.
+    let _lastTourStep = null;
 
     const TermsContext = React.createContext({ featuresLabel: 'Gallery Permissions', roleLabel: 'Audience', defaultRoleLabel: 'Default' });
     const useTerms = () => React.useContext(TermsContext);
@@ -8836,6 +8885,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const dragRef = useRef(null);
       const rootRef = useRef(null);
       useEffect(() => { setDragPos(null); }, [tourName, stepNum]);
+      // Report each step arrival for the drop-off funnel (intros/recaps have stepNum null).
+      useEffect(() => {
+        if (stepNum == null || !tourName) return;
+        const tourId = TOURNAME_TO_ID[tourName] || tourName;
+        _lastTourStep = { tourId, step: stepNum };
+        trackTourEvent('step_reached', { tourId, step: stepNum });
+      }, [tourName, stepNum]);
       const onDragStart = (e) => {
         if (e.button !== 0 || (e.target.closest && e.target.closest('button'))) return;
         const root = rootRef.current;
@@ -11787,15 +11843,24 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (mp) mp.scrollTop = 0;
         }, 50);
       };
+      const tourStartTimeRef = useRef(null);
       const startTopic = (topicId) => {
         resetPrototypeState();
         setActiveTopic(topicId);
         setInProgressTopic(topicId);
         saveTourProgress({ inProgress: topicId });
+        _lastTourStep = null;
+        tourStartTimeRef.current = Date.now();
+        trackTourEvent('tour_started', { tourId: topicId });
         setTourPhase('running');
       };
       const completeTopic = () => {
         setContinueTourFn(null);
+        const durationS = tourStartTimeRef.current
+          ? Math.max(0, Math.round((Date.now() - tourStartTimeRef.current) / 1000))
+          : null;
+        trackTourEvent('tour_completed', { tourId: activeTopic, durationS });
+        tourStartTimeRef.current = null;
         const next = new Set(completedTopics); next.add(activeTopic);
         setCompletedTopics(next);
         saveTourProgress({ completed: Array.from(next), inProgress: null });
@@ -11803,7 +11868,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         setActiveTopic(null);
         setTourPhase('menu');
       };
-      const cancelTopic = () => { setContinueTourFn(null); setActiveTopic(null); setTourPhase('menu'); };
+      const cancelTopic = () => {
+        trackTourEvent('tour_cancelled', {
+          tourId: activeTopic,
+          step: (_lastTourStep && _lastTourStep.tourId === activeTopic) ? _lastTourStep.step : null,
+        });
+        tourStartTimeRef.current = null;
+        setContinueTourFn(null);
+        setActiveTopic(null);
+        setTourPhase('menu');
+      };
       const roleHeaderWidth = useMemo(() => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
