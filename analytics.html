@@ -88,6 +88,8 @@
     const esc = (t) => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const dstr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+    let state = { from: null, to: null, events: [], selectedTour: null, preset: 30 };
+
     if (!CFG.url || !CFG.anonKey) {
       app.innerHTML = `<div class="card notice">Analytics isn't configured yet.<br/>
         Fill in the Supabase project URL and anon key in <code>analytics-config.js</code>
@@ -95,8 +97,6 @@
     } else {
       boot();
     }
-
-    let state = { from: null, to: null, events: [], selectedTour: null, preset: 30 };
 
     function boot() {
       const today = new Date();
