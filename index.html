@@ -8904,6 +8904,61 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       return ReactDOM.createPortal(jsx, document.body);
     };
 
+    // "Need help?" pill shown while a tour is parked for free-play customization.
+    const TourHelpPill = ({ onClick }) => {
+      const jsx = (
+        <button onClick={onClick}
+          style={{ position: 'fixed', top: 205, left: '48%', transform: 'translateX(-50%)', zIndex: 400,
+                   background: '#1B1C1F', color: '#fff', border: 'none', borderRadius: 10,
+                   padding: '9px 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                   boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
+          Need help? <span style={{ textDecoration: 'underline', textUnderlineOffset: 2 }}>Click here to see suggested settings</span>
+        </button>
+      );
+      return ReactDOM.createPortal(jsx, document.body);
+    };
+
+    // Draggable suggested-settings modal for the parked customize steps. Same header-strip drag
+    // pattern as CalloutModal; opens over the sidebar area and can be moved anywhere.
+    const TourSuggestionsModal = ({ title, bullets, onClose }) => {
+      const [pos, setPos] = useState({ top: 200, left: 14 });
+      const dragRef = useRef(null);
+      const onDragStart = (e) => {
+        if (e.button !== 0 || (e.target.closest && e.target.closest('button'))) return;
+        dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top };
+        e.currentTarget.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      };
+      const onDragMove = (e) => {
+        if (!dragRef.current) return;
+        setPos({
+          top: Math.max(8, Math.min(e.clientY - dragRef.current.dy, window.innerHeight - 72)),
+          left: Math.max(8, Math.min(e.clientX - dragRef.current.dx, window.innerWidth - 308)),
+        });
+      };
+      const onDragEnd = () => { dragRef.current = null; };
+      const jsx = (
+        <div style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 400, width: 300,
+                      background: '#fff', borderRadius: 16, overflow: 'hidden',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.18), 0 12px 40px rgba(0,0,0,0.26)' }}>
+          <div onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 0',
+                     cursor: 'grab', touchAction: 'none', userSelect: 'none' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--brand)', opacity: 0.75 }}>SUGGESTED SETTINGS</span>
+            <button onClick={onClose} aria-label="Close"
+              style={{ fontSize: 18, lineHeight: 1, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}>×</button>
+          </div>
+          <div style={{ padding: '8px 14px 14px', fontSize: 13, lineHeight: 1.55, color: 'var(--text-primary)' }}>
+            <p style={{ margin: '0 0 8px' }}>{title}</p>
+            <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {bullets.map((b, i) => <li key={i}>{b}</li>)}
+            </ul>
+          </div>
+        </div>
+      );
+      return ReactDOM.createPortal(jsx, document.body);
+    };
+
     const GeneralOverviewTopic = ({ onComplete, onCancel, setActiveSection, setActiveMainTab }) => {
       const [phase, setPhase] = useState('intro'); // 'intro' | 1..6
       const [highlightRects, setHighlightRects] = useState([]);
@@ -10214,6 +10269,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [highlightRects, setHighlightRects] = useState([]);
       const [visible, setVisible] = useState(false);
       const [nudge, setNudge] = useState(null);
+      // 'mp' | 'lp' while a Customize free-play park is active, else null — drives the
+      // "Need help?" pill and which audience's suggested settings the modal shows.
+      const [parked, setParked] = useState(null);
+      const [showSuggestions, setShowSuggestions] = useState(false);
       const advancingRef = useRef(false);
       const obsRef = useRef(null);
       const FADE = 160;
@@ -10273,9 +10332,15 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         saLockClean();
         setHighlightRects([]);
         setVisible(false);
+        // While parked, offer optional guidance: a "Need help?" pill that opens the draggable
+        // suggested-settings modal for whichever audience is being customized.
+        setParked(nextPhase === 6 ? 'mp' : 'lp');
+        setShowSuggestions(false);
         onSetContinueTour(() => {
           saLockClean();
           onSetContinueTour(null);
+          setParked(null);
+          setShowSuggestions(false);
           // Free play may have wandered to other tabs or sections — bring the page back to the
           // permissions matrix in its default position (nothing removed, nothing collapsed) so
           // the next step's target sits where the highlight expects it. The scroll reset waits a
@@ -10362,7 +10427,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         advance(1);
       };
 
-      const handleCancel = () => { saLockClean(); disconnectObs(); onSetContinueTour(null); onCancel(); };
+      const handleCancel = () => { saLockClean(); disconnectObs(); onSetContinueTour(null); setParked(null); setShowSuggestions(false); onCancel(); };
       const TOTAL = 15;
 
       // Phase setup
@@ -10557,6 +10622,24 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const mpName = mostPrivilegedName || (genre ? GENRE_NAMES[genre].most : 'your first audience');
       const lpName = lesserPrivilegedName || (genre ? GENRE_NAMES[genre].lesser : 'your second audience');
 
+      // Suggested settings shown in the draggable helper modal during the two Customize parks:
+      // generous for the most-permissions audience, restricted for the lesser one.
+      const SUGGESTED_SETTINGS = {
+        mp: [
+          <>Turn <strong>Photo Downloads</strong> on — leave the Download Type on <strong>All photos and individual download</strong> and the resolution on <strong>Original</strong></>,
+          <>Turn <strong>Video Downloads</strong> on — leave it on <strong>All videos</strong> and <strong>Original</strong></>,
+          <>Turn <strong>Favorites</strong> on</>,
+          <>Turn <strong>Commenting</strong> on</>,
+        ],
+        lp: [
+          <>Turn <strong>Photo Downloads</strong> on — set the Download Type to <strong>Specific amount download</strong>, the amount to <strong>5</strong>, and the resolution to <strong>Medium</strong> only (uncheck Original)</>,
+          <>Leave <strong>Video Downloads</strong> off</>,
+          <>Turn <strong>Screenshot Protection</strong> on</>,
+          <>Turn <strong>Favorites</strong> on</>,
+          <>Keep <strong>Commenting</strong> and <strong>Sharing</strong> off</>,
+        ],
+      };
+
       // Intro
       if (phase === 'intro') {
         const GENRES = [
@@ -10644,6 +10727,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       return (
         <>
           <SpotlightOverlay opacity={visible ? 1 : 0} />
+          {parked && !showSuggestions && <TourHelpPill onClick={() => setShowSuggestions(true)} />}
+          {parked && showSuggestions && (
+            <TourSuggestionsModal
+              title={<>Suggested settings for your <strong>{parked === 'mp' ? mpName : lpName}</strong> audience:</>}
+              bullets={SUGGESTED_SETTINGS[parked]}
+              onClose={() => setShowSuggestions(false)} />
+          )}
           <CalloutModal
             text={<>{CALLOUT_TEXT[phase]}{nudgeEl}</>}
             posStyle={calloutStyle}
