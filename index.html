@@ -11528,6 +11528,32 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       { id: 'registration',     label: 'Using Audiences with Registration' },
     ];
 
+    // ---- Tour progress persistence ----
+    // localStorage is per-browser, so every visitor keeps their own independent progress.
+    // Completed tours and the last tour someone left mid-way survive refreshes; a tour left
+    // mid-way restarts from its own intro (each topic seeds its demo state there), never from
+    // a mid-tour step. Key is prefixed because every project on this github.io origin shares
+    // one localStorage.
+    const TOUR_STORE_KEY = 'nexin-settings-demo:tour-progress:v1';
+    const loadTourProgress = () => {
+      try {
+        const raw = window.localStorage.getItem(TOUR_STORE_KEY);
+        if (!raw) return null;
+        const p = JSON.parse(raw);
+        return {
+          welcomeSeen: !!p.welcomeSeen,
+          completed: Array.isArray(p.completed) ? p.completed.filter(id => TOUR_TOPICS.some(t => t.id === id)) : [],
+          inProgress: typeof p.inProgress === 'string' ? p.inProgress : null,
+        };
+      } catch (e) { return null; }
+    };
+    const saveTourProgress = (patch) => {
+      try {
+        const cur = loadTourProgress() || { welcomeSeen: false, completed: [], inProgress: null };
+        window.localStorage.setItem(TOUR_STORE_KEY, JSON.stringify({ ...cur, ...patch }));
+      } catch (e) { /* storage unavailable (e.g. private mode) — progress simply won't persist */ }
+    };
+
     const WelcomeTourModal = ({ onTakeTour, onExplore }) => {
       const [closing, setClosing] = useState(false);
       const handleExplore = () => {
@@ -11727,8 +11753,15 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [viewMode] = useState('advanced');
 
       // ---- Tour state ----
-      const [tourPhase, setTourPhase] = useState('welcome'); // 'welcome' | 'idle' | 'menu' | 'running'
-      const [completedTopics, setCompletedTopics] = useState(new Set());
+      // Hydrated once from localStorage: returning visitors skip the welcome modal and, if they
+      // still have unfinished tours, land straight on the menu with their checkmarks intact.
+      const [savedTour] = useState(loadTourProgress);
+      const [tourPhase, setTourPhase] = useState(() => {
+        if (!savedTour || !savedTour.welcomeSeen) return 'welcome';
+        return TOUR_TOPICS.every(t => savedTour.completed.includes(t.id)) ? 'idle' : 'menu';
+      }); // 'welcome' | 'idle' | 'menu' | 'running'
+      const [completedTopics, setCompletedTopics] = useState(() => new Set(savedTour ? savedTour.completed : []));
+      const [inProgressTopic, setInProgressTopic] = useState(savedTour ? savedTour.inProgress : null);
       const [activeTopic, setActiveTopic] = useState(null);
       const [continueTourFn, setContinueTourFn] = useState(null);
       const openTourMenu = () => { setContinueTourFn(null); setTourPhase('menu'); };
@@ -11754,10 +11787,19 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (mp) mp.scrollTop = 0;
         }, 50);
       };
-      const startTopic = (topicId) => { resetPrototypeState(); setActiveTopic(topicId); setTourPhase('running'); };
+      const startTopic = (topicId) => {
+        resetPrototypeState();
+        setActiveTopic(topicId);
+        setInProgressTopic(topicId);
+        saveTourProgress({ inProgress: topicId });
+        setTourPhase('running');
+      };
       const completeTopic = () => {
         setContinueTourFn(null);
-        setCompletedTopics(prev => { const next = new Set(prev); next.add(activeTopic); return next; });
+        const next = new Set(completedTopics); next.add(activeTopic);
+        setCompletedTopics(next);
+        saveTourProgress({ completed: Array.from(next), inProgress: null });
+        setInProgressTopic(null);
         setActiveTopic(null);
         setTourPhase('menu');
       };
@@ -12587,10 +12629,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           {!realMobile && <TopBar
             onOpenTour={openTourMenu} tourVisible={tourPhase !== 'welcome'}
             continueTourFn={continueTourFn} />}
-          {tourPhase === 'welcome' && <WelcomeTourModal onTakeTour={openTourMenu} onExplore={() => setTourPhase('idle')} />}
+          {tourPhase === 'welcome' && <WelcomeTourModal
+            onTakeTour={() => { saveTourProgress({ welcomeSeen: true }); openTourMenu(); }}
+            onExplore={() => { saveTourProgress({ welcomeSeen: true }); setTourPhase('idle'); }} />}
           {tourPhase === 'menu' && <TourMenuModal
             completedTopics={completedTopics} onSelectTopic={startTopic} onClose={closeTourMenu}
-            suggestedTopicId={TOUR_TOPICS.find(t => !completedTopics.has(t.id))?.id || null} />}
+            suggestedTopicId={(inProgressTopic && !completedTopics.has(inProgressTopic))
+              ? inProgressTopic
+              : (TOUR_TOPICS.find(t => !completedTopics.has(t.id))?.id || null)} />}
           {tourPhase === 'running' && activeTopic && <TourTopicRunner
             topicId={activeTopic} onComplete={completeTopic} onCancel={cancelTopic}
             setActiveSection={setActiveSection} setActiveMainTab={setActiveMainTab}
