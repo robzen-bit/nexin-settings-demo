@@ -3724,7 +3724,7 @@
             style={{ gridTemplateColumns: gridCols, minHeight: 58, padding: '16px 0',
               cursor: hasSettings ? 'pointer' : 'default',
               background: isOpen ? 'var(--soft-bg)' : undefined }}>
-            <div className="pl-6">
+            <div className="pl-6" data-tour={feature.id === 'photo-downloads' ? 'photo-downloads-row-header' : undefined}>
               <div className="flex items-center gap-2">
                 <span data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-chevron' : feature.id === 'photo-downloads' ? 'photo-downloads-chevron' : undefined}
                   style={{ color: 'var(--text-tertiary)',
@@ -9745,7 +9745,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
           if (phase === 4) {
             setActiveSection('features');
-            lockAll('photo-downloads-row');
+            // Target the row's left header cluster (chevron + title), not the whole row: clicks
+            // there bubble to the row's expand handler, while the toggle cells stay blocked by
+            // the lock so the toggles can't be flipped on this step.
+            lockAll('photo-downloads-row-header');
             setHighlightRects(elevateEls(['[data-tour="photo-downloads-row"]']));
             // The row is transparent when collapsed, so the dim showed through everything but
             // the toggles. White backing brings the whole row forward.
@@ -9866,7 +9869,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return;
           }
           if (phase === 10) {
-            lockAll('photo-downloads-row');
+            // Header cluster only, same as step 4 — the collapse click works but the toggles
+            // inside the row stay inert.
+            lockAll('photo-downloads-row-header');
             const row = document.querySelector('[data-tour="photo-downloads-row"]');
             const wrapper = row ? row.closest('.border-t') : null;
             // The expanded settings leave this row scrolled out of view above the fold, so the
