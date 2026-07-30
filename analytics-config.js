@@ -4,5 +4,5 @@
 // "not configured" notice; the prototype itself is unaffected either way.
 window.TOUR_ANALYTICS_CONFIG = {
   url: 'https://sfjcsfbntmqvraualfhf.supabase.co',
-  anonKey: '',  // the "Publishable key" (sb_publishable_...) — safe to publish; the SQL policies protect the data
+  anonKey: 'sb_publishable_pcn0HCM_Q5nAY_K5TtK3sQ_pDBnJZD3',  // publishable key — safe to publish; the SQL policies protect the data
 };
