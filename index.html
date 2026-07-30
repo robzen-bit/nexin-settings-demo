@@ -9834,6 +9834,20 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             }
             setHighlightRects(elevateSettingsBand([dtTitle, dtRow]));
             setVisible(true);
+            // Auto-scroll the Guest band to sit just below the callout, which is fixed high in
+            // the page on this step — otherwise the band can load at (or past) the bottom of the
+            // viewport. Runs a beat after setVisible so the callout's real height is measurable;
+            // the elevation and scrims are content-attached, so they track the scroll.
+            setTimeout(() => {
+              const sc = document.querySelector('.matrix-scroll');
+              const callout = document.querySelector('.tour-callout-portal');
+              const title = document.querySelector('[data-tour="photo-downloads-guest-panel-title"]');
+              if (!sc || !callout || !title) return;
+              const desired = callout.getBoundingClientRect().bottom + 20;
+              const delta = title.getBoundingClientRect().top - desired;
+              const max = sc.scrollHeight - sc.clientHeight;
+              sc.scrollTo({ top: Math.max(0, Math.min(max, sc.scrollTop + delta)), behavior: 'smooth' });
+            }, 60);
             return;
           }
           if (phase === 9) {
