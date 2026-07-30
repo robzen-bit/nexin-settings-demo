@@ -245,6 +245,11 @@
         </div>
 
         <div class="card">
+          <h2>Completions by date</h2>
+          ${renderDailyChart(byDay)}
+        </div>
+
+        <div class="card">
           <h2>Per-tour performance <span class="muted" style="text-transform:none;font-weight:500">— click a row for its step funnel</span></h2>
           <table>
             <thead><tr><th>Tour</th><th>Started</th><th>Completed</th><th>Completion rate</th><th>Drop rate</th><th>Avg time</th><th>Median time</th></tr></thead>
@@ -264,11 +269,6 @@
               }).join('') : `<tr><td colspan="7" class="muted">No events in this date range yet.</td></tr>`}
             </tbody>
           </table>
-        </div>
-
-        <div class="card">
-          <h2>Completions by date</h2>
-          ${renderDailyChart(byDay)}
         </div>
 
         <div class="card">
