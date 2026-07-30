@@ -10449,9 +10449,30 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (phase === 14) {
             // Presentational step — Next advances. Lock with no targets so the whole page,
             // including the now-transparent backdrop (whose click would close the modal), stays
-            // inert while the modal itself reads fully lit.
+            // inert. Elevate the modal via its backdrop as usual, then re-dim everything in the
+            // card except the Saved Custom Audiences section with card-attached scrims — the
+            // card's overflow:hidden clips them to its rounded corners, and with no targets the
+            // inner area can't scroll, so the scrims stay aligned.
             saLockAll();
-            setHighlightRects(saElevateModal());
+            saElevateModal();
+            const card = document.querySelector('[data-tour="add-audience-modal"]');
+            const section = document.querySelector('[data-tour="saved-audiences-section"]');
+            if (card && section) {
+              if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+              const cr = card.getBoundingClientRect();
+              const sr = section.getBoundingClientRect();
+              const mkScrim = (cssText) => {
+                const scrim = document.createElement('div');
+                scrim.className = 'tour-injected-scrim';
+                scrim.style.cssText = `position:absolute;z-index:5;pointer-events:none;background:rgba(0,0,0,0.62);left:0;right:0;${cssText}`;
+                card.appendChild(scrim);
+              };
+              if (sr.top > cr.top) mkScrim(`top:0;height:${Math.round(sr.top - cr.top)}px;`);
+              if (cr.bottom > sr.bottom) mkScrim(`top:${Math.round(sr.bottom - cr.top)}px;bottom:0;`);
+              setHighlightRects([sr]);
+            } else {
+              setHighlightRects(card ? [card.getBoundingClientRect()] : []);
+            }
             setVisible(true); return;
           }
           if (phase === 15) {
