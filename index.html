@@ -9869,6 +9869,16 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             lockAll('photo-downloads-row');
             const row = document.querySelector('[data-tour="photo-downloads-row"]');
             const wrapper = row ? row.closest('.border-t') : null;
+            // The expanded settings leave this row scrolled out of view above the fold, so the
+            // elevation happened off-screen and the step looked like nothing lit up. Snap it
+            // back to just under the sticky header BEFORE measuring and elevating.
+            const sc = document.querySelector('.matrix-scroll');
+            if (sc && row) {
+              const headerRow = document.querySelector('[data-tour="matrix-header-row"]');
+              const headerH = headerRow ? headerRow.getBoundingClientRect().height : 0;
+              const delta = row.getBoundingClientRect().top - (sc.getBoundingClientRect().top + headerH + 8);
+              sc.scrollTop = Math.max(0, Math.min(sc.scrollHeight - sc.clientHeight, sc.scrollTop + delta));
+            }
             setHighlightRects(elevateEls([wrapper, row].filter(Boolean)));
             // Elevated-but-transparent reads as not elevated — the dim shows through the row band.
             // White backing like steps 4/5, via data-tour-bg since the background is React-managed.
