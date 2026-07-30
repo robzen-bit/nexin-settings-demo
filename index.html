@@ -10456,19 +10456,25 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             saLockAll();
             saElevateModal();
             const card = document.querySelector('[data-tour="add-audience-modal"]');
+            const backdrop = card ? card.closest('.modal-backdrop') : null;
             const section = document.querySelector('[data-tour="saved-audiences-section"]');
-            if (card && section) {
-              if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+            if (card && backdrop && section) {
               const cr = card.getBoundingClientRect();
               const sr = section.getBoundingClientRect();
-              const mkScrim = (cssText) => {
+              // Scrims live on the (full-viewport, elevated) backdrop rather than inside the
+              // card: in-card scrims are clipped by the card's overflow:hidden and can't cover
+              // its white border, which left a bright outline. A 2px overhang plus matching
+              // corner radii buries the border. Lighter than the 0.62 page dim so the modal
+              // still reads as a modal sitting above the page, just held back — only the
+              // Saved Custom Audiences band is fully lit.
+              const mkScrim = (cssText, radius) => {
                 const scrim = document.createElement('div');
                 scrim.className = 'tour-injected-scrim';
-                scrim.style.cssText = `position:absolute;z-index:5;pointer-events:none;background:rgba(0,0,0,0.62);left:0;right:0;${cssText}`;
-                card.appendChild(scrim);
+                scrim.style.cssText = `position:absolute;z-index:5;pointer-events:none;background:rgba(0,0,0,0.35);left:${Math.round(cr.left) - 2}px;width:${Math.round(cr.width) + 4}px;border-radius:${radius};${cssText}`;
+                backdrop.appendChild(scrim);
               };
-              if (sr.top > cr.top) mkScrim(`top:0;height:${Math.round(sr.top - cr.top)}px;`);
-              if (cr.bottom > sr.bottom) mkScrim(`top:${Math.round(sr.bottom - cr.top)}px;bottom:0;`);
+              if (sr.top > cr.top) mkScrim(`top:${Math.round(cr.top) - 2}px;height:${Math.round(sr.top - cr.top) + 2}px;`, '16px 16px 0 0');
+              if (cr.bottom > sr.bottom) mkScrim(`top:${Math.round(sr.bottom)}px;height:${Math.round(cr.bottom - sr.bottom) + 2}px;`, '0 0 16px 16px');
               setHighlightRects([sr]);
             } else {
               setHighlightRects(card ? [card.getBoundingClientRect()] : []);
