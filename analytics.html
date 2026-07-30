@@ -65,14 +65,16 @@
 
   <script>
     const CFG = window.TOUR_ANALYTICS_CONFIG || { url: '', anonKey: '' };
+    // steps = the tour's displayed step count, so the funnel can show the steps
+    // nobody reached, not just the ones with data.
     const TOURS = [
-      { id: 'overview',         label: 'General Overview' },
-      { id: 'default-audience', label: 'Using the Default Audience' },
-      { id: 'audiences',        label: 'Using Audiences' },
-      { id: 'saved-audiences',  label: 'Saved Custom Audiences' },
-      { id: 'contacts',         label: 'Adding Contacts to Audiences' },
-      { id: 'presets',          label: 'Saving and Using Presets' },
-      { id: 'registration',     label: 'Using Audiences with Registration' },
+      { id: 'overview',         label: 'General Overview',                  steps: 6 },
+      { id: 'default-audience', label: 'Using the Default Audience',        steps: 6 },
+      { id: 'audiences',        label: 'Using Audiences',                   steps: 10 },
+      { id: 'saved-audiences',  label: 'Saved Custom Audiences',            steps: 15 },
+      { id: 'contacts',         label: 'Adding Contacts to Audiences',      steps: 5 },
+      { id: 'presets',          label: 'Saving and Using Presets',          steps: 5 },
+      { id: 'registration',     label: 'Using Audiences with Registration', steps: 5 },
     ];
     const COLORS = ['#C75B39', '#3E7C4F', '#4A6FA5', '#B08C2E', '#7B5EA7', '#3B8E8C', '#A5556F'];
     const tourLabel = (id) => (TOURS.find(t => t.id === id) || { label: id || 'unknown' }).label;
@@ -249,7 +251,7 @@
 
         <div class="card">
           <h2>Step funnel ${state.selectedTour ? '— ' + esc(tourLabel(state.selectedTour)) : ''}</h2>
-          ${state.selectedTour ? renderFunnel(perTour.get(state.selectedTour)) : '<div class="muted" style="font-size:13px">Click a tour row above to see how far people get, step by step.</div>'}
+          ${state.selectedTour ? renderFunnel(perTour.get(state.selectedTour), state.selectedTour) : '<div class="muted" style="font-size:13px">Click a tour row above to see how far people get, step by step.</div>'}
         </div>
       `;
 
@@ -301,9 +303,11 @@
       return `<div class="bars">${cols}</div><div class="legend">${legend}</div>`;
     }
 
-    function renderFunnel(rec) {
+    function renderFunnel(rec, tourId) {
       if (!rec || rec.steps.size === 0) return '<div class="muted" style="font-size:13px">No step data for this tour in range.</div>';
-      let maxStep = 0;
+      // Show the tour's FULL step ladder — unreached steps render as zero-session rows, so the
+      // drop-off is visible against the whole tour, not just the steps that have data.
+      let maxStep = (TOURS.find(t => t.id === tourId) || {}).steps || 0;
       rec.steps.forEach(set => set.forEach(s => { if (s > maxStep) maxStep = s; }));
       const rows = [];
       let base = null;
@@ -319,8 +323,8 @@
       return rows.map(({ s, n }) => `
         <div class="funnel-row">
           <div class="funnel-step">Step ${s}</div>
-          <div class="funnel-track"><div class="funnel-fill" style="width:${Math.max(2, (n / base) * 100)}%"></div></div>
-          <div class="funnel-n">${n} session${n === 1 ? '' : 's'} · ${fmtPct(n / base)}</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:${n === 0 ? 0 : Math.max(2, (n / base) * 100)}%"></div></div>
+          <div class="funnel-n ${n === 0 ? 'muted' : ''}">${n} session${n === 1 ? '' : 's'} · ${fmtPct(n / base)}</div>
         </div>`).join('') + cancelNote;
     }
   </script>
