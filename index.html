@@ -9451,6 +9451,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const [visible, setVisible] = useState(false);
       const [nudge, setNudge] = useState(null);
       const advancingRef = useRef(false);
+      // Removes the document-level wheel listener installed by step 5's clamped scrolling.
+      const wheelCleanupRef = useRef(null);
       const FADE = 160;
       const ADVANCE_DELAY = 1000;
       // Longer beat after the Guest toggle flips, so the Guest settings below are visibly seen
@@ -9762,6 +9764,28 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               el.setAttribute('data-tour-bg', el.style.background || '');
               el.style.background = '#fff';
             });
+            // Allow vertical scrolling, clamped: down just far enough to bring the Guest
+            // settings into view, and back up to the toggles. The dim overlay swallows wheel
+            // events during the lock, so drive .matrix-scroll manually from a document-level
+            // listener. Everything elevated lives inside the scroll container, so the
+            // elevation tracks the scroll.
+            const sc = document.querySelector('.matrix-scroll');
+            const guestTitle = document.querySelector('[data-tour="photo-downloads-guest-panel-title"]');
+            if (sc) {
+              let maxScroll = 0;
+              if (guestTitle) {
+                const rel = guestTitle.getBoundingClientRect().top - sc.getBoundingClientRect().top;
+                maxScroll = Math.max(0, Math.round(sc.scrollTop + rel - sc.clientHeight * 0.35));
+              }
+              const onWheel = (e) => {
+                // Don't hijack scrolling inside the callout's own scrollable body
+                if (e.target.closest && e.target.closest('.tour-callout-portal')) return;
+                e.preventDefault();
+                sc.scrollTop = Math.max(0, Math.min(maxScroll, sc.scrollTop + e.deltaY));
+              };
+              document.addEventListener('wheel', onWheel, { passive: false });
+              wheelCleanupRef.current = () => document.removeEventListener('wheel', onWheel);
+            }
             setVisible(true);
             return;
           }
@@ -9842,7 +9866,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return;
           }
         }, 160);
-        return () => { clearTimeout(t); setAddModalMinSelect(0); };
+        return () => {
+          clearTimeout(t);
+          setAddModalMinSelect(0);
+          if (wheelCleanupRef.current) { wheelCleanupRef.current(); wheelCleanupRef.current = null; }
+        };
       }, [phase]);
 
       // Validated advance watchers
