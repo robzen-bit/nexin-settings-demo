@@ -8839,11 +8839,40 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const { width: posWidth, ...namedPos } = pos;
       const resolvedPos = posStyleProp || namedPos;
       const resolvedWidth = posStyleProp ? undefined : posWidth;
+      // Draggable via the header strip, in case the callout covers something the user wants to
+      // see. dragPos overrides the step's designed position; it resets when the step changes so
+      // a drag on one step can't strand the next step's callout.
+      const [dragPos, setDragPos] = useState(null);
+      const dragRef = useRef(null);
+      const rootRef = useRef(null);
+      useEffect(() => { setDragPos(null); }, [tourName, stepNum]);
+      const onDragStart = (e) => {
+        if (e.button !== 0 || (e.target.closest && e.target.closest('button'))) return;
+        const root = rootRef.current;
+        if (!root) return;
+        // Switch to plain top/left from the current rect — neutralizes the translate(-50%)
+        // transforms the named placements use, so deltas apply cleanly.
+        const r = root.getBoundingClientRect();
+        dragRef.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+        setDragPos({ top: r.top, left: r.left });
+        e.currentTarget.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      };
+      const onDragMove = (e) => {
+        if (!dragRef.current) return;
+        const w = rootRef.current ? rootRef.current.offsetWidth : 340;
+        setDragPos({
+          top: Math.max(8, Math.min(e.clientY - dragRef.current.dy, window.innerHeight - 72)),
+          left: Math.max(8, Math.min(e.clientX - dragRef.current.dx, window.innerWidth - w - 8)),
+        });
+      };
+      const onDragEnd = () => { dragRef.current = null; };
       const jsx = (
-        <div className="tour-callout-portal" style={{ position: 'fixed', ...resolvedPos, zIndex: 550, width: resolvedWidth || 340, maxWidth: 'calc(100vw - 50px)', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.22)) drop-shadow(0 12px 40px rgba(0,0,0,0.32))', opacity, transition: 'opacity 160ms ease', pointerEvents: opacity === 0 ? 'none' : 'auto' }}>
+        <div ref={rootRef} className="tour-callout-portal" style={{ position: 'fixed', ...(dragPos || resolvedPos), zIndex: 550, width: resolvedWidth || 340, maxWidth: 'calc(100vw - 50px)', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.22)) drop-shadow(0 12px 40px rgba(0,0,0,0.32))', opacity, transition: 'opacity 160ms ease', pointerEvents: opacity === 0 ? 'none' : 'auto' }}>
           <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', maxHeight: 'calc(100vh - 60px)', overflowY: 'auto' }}>
-            {/* Header row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0' }}>
+            {/* Header row — doubles as the drag handle (buttons excluded in onDragStart) */}
+            <div onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px 0', cursor: 'grab', touchAction: 'none', userSelect: 'none' }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--brand)', opacity: 0.75 }}>
                 {[tourName, stepNum != null && `STEP ${stepNum} OF ${totalSteps}`].filter(Boolean).join(' · ')}
               </span>
