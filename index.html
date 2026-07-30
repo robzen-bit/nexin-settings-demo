@@ -8714,10 +8714,24 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     let _tourElevated = [];
     const elevateEls = (selectors) => {
       clearElevation();
-      const rects = [];
+      const els = [];
       for (const sel of (Array.isArray(selectors) ? selectors : [selectors])) {
         const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
-        if (!el) continue;
+        if (el) els.push(el);
+      }
+      // Global rule: whatever a step highlights must be in view. Scroll the anchor (first)
+      // element into view BEFORE anything is measured — every caller takes rects for callouts,
+      // scrims and backings after this call, so they all see post-scroll positions.
+      // block:'nearest' no-ops when the target is already visible and minimally scrolls every
+      // scrollable ancestor otherwise (matrix scroller, window, form columns, modal internals);
+      // fixed-position targets are unaffected. The scroll margin keeps targets from landing
+      // hidden under the sticky matrix header.
+      if (els[0]) {
+        els[0].style.scrollMarginTop = '70px';
+        els[0].scrollIntoView({ block: 'nearest' });
+      }
+      const rects = [];
+      for (const el of els) {
         const origPos = el.style.position;
         const origZ = el.style.zIndex;
         if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
@@ -9577,6 +9591,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (!els.length) return [];
         const block = els[0].closest('.multi-panel-body')?.parentElement;
         if (!block) return elevateEls(els);
+        // The block container usually intersects the viewport already, so elevateEls' global
+        // scroll-into-view no-ops on it — bring the actual band into view instead, before any
+        // rects are measured.
+        els[0].style.scrollMarginTop = '70px';
+        els[0].scrollIntoView({ block: 'nearest' });
         elevateEls([block]);
         const br = block.getBoundingClientRect();
         const rects = els.map(el => el.getBoundingClientRect());
