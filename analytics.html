@@ -111,9 +111,13 @@
       const page = 1000;
       const base = `${CFG.url}/rest/v1/tour_events?select=created_at,event,session_id,tour_id,step,duration_s` +
         `&created_at=gte.${encodeURIComponent(fromIso)}&created_at=lt.${encodeURIComponent(toIso)}&order=created_at.asc`;
+      // New-style publishable keys (sb_publishable_...) go in apikey only; legacy anon keys
+      // are JWTs (eyJ...) and also go in the Authorization header.
+      const authHeaders = { apikey: CFG.anonKey };
+      if (CFG.anonKey.startsWith('eyJ')) authHeaders.Authorization = `Bearer ${CFG.anonKey}`;
       for (let offset = 0; offset < 200000; offset += page) {
         const res = await fetch(base, {
-          headers: { apikey: CFG.anonKey, Authorization: `Bearer ${CFG.anonKey}`, 'Range-Unit': 'items', Range: `${offset}-${offset + page - 1}` },
+          headers: { ...authHeaders, 'Range-Unit': 'items', Range: `${offset}-${offset + page - 1}` },
         });
         if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
         const rows = await res.json();

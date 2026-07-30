@@ -3,6 +3,6 @@
 // While either value is empty, the demo sends nothing and the dashboard shows a
 // "not configured" notice; the prototype itself is unaffected either way.
 window.TOUR_ANALYTICS_CONFIG = {
-  url: '',      // e.g. 'https://abcdefghijkl.supabase.co'
-  anonKey: '',  // the "anon public" key — safe to publish; the SQL policies make it append-only
+  url: 'https://sfjcsfbntmqvraualfhf.supabase.co',
+  anonKey: '',  // the "Publishable key" (sb_publishable_...) — safe to publish; the SQL policies protect the data
 };

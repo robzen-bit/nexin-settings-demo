@@ -1373,15 +1373,14 @@
     const trackTourEvent = (event, { tourId = null, step = null, durationS = null } = {}) => {
       if (!ANALYTICS_CFG.url || !ANALYTICS_CFG.anonKey) return;
       try {
+        // New-style Supabase publishable keys (sb_publishable_...) go in apikey only; legacy
+        // anon keys are JWTs (eyJ...) and also go in the Authorization header.
+        const headers = { 'Content-Type': 'application/json', apikey: ANALYTICS_CFG.anonKey, Prefer: 'return=minimal' };
+        if (ANALYTICS_CFG.anonKey.startsWith('eyJ')) headers.Authorization = `Bearer ${ANALYTICS_CFG.anonKey}`;
         fetch(`${ANALYTICS_CFG.url}/rest/v1/tour_events`, {
           method: 'POST',
           keepalive: true,
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: ANALYTICS_CFG.anonKey,
-            Authorization: `Bearer ${ANALYTICS_CFG.anonKey}`,
-            Prefer: 'return=minimal',
-          },
+          headers,
           body: JSON.stringify({ event, session_id: ANALYTICS_SESSION_ID, tour_id: tourId, step, duration_s: durationS }),
         }).catch(() => {});
       } catch (e) { /* analytics must never break the demo */ }
