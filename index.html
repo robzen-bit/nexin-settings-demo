@@ -10204,7 +10204,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       openFeatures, setFeatureOpen,
       showModal, setShowModal,
       openMenuRoleId, setOpenMenuRoleId,
-      savedRoles,
+      savedRoles, setSavedRoles,
       onSetContinueTour,
     }) => {
       const [phase, setPhase] = useState('intro');
@@ -10346,6 +10346,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const handleGenreSelect = (g) => {
         if (advancingRef.current) return;
         setGenre(g);
+        // The user may have saved custom audiences while experimenting before the tour —
+        // clear them so the Add Audience modal opens without a Saved Custom Audiences section
+        // and the steps read as written. (Step 12's save re-populates it for step 14.)
+        setSavedRoles([]);
         setRoles([{ id: 'everyone', name: 'Default', removable: false }]);
         const base = buildEveryoneState();
         const allOff = {};
@@ -11541,7 +11545,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
     // Routes to the correct topic component. Unimplemented topics complete immediately.
     const TourTopicRunner = ({ topicId, onComplete, onCancel, setActiveSection, setActiveMainTab, onSetContinueTour,
       roles, setRoles, perRole, setPerRole, openFeatures, setFeatureOpen, showModal, setShowModal,
-      openMenuRoleId, setOpenMenuRoleId, savedRoles, setAddModalMinSelect,
+      openMenuRoleId, setOpenMenuRoleId, savedRoles, setSavedRoles, setAddModalMinSelect,
       contacts, setContacts, completedTopics,
       setShowGalleryRegistration, setCollectEmailEnabled, setCustomFormEnabled, setShowEditCustomForm }) => {
       if (topicId === 'overview') {
@@ -11574,7 +11578,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
           showModal={showModal} setShowModal={setShowModal}
           openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
-          savedRoles={savedRoles} />;
+          savedRoles={savedRoles} setSavedRoles={setSavedRoles} />;
       }
       if (topicId === 'contacts') {
         return <AddingContactsTopic
@@ -12511,7 +12515,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             openFeatures={openFeatures} setFeatureOpen={setFeatureOpen}
             showModal={showModal} setShowModal={setShowModal}
             openMenuRoleId={openMenuRoleId} setOpenMenuRoleId={setOpenMenuRoleId}
-            savedRoles={savedRoles}
+            savedRoles={savedRoles} setSavedRoles={setSavedRoles}
             setAddModalMinSelect={setAddModalMinSelect}
             contacts={contacts} setContacts={setContacts} completedTopics={completedTopics}
             setShowGalleryRegistration={setShowGalleryRegistration}
