@@ -10332,6 +10332,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const calloutStyle = useMemo(() => {
         if (highlightRects.length === 0) return null;
         if ([2, 5, 7, 10, 14, 15].includes(phase)) return null;
+        if (phase === 11 || phase === 12) {
+          // Fixed spot left of the audience header, clear of the kebab menu that opens under
+          // it — and shared by both steps, so the callout doesn't move (and briefly cover the
+          // menu) when step 11 advances to 12.
+          const vw = window.innerWidth;
+          return { top: 245, left: Math.min(Math.max(25, Math.round(vw * 0.36)), vw - 365) };
+        }
         if (phase === 1 || phase === 6 || phase === 13) return nearRect(highlightRects[0], 'below');
         return nearRect(highlightRects[0]);
       }, [highlightRects, phase]);
