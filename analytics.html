@@ -111,16 +111,23 @@
     async function fetchEvents(fromIso, toIso) {
       const all = [];
       const page = 1000;
-      const base = `${CFG.url}/rest/v1/tour_events?select=created_at,event,session_id,tour_id,step,duration_s` +
-        `&created_at=gte.${encodeURIComponent(fromIso)}&created_at=lt.${encodeURIComponent(toIso)}&order=created_at.asc`;
+      let cols = 'created_at,event,session_id,tour_id,step,duration_s,label';
+      const filters = `&created_at=gte.${encodeURIComponent(fromIso)}&created_at=lt.${encodeURIComponent(toIso)}&order=created_at.asc`;
       // New-style publishable keys (sb_publishable_...) go in apikey only; legacy anon keys
       // are JWTs (eyJ...) and also go in the Authorization header.
       const authHeaders = { apikey: CFG.anonKey };
       if (CFG.anonKey.startsWith('eyJ')) authHeaders.Authorization = `Bearer ${CFG.anonKey}`;
       for (let offset = 0; offset < 200000; offset += page) {
-        const res = await fetch(base, {
+        const res = await fetch(`${CFG.url}/rest/v1/tour_events?select=${cols}${filters}`, {
           headers: { ...authHeaders, 'Range-Unit': 'items', Range: `${offset}-${offset + page - 1}` },
         });
+        // Tables created before the label migration reject the label column with a 400 —
+        // retry once without it so the dashboard still works pre-migration.
+        if (res.status === 400 && offset === 0 && cols.includes(',label')) {
+          cols = cols.replace(',label', '');
+          offset -= page;
+          continue;
+        }
         if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
         const rows = await res.json();
         all.push(...rows);
@@ -151,6 +158,9 @@
         return perTour.get(id);
       };
       const byDay = new Map();
+      // Unique-label rollups (deduped by session, grouped case-insensitively)
+      const genres = new Map();
+      const names = new Map();
       for (const ev of events) {
         const t = ev.tour_id || 'unknown';
         const rec = forTour(t);
@@ -167,9 +177,21 @@
           rec.steps.get(ev.session_id).add(ev.step);
         } else if (ev.event === 'tour_cancelled' && ev.step != null) {
           rec.cancelSteps.push(ev.step);
+        } else if (ev.event === 'genre_selected' && ev.label) {
+          const key = String(ev.label).trim().toLowerCase();
+          if (key) {
+            if (!genres.has(key)) genres.set(key, { display: key.charAt(0).toUpperCase() + key.slice(1), sessions: new Set() });
+            genres.get(key).sessions.add(ev.session_id);
+          }
+        } else if (ev.event === 'audience_named' && ev.label) {
+          const key = String(ev.label).trim().toLowerCase();
+          if (key) {
+            if (!names.has(key)) names.set(key, { display: String(ev.label).trim(), sessions: new Set() });
+            names.get(key).sessions.add(ev.session_id);
+          }
         }
       }
-      return { perTour, byDay };
+      return { perTour, byDay, genres, names };
     }
     const median = (a) => {
       if (!a.length) return null;
@@ -181,7 +203,7 @@
 
     // ---- Rendering ----
     function render(initialOnly) {
-      const { perTour, byDay } = aggregate(state.events);
+      const { perTour, byDay, genres, names } = aggregate(state.events);
       const tourIds = TOURS.map(t => t.id).filter(id => perTour.has(id))
         .concat([...perTour.keys()].filter(id => !TOURS.some(t => t.id === id)));
 
@@ -253,6 +275,17 @@
           <h2>Step funnel ${state.selectedTour ? '— ' + esc(tourLabel(state.selectedTour)) : ''}</h2>
           ${state.selectedTour ? renderFunnel(perTour.get(state.selectedTour), state.selectedTour) : '<div class="muted" style="font-size:13px">Click a tour row above to see how far people get, step by step.</div>'}
         </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+          <div class="card" style="margin-bottom:0">
+            <h2>Genres picked <span class="muted" style="text-transform:none;font-weight:500">— Saved Custom Audiences tour</span></h2>
+            ${renderLabelTable(genres, 'Genre')}
+          </div>
+          <div class="card" style="margin-bottom:0">
+            <h2>Custom audience names <span class="muted" style="text-transform:none;font-weight:500">— unique, per person</span></h2>
+            ${renderLabelTable(names, 'Name')}
+          </div>
+        </div>
       `;
 
       document.getElementById('f-refresh').onclick = () => { readDates(); state.preset = null; load(); };
@@ -301,6 +334,18 @@
       }).join('');
       const legend = [...usedTours].map(t => `<span><span class="sw" style="background:${tourColor(t)}"></span>${esc(tourLabel(t))}</span>`).join('');
       return `<div class="bars">${cols}</div><div class="legend">${legend}</div>`;
+    }
+
+    function renderLabelTable(map, colName) {
+      if (!map || map.size === 0) return '<div class="muted" style="font-size:13px">No data yet in this date range.</div>';
+      const rows = [...map.values()].sort((a, b) => b.sessions.size - a.sessions.size);
+      const MAX = 50;
+      const shown = rows.slice(0, MAX);
+      const more = rows.length - shown.length;
+      return `<table>
+        <thead><tr><th>${esc(colName)}</th><th style="text-align:right">Used by</th></tr></thead>
+        <tbody>${shown.map(r => `<tr><td>${esc(r.display)}</td><td style="text-align:right">${r.sessions.size} ${r.sessions.size === 1 ? 'person' : 'people'}</td></tr>`).join('')}</tbody>
+      </table>${more > 0 ? `<div class="muted" style="font-size:12px;margin-top:8px">+ ${more} more not shown</div>` : ''}`;
     }
 
     function renderFunnel(rec, tourId) {

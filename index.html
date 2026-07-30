@@ -1370,18 +1370,22 @@
         return 'anon-ephemeral-' + Math.random().toString(36).slice(2, 10);
       }
     })();
-    const trackTourEvent = (event, { tourId = null, step = null, durationS = null } = {}) => {
+    const trackTourEvent = (event, { tourId = null, step = null, durationS = null, label = null } = {}) => {
       if (!ANALYTICS_CFG.url || !ANALYTICS_CFG.anonKey) return;
       try {
         // New-style Supabase publishable keys (sb_publishable_...) go in apikey only; legacy
         // anon keys are JWTs (eyJ...) and also go in the Authorization header.
         const headers = { 'Content-Type': 'application/json', apikey: ANALYTICS_CFG.anonKey, Prefer: 'return=minimal' };
         if (ANALYTICS_CFG.anonKey.startsWith('eyJ')) headers.Authorization = `Bearer ${ANALYTICS_CFG.anonKey}`;
+        // label is only included when present, so pre-migration tables (no label column)
+        // keep accepting the original event types.
+        const payload = { event, session_id: ANALYTICS_SESSION_ID, tour_id: tourId, step, duration_s: durationS };
+        if (label != null) payload.label = String(label).slice(0, 40);
         fetch(`${ANALYTICS_CFG.url}/rest/v1/tour_events`, {
           method: 'POST',
           keepalive: true,
           headers,
-          body: JSON.stringify({ event, session_id: ANALYTICS_SESSION_ID, tour_id: tourId, step, duration_s: durationS }),
+          body: JSON.stringify(payload),
         }).catch(() => {});
       } catch (e) { /* analytics must never break the demo */ }
     };
@@ -10460,6 +10464,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       const handleGenreSelect = (g) => {
         if (advancingRef.current) return;
+        trackTourEvent('genre_selected', { tourId: 'saved-audiences', label: g });
         setGenre(g);
         // The user may have saved custom audiences while experimenting before the tour —
         // clear them so the Add Audience modal opens without a Saved Custom Audiences section
@@ -10628,6 +10633,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         if (phase === 4 && customRoles.length >= 1 && !mostPrivilegedName) {
           const newest = customRoles[customRoles.length - 1];
           setMostPrivilegedName(newest.name);
+          trackTourEvent('audience_named', { tourId: 'saved-audiences', label: newest.name });
           const t = setTimeout(() => advance(5), ADVANCE_DELAY);
           return () => clearTimeout(t);
         }
@@ -10637,6 +10643,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           if (newRoles.length >= 1 && !lesserPrivilegedName) {
             const newest = newRoles[newRoles.length - 1];
             setLesserPrivilegedName(newest.name);
+            trackTourEvent('audience_named', { tourId: 'saved-audiences', label: newest.name });
             const t = setTimeout(() => advance(10), ADVANCE_DELAY);
             return () => clearTimeout(t);
           }
