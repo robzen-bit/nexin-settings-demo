@@ -3720,7 +3720,7 @@
         <div className="border-t" style={{ borderColor: 'var(--card-border)' }}>
           <div onClick={() => hasSettings && onToggleOpen()}
             className={`feature-row grid items-center${hasSettings ? ' is-collapsible' : ''}${isOpen ? ' is-open' : ''}`}
-            data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-row' : feature.id === 'photo-downloads' ? 'photo-downloads-row' : feature.id === 'favorites' ? 'favorites-row' : feature.id === 'sharing' ? 'sharing-row' : undefined}
+            data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-row' : feature.id === 'photo-downloads' ? 'photo-downloads-row' : feature.id === 'favorites' ? 'favorites-row' : feature.id === 'sharing' ? 'sharing-row' : feature.id === 'face-finder' ? 'face-finder-row' : undefined}
             style={{ gridTemplateColumns: gridCols, minHeight: 58, padding: '16px 0',
               cursor: hasSettings ? 'pointer' : 'default',
               background: isOpen ? 'var(--soft-bg)' : undefined }}>
@@ -3808,6 +3808,7 @@
                 const tourAttr =
                   (feature.id === 'screenshot-protection' && r.id === 'everyone') ? 'screenshot-protection-default-toggle' :
                   (feature.id === 'sharing' && r.id === 'everyone') ? 'sharing-default-toggle' :
+                  (feature.id === 'face-finder' && r.id === 'everyone') ? 'face-finder-default-toggle' :
                   (feature.id === 'photo-downloads' && r.id === 'everyone') ? 'photo-downloads-default-toggle' :
                   (feature.id === 'photo-downloads' && r.name === 'Guest') ? 'photo-downloads-guest-toggle' :
                   (feature.id === 'photo-downloads' && r.name === 'Client') ? 'photo-downloads-client-toggle' :
@@ -9158,8 +9159,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         const spWrapper = spRow ? spRow.closest('.border-t') : null;
         const spSettings = spWrapper ? spWrapper.nextElementSibling : null;
         if (spSettings) spSettings.style.background = '';
-        const shRow = document.querySelector('[data-tour="sharing-row"]');
-        if (shRow) shRow.style.background = '';
+        const ffRow = document.querySelector('[data-tour="face-finder-row"]');
+        if (ffRow) ffRow.style.background = '';
         const hdrProxy = document.getElementById('tour-default-hdr-proxy');
         if (hdrProxy) hdrProxy.remove();
         document.querySelectorAll('.modal-backdrop[data-tour-bg]').forEach(el => {
@@ -9253,16 +9254,18 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
 
           if (phase === 3) {
-            // Active target stays on the toggle (keeps it clickable); elevate the full row
-            const el = lockTarget('[data-tour="sharing-default-toggle"]');
-            const row = document.querySelector('[data-tour="sharing-row"]');
+            // Active target stays on the toggle (keeps it clickable); elevate the full row.
+            // Face Finder (not Sharing): it sits high enough on the page that the row isn't
+            // pushed off the bottom of the viewport.
+            const el = lockTarget('[data-tour="face-finder-default-toggle"]');
+            const row = document.querySelector('[data-tour="face-finder-row"]');
             setHighlightRects(elevateEls([row].filter(Boolean)));
             if (row) row.style.background = '#fff';
             setVisible(true);
             if (!el) return;
             const onClick = () => {
               setTimeout(() => {
-                const target = document.querySelector('[data-tour="sharing-default-toggle"]');
+                const target = document.querySelector('[data-tour="face-finder-default-toggle"]');
                 if (target && target.getAttribute('data-enabled') === 'true') {
                   advance(4);
                 }
@@ -9378,8 +9381,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         3: {
           text: (
             <>
-              <p style={{ margin: 0 }}>Now let's turn on the Sharing permission. This one doesn't have advanced settings, it's simply an on/off toggle for each audience you've added to the gallery. Go ahead and toggle Sharing on for your Default audience, and we'll move on.</p>
-              {actionBullet('Turn on the Sharing toggle under the Default audience.')}
+              <p style={{ margin: 0 }}>Now let's turn on the Face Finder permission. This one doesn't have advanced settings, it's simply an on/off toggle for each audience you've added to the gallery. Go ahead and toggle Face Finder on for your Default audience, and we'll move on.</p>
+              {actionBullet('Turn on the Face Finder toggle under the Default audience.')}
             </>
           ),
           placement: 'center',
