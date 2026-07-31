@@ -90,7 +90,7 @@
     const esc = (t) => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const dstr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    let state = { from: null, to: null, events: [], selectedTour: null, preset: 30 };
+    let state = { from: null, to: null, events: [], feedback: [], feedbackError: null, selectedTour: null, preset: 30 };
 
     if (!CFG.url || !CFG.anonKey) {
       app.innerHTML = `<div class="card notice">Analytics isn't configured yet.<br/>
@@ -136,14 +136,36 @@
       return all;
     }
 
+    async function fetchFeedback(fromIso, toIso) {
+      const authHeaders = { apikey: CFG.anonKey };
+      if (CFG.anonKey.startsWith('eyJ')) authHeaders.Authorization = `Bearer ${CFG.anonKey}`;
+      const cols = 'created_at,session_id,meets_requirements,ease_of_use,comments,source';
+      const res = await fetch(`${CFG.url}/rest/v1/tour_feedback?select=${cols}&created_at=gte.${encodeURIComponent(fromIso)}&created_at=lt.${encodeURIComponent(toIso)}&order=created_at.desc&limit=1000`, {
+        headers: authHeaders,
+      });
+      if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
     async function load() {
       const note = document.getElementById('loaded-note');
       note.textContent = 'Loading…';
       try {
         const fromIso = new Date(`${state.from}T00:00:00`).toISOString();
         const toEx = new Date(`${state.to}T00:00:00`); toEx.setDate(toEx.getDate() + 1);
-        state.events = await fetchEvents(fromIso, toEx.toISOString());
-        note.textContent = `${state.events.length.toLocaleString()} events loaded · ${new Date().toLocaleTimeString()}`;
+        // Feedback loads separately and its failure (e.g. tour_feedback table not yet
+        // created) must not take down the events dashboard.
+        const [events, feedback] = await Promise.all([
+          fetchEvents(fromIso, toEx.toISOString()),
+          fetchFeedback(fromIso, toEx.toISOString()).then(
+            rows => ({ rows, error: null }),
+            e => ({ rows: [], error: e.message })
+          ),
+        ]);
+        state.events = events;
+        state.feedback = feedback.rows;
+        state.feedbackError = feedback.error;
+        note.textContent = `${state.events.length.toLocaleString()} events · ${state.feedback.length.toLocaleString()} feedback response${state.feedback.length === 1 ? '' : 's'} loaded · ${new Date().toLocaleTimeString()}`;
         render(false);
       } catch (e) {
         note.innerHTML = `<span class="err">Couldn't load events (${esc(e.message)}). Check the config values and the Supabase policies.</span>`;
@@ -276,6 +298,11 @@
           ${state.selectedTour ? renderFunnel(perTour.get(state.selectedTour), state.selectedTour) : '<div class="muted" style="font-size:13px">Click a tour row above to see how far people get, step by step.</div>'}
         </div>
 
+        <div class="card">
+          <h2>Feedback survey</h2>
+          ${renderFeedback()}
+        </div>
+
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
           <div class="card" style="margin-bottom:0">
             <h2>Genres picked <span class="muted" style="text-transform:none;font-weight:500">— Saved Custom Audiences tour</span></h2>
@@ -346,6 +373,37 @@
         <thead><tr><th>${esc(colName)}</th><th style="text-align:right">Used by</th></tr></thead>
         <tbody>${shown.map(r => `<tr><td>${esc(r.display)}</td><td style="text-align:right">${r.sessions.size} ${r.sessions.size === 1 ? 'person' : 'people'}</td></tr>`).join('')}</tbody>
       </table>${more > 0 ? `<div class="muted" style="font-size:12px;margin-top:8px">+ ${more} more not shown</div>` : ''}`;
+    }
+
+    function renderFeedback() {
+      if (state.feedbackError) {
+        return `<div class="muted" style="font-size:13px">Couldn't load feedback (${esc(state.feedbackError)}). If the <code>tour_feedback</code> table doesn't exist yet, run the feedback section of <code>analytics-setup.sql</code> in the Supabase SQL editor.</div>`;
+      }
+      const rows = state.feedback;
+      if (!rows.length) return '<div class="muted" style="font-size:13px">No feedback yet in this date range.</div>';
+      const meetsAvg = avg(rows.map(r => r.meets_requirements));
+      const easeAvg = avg(rows.map(r => r.ease_of_use));
+      const fmtScore = (x) => x == null ? '—' : `${(Math.round(x * 10) / 10).toFixed(1)} / 5`;
+      const srcLabel = (s) => s === 'topbar' ? 'Top bar link' : s ? tourLabel(s) : '—';
+      const scoreCls = (n) => n >= 4 ? 'rate-good' : n <= 2 ? 'rate-bad' : '';
+      return `
+        <div class="tiles" style="margin-bottom:16px">
+          <div class="tile"><div class="n">${rows.length.toLocaleString()}</div><div class="l">Responses</div></div>
+          <div class="tile"><div class="n">${fmtScore(meetsAvg)}</div><div class="l">Avg — meets requirements</div></div>
+          <div class="tile"><div class="n">${fmtScore(easeAvg)}</div><div class="l">Avg — ease of use</div></div>
+        </div>
+        <table>
+          <thead><tr><th>When</th><th>Meets req.</th><th>Ease of use</th><th>Comments</th><th>From</th></tr></thead>
+          <tbody>
+            ${rows.map(r => `<tr>
+              <td style="white-space:nowrap">${esc(new Date(r.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))}</td>
+              <td class="${scoreCls(r.meets_requirements)}">${r.meets_requirements}</td>
+              <td class="${scoreCls(r.ease_of_use)}">${r.ease_of_use}</td>
+              <td style="max-width:420px">${r.comments ? esc(r.comments) : '<span class="muted">—</span>'}</td>
+              <td class="muted" style="white-space:nowrap">${esc(srcLabel(r.source))}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
     }
 
     function renderFunnel(rec, tourId) {

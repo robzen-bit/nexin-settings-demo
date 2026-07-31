@@ -1389,6 +1389,34 @@
         }).catch(() => {});
       } catch (e) { /* analytics must never break the demo */ }
     };
+    // Feedback survey — posts to the tour_feedback table (see analytics-setup.sql). Same
+    // trust model as trackTourEvent: inert without config, failures swallowed.
+    const submitFeedback = async ({ meetsRequirements, easeOfUse, comments, source }) => {
+      if (!ANALYTICS_CFG.url || !ANALYTICS_CFG.anonKey) return false;
+      try {
+        const headers = { 'Content-Type': 'application/json', apikey: ANALYTICS_CFG.anonKey, Prefer: 'return=minimal' };
+        if (ANALYTICS_CFG.anonKey.startsWith('eyJ')) headers.Authorization = `Bearer ${ANALYTICS_CFG.anonKey}`;
+        const res = await fetch(`${ANALYTICS_CFG.url}/rest/v1/tour_feedback`, {
+          method: 'POST',
+          keepalive: true,
+          headers,
+          body: JSON.stringify({
+            session_id: ANALYTICS_SESSION_ID,
+            meets_requirements: meetsRequirements,
+            ease_of_use: easeOfUse,
+            comments: comments ? String(comments).slice(0, 4000) : null,
+            source: source ? String(source).slice(0, 40) : null,
+          }),
+        });
+        return res.ok;
+      } catch (e) { return false; }
+    };
+    // Global opener so the feedback modal can be triggered from anywhere (top bar,
+    // tour recap callouts) without threading props through portals. FeedbackHost
+    // registers itself here on mount.
+    let _openFeedbackModal = null;
+    const openFeedback = (source) => { if (_openFeedbackModal) _openFeedbackModal(source || null); };
+
     // CalloutModal reports steps by display name; events store topic ids.
     const TOURNAME_TO_ID = {
       'GENERAL OVERVIEW': 'overview',
@@ -1404,6 +1432,101 @@
 
     const TermsContext = React.createContext({ featuresLabel: 'Gallery Permissions', roleLabel: 'Audience', defaultRoleLabel: 'Default' });
     const useTerms = () => React.useContext(TermsContext);
+
+    // ===== Feedback modal =====
+    // Two 1–5 scale questions plus free-text comments; submits to Supabase via
+    // submitFeedback. Root carries tour-callout-portal so it stays clickable while a
+    // tour's pointer lock (tour-model-a-active) is active.
+    const FeedbackScale = ({ value, onChange }) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <button key={n} onClick={() => onChange(n)}
+            style={{ width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 15, fontWeight: 700,
+              border: `2px solid ${value === n ? 'var(--brand)' : 'var(--card-border)'}`,
+              background: value === n ? 'var(--brand)' : '#fff',
+              color: value === n ? '#fff' : 'var(--text-primary)',
+              transition: 'all 0.12s' }}>
+            {n}
+          </button>
+        ))}
+      </div>
+    );
+
+    const FeedbackModal = ({ source, onClose }) => {
+      const [meets, setMeets] = useState(null);
+      const [ease, setEase] = useState(null);
+      const [comments, setComments] = useState('');
+      const [status, setStatus] = useState('editing'); // editing | sending | done
+
+      const handleSubmit = async () => {
+        if (meets == null || ease == null || status !== 'editing') return;
+        setStatus('sending');
+        await submitFeedback({ meetsRequirements: meets, easeOfUse: ease, comments: comments.trim() || null, source });
+        setStatus('done');
+        setTimeout(onClose, 1600);
+      };
+
+      const qStyle = { fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 };
+      const jsx = (
+        <div className="tour-callout-portal" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.52)', zIndex: 700, pointerEvents: 'auto' }}
+          onClick={(e) => { if (e.target === e.currentTarget && status !== 'sending') onClose(); }}>
+          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.18)', width: 480, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}>
+            {status === 'done' ? (
+              <div style={{ padding: '52px 36px', textAlign: 'center' }}>
+                <div style={{ fontSize: 21, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>Thank you!</div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Your feedback has been recorded.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px 0' }}>
+                  <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>Feedback</div>
+                  <button onClick={onClose}
+                    style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: 'var(--text-tertiary, #aaa)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>
+                    CANCEL
+                  </button>
+                </div>
+                <div style={{ padding: '18px 28px 0' }}>
+                  <div style={qStyle}>On a scale of 1 through 5 — with 1 being the worst and 5 being the best — how well do these new settings meet my requirements?</div>
+                  <FeedbackScale value={meets} onChange={setMeets} />
+                </div>
+                <div style={{ padding: '22px 28px 0' }}>
+                  <div style={qStyle}>How easy are these new settings to use?</div>
+                  <FeedbackScale value={ease} onChange={setEase} />
+                </div>
+                <div style={{ padding: '22px 28px 0' }}>
+                  <div style={qStyle}>Please provide any additional comments, concerns, or additional feedback.</div>
+                  <textarea value={comments} onChange={(e) => setComments(e.target.value)} rows={4}
+                    placeholder="Your comments (optional)"
+                    style={{ width: '100%', marginTop: 10, padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--card-border)', fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5, color: 'var(--text-primary)', resize: 'vertical', outline: 'none' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '20px 28px 26px' }}>
+                  <button onClick={handleSubmit} disabled={meets == null || ease == null || status === 'sending'}
+                    style={{ padding: '11px 28px', borderRadius: 9999, border: 'none', fontSize: 14, fontWeight: 700, letterSpacing: '0.02em',
+                      background: (meets == null || ease == null) ? 'var(--card-border)' : 'var(--brand)',
+                      color: (meets == null || ease == null) ? 'var(--text-tertiary, #aaa)' : '#fff',
+                      cursor: (meets == null || ease == null || status === 'sending') ? 'default' : 'pointer' }}>
+                    {status === 'sending' ? 'Sending…' : 'Submit Feedback'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
+      return ReactDOM.createPortal(jsx, document.body);
+    };
+
+    // Mounted once at App level; registers the global opener used by the top bar link
+    // and the tour recap callouts.
+    const FeedbackHost = () => {
+      const [open, setOpen] = useState(false);
+      const [source, setSource] = useState(null);
+      useEffect(() => {
+        _openFeedbackModal = (src) => { setSource(src); setOpen(true); };
+        return () => { _openFeedbackModal = null; };
+      }, []);
+      return open ? <FeedbackModal source={source} onClose={() => setOpen(false)} /> : null;
+    };
 
     const TopBar = ({ onOpenTour, tourVisible, continueTourFn }) => (
       <header className="top-bar flex items-center justify-between px-6 h-[52px] bg-white border-b" style={{ borderColor: 'var(--card-border)' }}>
@@ -1434,6 +1557,15 @@
               )}
             </>
           )}
+
+          {/* Feedback link — sits to the right of the tour button */}
+          <button onClick={() => openFeedback('topbar')}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 20, border: 'none', background: 'none', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span style={{ textDecoration: 'underline', textUnderlineOffset: 2 }}>GIVE FEEDBACK</span>
+          </button>
         </div>
 
         <div />
@@ -8940,6 +9072,13 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
                 ← Back
               </button>
+              {/* Recap steps (Done) offer the feedback survey */}
+              {nextLabel === 'Done' && (
+                <button onClick={() => openFeedback(TOURNAME_TO_ID[tourName] || tourName || 'tour')}
+                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                  Give feedback
+                </button>
+              )}
               {onNext && (
                 <button onClick={onNext}
                   style={{ padding: '8px 20px', borderRadius: 9999, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em' }}>
@@ -12709,6 +12848,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           {!realMobile && <TopBar
             onOpenTour={openTourMenu} tourVisible={tourPhase !== 'welcome'}
             continueTourFn={continueTourFn} />}
+          <FeedbackHost />
           {tourPhase === 'welcome' && <WelcomeTourModal
             onTakeTour={() => { saveTourProgress({ welcomeSeen: true }); openTourMenu(); }}
             onExplore={() => { saveTourProgress({ welcomeSeen: true }); setTourPhase('idle'); }} />}

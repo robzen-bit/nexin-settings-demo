@@ -43,3 +43,28 @@ create policy "anon can read events"
 
 create index if not exists tour_events_created_at_idx on public.tour_events (created_at);
 create index if not exists tour_events_tour_idx on public.tour_events (tour_id, event);
+
+-- ===== Feedback survey =====
+-- Stores "Give Feedback" modal submissions: two 1–5 ratings plus free-text comments.
+-- Same trust model as tour_events: anon key can insert and read, never modify.
+create table if not exists public.tour_feedback (
+  id                 bigint generated always as identity primary key,
+  created_at         timestamptz not null default now(),
+  session_id         text not null check (char_length(session_id) between 1 and 64),
+  meets_requirements int not null check (meets_requirements between 1 and 5),
+  ease_of_use        int not null check (ease_of_use between 1 and 5),
+  comments           text check (comments is null or char_length(comments) <= 4000),
+  source             text check (source is null or char_length(source) <= 40)
+);
+
+alter table public.tour_feedback enable row level security;
+
+create policy "anon can insert feedback"
+  on public.tour_feedback for insert to anon
+  with check (true);
+
+create policy "anon can read feedback"
+  on public.tour_feedback for select to anon
+  using (true);
+
+create index if not exists tour_feedback_created_at_idx on public.tour_feedback (created_at);
