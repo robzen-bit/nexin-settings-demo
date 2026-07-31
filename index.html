@@ -1463,7 +1463,6 @@
         setStatus('sending');
         await submitFeedback({ meetsRequirements: meets, easeOfUse: ease, comments: comments.trim() || null, source });
         setStatus('done');
-        setTimeout(onClose, 1600);
       };
 
       const qStyle = { fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 };
@@ -1472,9 +1471,16 @@
           onClick={(e) => { if (e.target === e.currentTarget && status !== 'sending') onClose(); }}>
           <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.18)', width: 480, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}>
             {status === 'done' ? (
-              <div style={{ padding: '52px 36px', textAlign: 'center' }}>
-                <div style={{ fontSize: 21, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>Thank you!</div>
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Your feedback has been recorded.</div>
+              <div style={{ padding: '52px 36px 40px', textAlign: 'center' }}>
+                <div style={{ fontSize: 21, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>Thank you for your feedback</div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  You can submit additional questions, comments or concerns to{' '}
+                  <a href="mailto:research@zenfolio.com" style={{ color: 'var(--brand)', fontWeight: 600 }}>research@zenfolio.com</a>
+                </div>
+                <button onClick={onClose}
+                  style={{ marginTop: 24, padding: '11px 32px', borderRadius: 9999, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer' }}>
+                  Close
+                </button>
               </div>
             ) : (
               <>
