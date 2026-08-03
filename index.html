@@ -9102,6 +9102,33 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       return ReactDOM.createPortal(jsx, document.body);
     };
 
+    // Shared tour intro card — the same centered style as the General Overview and Default
+    // Audience intros: full-screen dim that grays out and blocks the prototype, label +
+    // title, body copy, and a Cancel + primary button row (no Back). Pass onNext to get the
+    // primary button; omit it for intros that advance from inside the body (genre picker).
+    const TourIntroModal = ({ label, title, onCancel, onNext, nextLabel = 'Next', children }) => {
+      const jsx = (
+        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.52)', zIndex: 600, pointerEvents: 'auto' }}>
+          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.18)', width: 460, maxWidth: 'calc(100vw - 32px)', overflow: 'hidden' }}>
+            <div style={{ padding: '36px 36px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--brand)', marginBottom: 10, opacity: 0.75 }}>{label}</div>
+              <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-primary)', lineHeight: 1.2 }}>{title}</div>
+            </div>
+            <div style={{ padding: '0 36px 28px', fontSize: 15, lineHeight: 1.7, color: 'var(--text-primary)', textAlign: 'center' }}>
+              {children}
+            </div>
+            <div style={{ display: 'flex', gap: 12, padding: '0 36px 36px' }}>
+              <button onClick={onCancel} style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1.5px solid var(--card-border)', background: '#fff', color: 'var(--text-primary)', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              {onNext && (
+                <button onClick={onNext} style={{ flex: 2, padding: '13px 0', borderRadius: 12, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{nextLabel}</button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+      return ReactDOM.createPortal(jsx, document.body);
+    };
+
     // "Need help?" pill shown while a tour is parked for free-play customization.
     const TourHelpPill = ({ onClick }) => {
       const jsx = (
@@ -10442,16 +10469,11 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const handleCancel = () => { tourLockClean(); onCancel(); };
 
       if (phase === 'intro') {
-        const c = callouts.intro;
         return (
-          <CalloutModal
-            text={c.text} placement={c.placement}
-            tourName="USING AUDIENCES"
-            stepNum={null} totalSteps={TOTAL}
-            nextLabel={c.nextLabel} onNext={c.onNext}
-            onBack={null} onCancel={handleCancel}
-            opacity={1}
-          />
+          <TourIntroModal label="USING AUDIENCES" title="Using Audiences"
+            onCancel={handleCancel} onNext={() => advance(1)} nextLabel="Start">
+            In this topic you'll learn how to add multiple audiences to a gallery and configure different download permissions for each one.
+          </TourIntroModal>
         );
       }
 
@@ -10891,28 +10913,20 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           { id: 'commercial', label: 'Commercial' },
         ];
         return (
-          <CalloutModal
-            tourName="SAVED AUDIENCES"
-            text={<>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Saved Custom Audiences</div>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>
-                Now that you've learned how to set up audiences, let's create two custom audiences. First, what type of photography do you shoot most? We'll use this to suggest audience names that fit your work.
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {GENRES.map(g => (
-                  <button key={g.id} onClick={() => handleGenreSelect(g.id)}
-                    style={{ padding: '10px 14px', borderRadius: 10, border: `2px solid ${genre === g.id ? 'var(--brand)' : 'var(--card-border)'}`, background: genre === g.id ? 'var(--brand-cream, #FFF1E6)' : '#fff', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.12s' }}>
-                    {g.label}
-                  </button>
-                ))}
-              </div>
-            </>}
-            placement="center"
-            stepNum={null} totalSteps={TOTAL}
-            nextLabel={null} onNext={null}
-            onBack={null} onCancel={handleCancel}
-            opacity={1}
-          />
+          <TourIntroModal label="SAVED AUDIENCES" title="Saved Custom Audiences"
+            onCancel={handleCancel}>
+            <p style={{ margin: '0 0 16px' }}>
+              Now that you've learned how to set up audiences, let's create two custom audiences. First, what type of photography do you shoot most? We'll use this to suggest audience names that fit your work.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {GENRES.map(g => (
+                <button key={g.id} onClick={() => handleGenreSelect(g.id)}
+                  style={{ padding: '10px 14px', borderRadius: 10, border: `2px solid ${genre === g.id ? 'var(--brand)' : 'var(--card-border)'}`, background: genre === g.id ? 'var(--brand-cream, #FFF1E6)' : '#fff', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.12s' }}>
+                  {g.label}
+                </button>
+              ))}
+            </div>
+          </TourIntroModal>
         );
       }
 
@@ -11174,17 +11188,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       if (phase === 'intro') {
         return (
-          <CalloutModal
-            text={<>
-              <p style={{ margin: 0 }}>In this tour we'll cover the different ways to add contacts to your audiences. We've set this gallery up with <strong>Guest</strong> and <strong>Client</strong> audiences, plus a custom audience called <strong>Parents</strong> — added just for demonstration purposes.</p>
-            </>}
-            placement="center"
-            tourName="ADDING CONTACTS"
-            stepNum={null} totalSteps={TOTAL}
-            nextLabel="Next" onNext={() => handleIntroNext()}
-            onBack={null} onCancel={handleCancel}
-            opacity={1}
-          />
+          <TourIntroModal label="ADDING CONTACTS" title="Adding Contacts to Audiences"
+            onCancel={handleCancel} onNext={() => handleIntroNext()}>
+            In this tour we'll cover the different ways to add contacts to your audiences. We've set this gallery up with <strong>Guest</strong> and <strong>Client</strong> audiences, plus a custom audience called <strong>Parents</strong> — added just for demonstration purposes.
+          </TourIntroModal>
         );
       }
 
@@ -11464,17 +11471,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       if (phase === 'intro') {
         return (
-          <CalloutModal
-            text={<>
-              <p style={{ margin: 0 }}>Setting presets let you reconfigure a whole gallery in one click. We've set this gallery up with <strong>Guest</strong>, <strong>Client</strong> and a custom <strong>Parent</strong> audience — each configured a little differently — and added a few contacts to each audience in the background.</p>
-            </>}
-            placement="center"
-            tourName="SETTING PRESETS"
-            stepNum={null} totalSteps={TOTAL}
-            nextLabel="Next" onNext={() => { setVisible(false); setPhase(1); }}
-            onBack={null} onCancel={handleCancel}
-            opacity={1}
-          />
+          <TourIntroModal label="SETTING PRESETS" title="Saving and Using Presets"
+            onCancel={handleCancel} onNext={() => { setVisible(false); setPhase(1); }}>
+            Setting presets let you reconfigure a whole gallery in one click. We've set this gallery up with <strong>Guest</strong>, <strong>Client</strong> and a custom <strong>Parent</strong> audience — each configured a little differently — and added a few contacts to each audience in the background.
+          </TourIntroModal>
         );
       }
 
@@ -11693,17 +11693,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
 
       if (phase === 'intro') {
         return (
-          <CalloutModal
-            text={<>
-              <p style={{ margin: 0 }}>Audiences aren't only for contacts you add yourself — visitors who register for your gallery can be added to an audience automatically. We're starting on <strong>Gallery Access</strong>, where registration is configured, and we've turned on <strong>Show Gallery Registration</strong> for you.</p>
-            </>}
-            placement="center"
-            tourName="AUDIENCES + REGISTRATION"
-            stepNum={null} totalSteps={TOTAL}
-            nextLabel="Next" onNext={() => { setVisible(false); setPhase(1); }}
-            onBack={null} onCancel={handleCancel}
-            opacity={1}
-          />
+          <TourIntroModal label="AUDIENCES + REGISTRATION" title="Using Audiences with Registration"
+            onCancel={handleCancel} onNext={() => { setVisible(false); setPhase(1); }}>
+            Audiences aren't only for contacts you add yourself — visitors who register for your gallery can be added to an audience automatically. We're starting on <strong>Gallery Access</strong>, where registration is configured, and we've turned on <strong>Show Gallery Registration</strong> for you.
+          </TourIntroModal>
         );
       }
 
