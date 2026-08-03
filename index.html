@@ -1747,11 +1747,6 @@
       const isContacts = activeSection === 'contacts';
       const isPresets = activeSection === 'presets';
       const contactsCount = contacts.length;
-      // Build a per-role count list, only including roles that have at least one contact.
-      // Order matches the matrix roles order so it stays consistent with the rest of the UI.
-      const roleCounts = roles
-        .map(r => ({ id: r.id, name: r.name, count: contacts.filter(c => c.roleId === r.id).length }))
-        .filter(r => r.count > 0);
       const access = ACCESS_MODES.find(m => m.id === accessMode) || ACCESS_MODES[0];
       return (
         <aside className="inner-sidebar w-[270px] shrink-0 px-5 pt-6 pb-10">
@@ -1803,17 +1798,6 @@
                          color: isContacts ? 'var(--brand)' : 'var(--text-secondary)',
                          background: '#fff' }}>{contactsCount}</span>
             </div>
-            {roleCounts.length > 0 && (
-              <ul className="pl-6 mt-2 space-y-1">
-                {roleCounts.map(r => (
-                  <li key={r.id}
-                    className="text-[11px] font-bold tracking-wider uppercase"
-                    style={{ color: 'var(--text-primary)' }}>
-                    {r.name} <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>({r.count})</span>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
           <div className="rounded-xl px-3 py-3 mb-2 bg-white border" style={{ borderColor: 'var(--card-border)' }}>
             <div className="flex items-center gap-2 mb-2"><CartIcon size={15} /><span className="text-[13px] font-semibold">Store</span></div>
