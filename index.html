@@ -3802,6 +3802,17 @@
     // on top (clickable to expand settings), and each role rendered as a label/toggle row.
     const MatrixRow = ({ feature, roles, perRole, isOpen, onToggleOpen, onToggleEnabled, onUpdateShared, onSetOpen, gridCols, hasSettings, isMobile, onEditSettings }) => {
       const SUMMARY_FEATURES = new Set(['photo-downloads', 'video-downloads']);
+      // A double-click must act like a single click: without this, the second click re-toggles
+      // the accordion (open then instantly closed), which desyncs tour steps waiting on the
+      // row's open state.
+      const lastToggleRef = React.useRef(0);
+      const handleRowClick = () => {
+        if (!hasSettings) return;
+        const now = Date.now();
+        if (now - lastToggleRef.current < 350) return;
+        lastToggleRef.current = now;
+        onToggleOpen();
+      };
       if (isMobile) {
         const watermarkOn = feature.appliesToAll
           ? (() => { const v = getSharedValue(perRole, roles, feature.id, 'watermark-source'); return !!(v && v !== 'None'); })()
@@ -3872,7 +3883,7 @@
       const statusLines = showSummary ? buildFeatureStatusLines(feature, roles, perRole) : [];
       return (
         <div className="border-t" style={{ borderColor: 'var(--card-border)' }}>
-          <div onClick={() => hasSettings && onToggleOpen()}
+          <div onClick={handleRowClick}
             className={`feature-row grid items-center${hasSettings ? ' is-collapsible' : ''}${isOpen ? ' is-open' : ''}`}
             data-tour={feature.id === 'screenshot-protection' ? 'screenshot-protection-row' : feature.id === 'photo-downloads' ? 'photo-downloads-row' : feature.id === 'favorites' ? 'favorites-row' : feature.id === 'sharing' ? 'sharing-row' : feature.id === 'face-finder' ? 'face-finder-row' : undefined}
             style={{ gridTemplateColumns: gridCols, minHeight: 58, padding: '16px 0',
@@ -9658,8 +9669,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         2: {
           text: (
             <>
-              <p style={{ margin: 0 }}>Perfect, you've turned on Screenshot Protection for your Default audience. Some permissions have advanced settings you can see by expanding the permission. To expand it, click the chevron to the left of the permission's name. Go ahead and click that chevron to see Screenshot Protection's advanced settings.</p>
-              {actionBullet('Click the chevron to the left of Screenshot Protection to expand its advanced settings.')}
+              <p style={{ margin: 0 }}>Perfect, you've turned on Screenshot Protection for your Default audience. Some permissions have advanced settings you can see by expanding the permission. To expand it, click the chevron to the left of the permission's name — or simply click anywhere on the row. Go ahead and expand Screenshot Protection to see its advanced settings.</p>
+              {actionBullet('Click the chevron — or anywhere on the Screenshot Protection row — to expand its advanced settings.')}
             </>
           ),
           placement: 'center',
