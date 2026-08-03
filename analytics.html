@@ -50,6 +50,7 @@
     .funnel-track { flex: 1; background: var(--bg); border-radius: 6px; height: 22px; position: relative; }
     .funnel-fill { height: 100%; border-radius: 6px; background: var(--brand); opacity: 0.85; }
     .funnel-n { width: 130px; flex-shrink: 0; color: var(--text-1); }
+    .funnel-t { width: 78px; flex-shrink: 0; text-align: right; font-size: 12px; }
     .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 2px solid var(--card-border); }
     .tabs button { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; padding: 10px 18px; border: none; background: none; color: var(--text-2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
     .tabs button.active { color: var(--brand); border-bottom-color: var(--brand); }
@@ -179,8 +180,23 @@
     function aggregate(events) {
       const perTour = new Map();
       const forTour = (id) => {
-        if (!perTour.has(id)) perTour.set(id, { started: new Set(), completed: new Set(), durations: [], steps: new Map(), cancelSteps: [] });
+        if (!perTour.has(id)) perTour.set(id, { started: new Set(), completed: new Set(), durations: [], steps: new Map(), cancelSteps: [], stepDurations: new Map(), _pendingStep: new Map() });
         return perTour.get(id);
+      };
+      // Time-on-step: events arrive in chronological order, so each session's dwell time on a
+      // step is the gap between that step_reached and the session's next event for the same
+      // tour (next step, completion, or cancel). Gaps over 30 min are treated as the visitor
+      // having walked away and are excluded from averages.
+      const MAX_STEP_S = 1800;
+      const closeStep = (rec, sessionId, endMs) => {
+        const p = rec._pendingStep.get(sessionId);
+        if (!p) return;
+        rec._pendingStep.delete(sessionId);
+        const dur = (endMs - p.t) / 1000;
+        if (dur >= 0 && dur <= MAX_STEP_S) {
+          if (!rec.stepDurations.has(p.step)) rec.stepDurations.set(p.step, []);
+          rec.stepDurations.get(p.step).push(dur);
+        }
       };
       const byDay = new Map();
       // Unique-label rollups (deduped by session, grouped case-insensitively)
@@ -192,6 +208,7 @@
         if (ev.event === 'tour_started') rec.started.add(ev.session_id);
         else if (ev.event === 'tour_completed') {
           rec.completed.add(ev.session_id);
+          closeStep(rec, ev.session_id, Date.parse(ev.created_at));
           if (ev.duration_s != null) rec.durations.push(ev.duration_s);
           const day = dstr(new Date(ev.created_at));
           if (!byDay.has(day)) byDay.set(day, new Map());
@@ -200,7 +217,11 @@
         } else if (ev.event === 'step_reached' && ev.step != null) {
           if (!rec.steps.has(ev.session_id)) rec.steps.set(ev.session_id, new Set());
           rec.steps.get(ev.session_id).add(ev.step);
+          const now = Date.parse(ev.created_at);
+          closeStep(rec, ev.session_id, now);
+          rec._pendingStep.set(ev.session_id, { step: ev.step, t: now });
         } else if (ev.event === 'tour_cancelled' && ev.step != null) {
+          closeStep(rec, ev.session_id, Date.parse(ev.created_at));
           rec.cancelSteps.push(ev.step);
         } else if (ev.event === 'genre_selected' && ev.label) {
           const key = String(ev.label).trim().toLowerCase();
@@ -441,12 +462,16 @@
       const cancelNote = rec.cancelSteps.length
         ? `<div class="muted" style="font-size:12px;margin-top:10px">${rec.cancelSteps.length} explicit cancel${rec.cancelSteps.length === 1 ? '' : 's'} recorded (most common at step ${median(rec.cancelSteps) != null ? Math.round(median(rec.cancelSteps)) : '—'}).</div>`
         : '';
-      return rows.map(({ s, n }) => `
+      return rows.map(({ s, n }) => {
+        const stepAvg = avg(rec.stepDurations.get(s) || []);
+        return `
         <div class="funnel-row">
           <div class="funnel-step">Step ${s}</div>
           <div class="funnel-track"><div class="funnel-fill" style="width:${n === 0 ? 0 : Math.max(2, (n / base) * 100)}%"></div></div>
           <div class="funnel-n ${n === 0 ? 'muted' : ''}">${n} session${n === 1 ? '' : 's'} · ${fmtPct(n / base)}</div>
-        </div>`).join('') + cancelNote;
+          <div class="funnel-t muted" title="Average time spent on this step">${stepAvg != null ? 'avg ' + fmtDur(stepAvg) : ''}</div>
+        </div>`;
+      }).join('') + cancelNote;
     }
   </script>
 </body>
