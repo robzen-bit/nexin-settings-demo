@@ -1902,6 +1902,10 @@
       </button>
     );
 
+    // Add-contact buttons stay disabled until this passes — a real address shape,
+    // not just any text in the email field.
+    const isValidEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(s || '').trim());
+
     // Reusable contact form fields (First/Last name, Email, Mobile with US flag select)
     const ContactFields = ({ first, setFirst, last, setLast, email, setEmail, mobile, setMobile, emailPlaceholder = 'Email' }) => {
       const isMobile = useIsMobile();
@@ -2103,7 +2107,7 @@
       };
 
       const submit = () => {
-        const contact = contactEmail.trim()
+        const contact = isValidEmail(contactEmail)
           ? { firstName: firstName.trim(), lastName: lastName.trim(), email: contactEmail.trim(), mobile: contactMobile.trim() }
           : null;
         onSelect(presetId, presetId === 'custom' ? trimmed : undefined, contact, savedPerRoleState);
@@ -2731,7 +2735,7 @@
       const [last, setLast] = useState('');
       const [email, setEmail] = useState('');
       const [mobile, setMobile] = useState('');
-      const canAdd = email.trim().length > 0;
+      const canAdd = isValidEmail(email);
       return (
         <MobileSheetModal onClose={onClose} zIndex={50} maxWidth={600}>
           <div className="p-6" data-tour="add-contact-modal">
@@ -6609,7 +6613,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       const safePage = Math.min(page, Math.max(0, totalPages - 1));
       const pageContacts = contacts.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
-      const canAdd = email.trim().length > 0;
+      const canAdd = isValidEmail(email);
       const reset = () => { setFirst(''); setLast(''); setEmail(''); setMobile(''); };
       const submit = (roleId) => {
         if (!canAdd) return;
@@ -9413,14 +9417,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Derived: recomputed whenever highlightRects or phase changes — avoids stale-setState race
       const calloutStyle = useMemo(() => {
         if (highlightRects.length === 0) return null;
-        if (phase === 2) {
+        if (phase === 3) {
           // Park the modal in the empty gutter above the settings block — clear of the
           // collapse chevron on the left and the advanced-settings panel on the right
           const vw = window.innerWidth;
           return { top: 40, left: Math.min(Math.max(25, Math.round(vw * 0.37)), vw - 365) };
         }
-        if (phase === 3) {
-          // Center gutter, high on the page — clear of the Sharing row near the bottom
+        if (phase === 4) {
+          // Center gutter, high on the page — clear of the Face Finder row near the bottom
           const vw = window.innerWidth;
           return { top: 114, left: Math.min(Math.max(25, Math.round(vw * 0.38)), vw - 365) };
         }
@@ -9481,7 +9485,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       // Navigate and set up Model A lock for each numbered phase
       useEffect(() => {
         if (phase === 'intro') { lockCleanup(); setHighlightRects([]); return; }
-        if (phase === 6) { lockCleanup(); setHighlightRects([]); setVisible(true); return; }
+        if (phase === 7) { lockCleanup(); setHighlightRects([]); setVisible(true); return; }
         setActiveMainTab && setActiveMainTab('Settings');
         setActiveSection('features');
 
@@ -9507,6 +9511,26 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           }
 
           if (phase === 2) {
+            // Toggling a permission on no longer auto-expands it, so this step asks for the
+            // chevron click. Elevate the collapsed row (white bg) and advance once it opens.
+            const el = lockTarget('[data-tour="screenshot-protection-row"]');
+            setHighlightRects(elevateEls([el].filter(Boolean)));
+            if (el) el.style.background = '#fff';
+            setVisible(true);
+            if (!el) return;
+            const onClick = () => {
+              setTimeout(() => {
+                const row = document.querySelector('[data-tour="screenshot-protection-row"]');
+                if (row && row.classList.contains('is-open')) {
+                  advance(3);
+                }
+              }, 80);
+            };
+            el.addEventListener('click', onClick);
+            return () => el.removeEventListener('click', onClick);
+          }
+
+          if (phase === 3) {
             // Elevate the expanded row AND the settings block below it
             const settingsBlock = (() => {
               const r = document.querySelector('[data-tour="screenshot-protection-row"]');
@@ -9523,7 +9547,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               setTimeout(() => {
                 const row = document.querySelector('[data-tour="screenshot-protection-row"]');
                 if (row && !row.classList.contains('is-open')) {
-                  advance(3);
+                  advance(4);
                 }
               }, 80);
             };
@@ -9531,7 +9555,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return () => el.removeEventListener('click', onClick);
           }
 
-          if (phase === 3) {
+          if (phase === 4) {
             // Active target stays on the toggle (keeps it clickable); elevate the full row.
             // Face Finder (not Sharing): it sits high enough on the page that the row isn't
             // pushed off the bottom of the viewport.
@@ -9545,7 +9569,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               setTimeout(() => {
                 const target = document.querySelector('[data-tour="face-finder-default-toggle"]');
                 if (target && target.getAttribute('data-enabled') === 'true') {
-                  advance(4);
+                  advance(5);
                 }
               }, 80);
             };
@@ -9553,7 +9577,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             return () => el.removeEventListener('click', onClick);
           }
 
-          if (phase === 4) {
+          if (phase === 5) {
             // The Default header cell lives inside [data-tour="matrix-header-row"], which is
             // position:sticky/zIndex:10 — a stacking context below the dim (540). Elevating the
             // cell can't lift it above the dim, so overlay a clickable proxy of the header
@@ -9574,14 +9598,14 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             setVisible(true);
             const onClick = () => {
               if (realBtn) realBtn.click();
-              advance(5);
+              advance(6);
             };
             proxy.addEventListener('click', onClick);
             return () => { proxy.removeEventListener('click', onClick); proxy.remove(); };
           }
 
-          if (phase === 5) {
-            // Add-contact modal is open from step 4; wait a frame for it to render
+          if (phase === 6) {
+            // Add-contact modal is open from step 5; wait a frame for it to render
             const setup = () => {
               const modal = document.querySelector('[data-tour="add-contact-modal"]');
               if (!modal) { setTimeout(setup, 80); return; }
@@ -9601,7 +9625,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
               setVisible(true);
               const btn = document.querySelector('[data-tour="add-as-role-btn"]');
               if (!btn) return;
-              const onClick = () => advance(6);
+              const onClick = () => advance(7);
               btn.addEventListener('click', onClick);
             };
             setup();
@@ -9650,13 +9674,22 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
         2: {
           text: (
             <>
-              <p style={{ margin: 0 }}>Perfect, you've turned on Screenshot Protection for your Default audience. You may notice some permissions have advanced settings you can see by expanding the permission. We'll leave Screenshot Protection set up as it is. You can collapse the advanced settings by clicking the chevron to the left of the permission's name. Go ahead and click that chevron to collapse the settings, and we'll move on.</p>
+              <p style={{ margin: 0 }}>Perfect, you've turned on Screenshot Protection for your Default audience. Some permissions have advanced settings you can see by expanding the permission. To expand it, click the chevron to the left of the permission's name. Go ahead and click that chevron to see Screenshot Protection's advanced settings.</p>
+              {actionBullet('Click the chevron to the left of Screenshot Protection to expand its advanced settings.')}
+            </>
+          ),
+          placement: 'center',
+        },
+        3: {
+          text: (
+            <>
+              <p style={{ margin: 0 }}>These are Screenshot Protection's advanced settings. We'll leave them set up as they are. You can collapse the advanced settings the same way you expanded them — by clicking the chevron to the left of the permission's name. Go ahead and click that chevron to collapse the settings, and we'll move on.</p>
               {actionBullet('Click the chevron to the left of Screenshot Protection to collapse its advanced settings.')}
             </>
           ),
           placement: 'upper-center',
         },
-        3: {
+        4: {
           text: (
             <>
               <p style={{ margin: 0 }}>Now let's turn on the Face Finder permission. This one doesn't have advanced settings, it's simply an on/off toggle for each audience you've added to the gallery. Go ahead and toggle Face Finder on for your Default audience, and we'll move on.</p>
@@ -9665,7 +9698,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           ),
           placement: 'center',
         },
-        4: {
+        5: {
           text: (
             <>
               <p style={{ margin: 0 }}>Now that you've learned how to set up your Default audience, let's add a contact to it without leaving the Gallery Permissions page. If you click the name of an audience in the header, a window pops up that lets you add a contact to that audience. Go ahead and click Default in the header.</p>
@@ -9674,7 +9707,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           ),
           placement: 'center',
         },
-        5: {
+        6: {
           text: (
             <>
               <p style={{ margin: 0 }}>Go ahead and enter some contact information here. All that's required is an email. Then click Add as Default to complete this part of the tour.</p>
@@ -9683,7 +9716,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
           ),
           placement: 'upper-center',
         },
-        6: {
+        7: {
           text: <span>That's your Default audience set up. These are the baseline gallery permissions every visitor receives when they access your gallery, along with anyone you add as a Default contact. Nicely done.</span>,
           placement: 'center',
           nextLabel: 'Done',
@@ -9703,7 +9736,7 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             posStyle={calloutStyle}
             tourName="DEFAULT AUDIENCE"
             stepNum={phase}
-            totalSteps={6}
+            totalSteps={7}
             nextLabel={currentCallout.nextLabel || null}
             onNext={currentCallout.onNext || null}
             onBack={() => goBack(phase)}
@@ -12280,7 +12313,6 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 ['screenshot-protection']: { enabled: true, values: { 'screenshot-config': newConfig } },
               },
             });
-            setOpenFeatures(prev => { if (prev.has(featureId)) return prev; const s = new Set(prev); s.add(featureId); return s; });
           } else {
             setPerRole({ ...perRole, [roleId]: { ...perRole[roleId], ['screenshot-protection']: { ...perRole[roleId]['screenshot-protection'], enabled: false } } });
           }
@@ -12294,17 +12326,6 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
             [featureId]: { ...perRole[roleId][featureId], enabled: !wasEnabled },
           },
         });
-        if (!wasEnabled) {
-          const feature = features.find(f => f.id === featureId);
-          if (feature && feature.settings && feature.settings.length > 0) {
-            setOpenFeatures(prev => {
-              if (prev.has(featureId)) return prev;
-              const next = new Set(prev);
-              next.add(featureId);
-              return next;
-            });
-          }
-        }
       };
 
       const updateValue = (featureId, roleId, settingId, value) => {
