@@ -10217,7 +10217,9 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       useEffect(() => {
         if (phase !== 1 || advancingRef.current) return;
         if (showModal) {
-          const t = setTimeout(() => advance(2), ADVANCE_DELAY);
+          // Modal-open steps advance fast: the full ADVANCE_DELAY leaves the freshly opened
+          // modal sitting behind the dim for a second, which reads as lag after the click.
+          const t = setTimeout(() => advance(2), 150);
           return () => clearTimeout(t);
         }
       }, [phase, showModal]);
@@ -10796,7 +10798,8 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
       useEffect(() => {
         if ((phase !== 1 && phase !== 6 && phase !== 13) || advancingRef.current || !showModal) return;
         const next = phase === 1 ? 2 : phase === 6 ? 7 : 14;
-        const t = setTimeout(() => advance(next), ADVANCE_DELAY);
+        // Modal-open steps advance fast — see UsingAudiencesTopic phase 1 watcher.
+        const t = setTimeout(() => advance(next), 150);
         return () => clearTimeout(t);
       }, [phase, showModal]);
 
