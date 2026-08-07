@@ -1439,11 +1439,11 @@
     // Two 1–5 scale questions plus free-text comments; submits to Supabase via
     // submitFeedback. Root carries tour-callout-portal so it stays clickable while a
     // tour's pointer lock (tour-model-a-active) is active.
-    const FeedbackScale = ({ value, onChange }) => (
+    const FeedbackScale = ({ value, onChange, size = 40 }) => (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
         {[1, 2, 3, 4, 5].map(n => (
           <button key={n} onClick={() => onChange(n)}
-            style={{ width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 15, fontWeight: 700,
+            style={{ width: size, height: size, borderRadius: Math.round(size / 4), cursor: 'pointer', fontSize: size >= 40 ? 15 : 13, fontWeight: 700,
               border: `2px solid ${value === n ? 'var(--brand)' : 'var(--card-border)'}`,
               background: value === n ? 'var(--brand)' : '#fff',
               color: value === n ? '#fff' : 'var(--text-primary)',
@@ -1534,6 +1534,59 @@
         return () => { _openFeedbackModal = null; };
       }, []);
       return open ? <FeedbackModal source={source} onClose={() => setOpen(false)} /> : null;
+    };
+
+    // Compact feedback form embedded directly in each tour's recap step (CalloutModal renders
+    // it when nextLabel === 'Done'), so giving feedback doesn't require opening a separate
+    // modal. Same questions and submitFeedback pipeline as FeedbackModal; each tour recap
+    // mounts fresh, so the source tags which tour it came from.
+    const InlineFeedback = ({ source }) => {
+      const [meets, setMeets] = useState(null);
+      const [ease, setEase] = useState(null);
+      const [comments, setComments] = useState('');
+      const [status, setStatus] = useState('editing'); // editing | sending | done
+
+      const handleSubmit = async () => {
+        if (meets == null || ease == null || status !== 'editing') return;
+        setStatus('sending');
+        await submitFeedback({ meetsRequirements: meets, easeOfUse: ease, comments: comments.trim() || null, source });
+        setStatus('done');
+      };
+
+      if (status === 'done') {
+        return (
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--card-border)', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Thank you for your feedback</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.5 }}>
+              You can submit additional questions, comments or concerns to{' '}
+              <a href="mailto:research@zenfolio.com" style={{ color: 'var(--brand)', fontWeight: 600 }}>research@zenfolio.com</a>
+            </div>
+          </div>
+        );
+      }
+
+      const qStyle = { fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 };
+      const ready = meets != null && ease != null;
+      return (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--card-border)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--brand)', opacity: 0.85, marginBottom: 2 }}>QUICK FEEDBACK</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary, #aaa)', marginBottom: 10 }}>1 = worst · 5 = best</div>
+          <div style={qStyle}>How well do these new settings meet your requirements?</div>
+          <FeedbackScale value={meets} onChange={setMeets} size={32} />
+          <div style={{ ...qStyle, marginTop: 12 }}>How easy are these new settings to use?</div>
+          <FeedbackScale value={ease} onChange={setEase} size={32} />
+          <textarea value={comments} onChange={(e) => setComments(e.target.value)} rows={2}
+            placeholder="Any additional comments, concerns, or feedback (optional)"
+            style={{ width: '100%', marginTop: 12, padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--card-border)', fontSize: 12.5, fontFamily: 'inherit', lineHeight: 1.5, color: 'var(--text-primary)', resize: 'vertical', outline: 'none' }} />
+          <button onClick={handleSubmit} disabled={!ready || status === 'sending'}
+            style={{ width: '100%', marginTop: 8, padding: '9px 0', borderRadius: 9999, border: 'none', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.02em',
+              background: ready ? 'var(--brand)' : 'var(--card-border)',
+              color: ready ? '#fff' : 'var(--text-tertiary, #aaa)',
+              cursor: (ready && status !== 'sending') ? 'pointer' : 'default' }}>
+            {status === 'sending' ? 'Sending…' : 'Submit Feedback'}
+          </button>
+        </div>
+      );
     };
 
     const TopBar = ({ onOpenTour, tourVisible, continueTourFn }) => (
@@ -9072,9 +9125,10 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 CANCEL
               </button>
             </div>
-            {/* Body */}
+            {/* Body — recap steps (Done) get the feedback survey baked in */}
             <div style={{ padding: '10px 16px 14px', fontSize: 14, lineHeight: 1.65, color: 'var(--text-primary)' }}>
               {text}
+              {nextLabel === 'Done' && <InlineFeedback source={TOURNAME_TO_ID[tourName] || tourName || 'tour'} />}
             </div>
             {/* Footer */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: onNext ? 'space-between' : 'flex-start', padding: '11px 16px 14px', borderTop: '1px solid var(--card-border)' }}>
@@ -9082,13 +9136,6 @@ Ben,Park,ben.park@yopmail.com,555-125-2257,James,Park,james.park@yopmail.com,555
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
                 ← Back
               </button>
-              {/* Recap steps (Done) offer the feedback survey */}
-              {nextLabel === 'Done' && (
-                <button onClick={() => openFeedback(TOURNAME_TO_ID[tourName] || tourName || 'tour')}
-                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textDecoration: 'underline', textUnderlineOffset: 2 }}>
-                  Give feedback
-                </button>
-              )}
               {onNext && (
                 <button onClick={onNext}
                   style={{ padding: '8px 20px', borderRadius: 9999, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em' }}>
