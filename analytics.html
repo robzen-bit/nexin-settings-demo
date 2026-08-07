@@ -349,12 +349,15 @@
 
       let totStartSessions = new Set(), totCompletions = 0, totAttempts = 0, totCompleted = 0;
       let best = null, worst = null;
+      let allDurations = [], allExcluded = 0;
       for (const id of tourIds) {
         const r = perTour.get(id);
         r.started.forEach(s => totStartSessions.add(s));
         totCompletions += r.completed.size;
         totAttempts += r.started.size;
         totCompleted += r.completed.size;
+        allDurations = allDurations.concat(r.durations);
+        allExcluded += r.excludedDurations;
         const rate = r.started.size ? r.completed.size / r.started.size : null;
         if (rate != null && r.started.size >= 3) {
           if (!best || rate > best.rate) best = { id, rate };
@@ -398,6 +401,15 @@
                   <td>${fmtDur(median(r.durations))}</td>
                 </tr>`;
               }).join('') : `<tr><td colspan="7" class="muted">No events in this date range yet.</td></tr>`}
+              ${tourIds.length ? `<tr style="font-weight:700;border-top:2px solid var(--card-border)">
+                <td>All Tours Combined</td>
+                <td>${totAttempts}</td>
+                <td>${totCompleted}</td>
+                <td class="${overallRate != null && overallRate >= 0.5 ? 'rate-good' : overallRate != null ? 'rate-bad' : ''}">${fmtPct(overallRate)}</td>
+                <td>${overallRate != null ? fmtPct(1 - overallRate) : '—'}</td>
+                <td>${fmtDur(avg(allDurations))}${allExcluded ? `<span class="muted" style="font-weight:400" title="${allExcluded} completion${allExcluded === 1 ? '' : 's'} excluded from avg/median — tab was left open past 30 min before finishing">*</span>` : ''}</td>
+                <td>${fmtDur(median(allDurations))}</td>
+              </tr>` : ''}
             </tbody>
           </table>
         </div>
