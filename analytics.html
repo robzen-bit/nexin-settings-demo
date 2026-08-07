@@ -432,15 +432,18 @@
                   <td>${fmtDur(median(r.durations))}</td>
                 </tr>`;
               }).join('') : `<tr><td colspan="7" class="muted">No events in this date range yet.</td></tr>`}
-              ${tourIds.length ? `<tr style="font-weight:700;border-top:2px solid var(--card-border)">
-                <td>All Tours Combined</td>
-                <td>${totAttempts}</td>
-                <td>${totCompleted}</td>
-                <td class="${overallRate != null && overallRate >= 0.5 ? 'rate-good' : overallRate != null ? 'rate-bad' : ''}">${fmtPct(overallRate)}</td>
-                <td>${overallRate != null ? fmtPct(1 - overallRate) : '—'}</td>
+              ${tourIds.length ? (() => {
+                const fullRate = totStartSessions.size ? fullCompletion.qualifying / totStartSessions.size : null;
+                return `<tr style="font-weight:700;border-top:2px solid var(--card-border)">
+                <td>Completed All Tours</td>
+                <td title="Unique visitors who started any tour">${totStartSessions.size}</td>
+                <td title="Unique visitors who completed every one of the ${TOURS.length} tours">${fullCompletion.qualifying}</td>
+                <td class="${fullRate != null && fullRate >= 0.5 ? 'rate-good' : fullRate != null ? 'rate-bad' : ''}">${fmtPct(fullRate)}</td>
+                <td>${fullRate != null ? fmtPct(1 - fullRate) : '—'}</td>
                 <td title="${fullCompletionTitle(fullCompletion)}">${fmtDur(avg(fullCompletion.totals))}${fullCompletion.qualifying ? `<span class="muted" style="font-weight:400">*</span>` : ''}</td>
                 <td title="${fullCompletionTitle(fullCompletion)}">${fmtDur(median(fullCompletion.totals))}</td>
-              </tr>` : ''}
+              </tr>`;
+              })() : ''}
             </tbody>
           </table>
         </div>
