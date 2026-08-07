@@ -266,7 +266,7 @@
     function aggregate(events) {
       const perTour = new Map();
       const forTour = (id) => {
-        if (!perTour.has(id)) perTour.set(id, { started: new Set(), completed: new Set(), durations: [], steps: new Map(), cancelSteps: [], stepDurations: new Map(), _pendingStep: new Map() });
+        if (!perTour.has(id)) perTour.set(id, { started: new Set(), completed: new Set(), durations: [], excludedDurations: 0, steps: new Map(), cancelSteps: [], stepDurations: new Map(), _pendingStep: new Map() });
         return perTour.get(id);
       };
       // Time-on-step: events arrive in chronological order, so each session's dwell time on a
@@ -274,6 +274,11 @@
       // tour (next step, completion, or cancel). Gaps over 30 min are treated as the visitor
       // having walked away and are excluded from averages.
       const MAX_STEP_S = 1800;
+      // Same 30-min cutoff applied to whole-tour completion time: a tab left open (overnight,
+      // over a weekend) reports a duration_s of the real wall-clock gap with no upper bound,
+      // and a single such session can drag the average up by many minutes. Excluded from
+      // avg/median but the completion itself still counts.
+      const MAX_TOUR_S = 1800;
       const closeStep = (rec, sessionId, endMs) => {
         const p = rec._pendingStep.get(sessionId);
         if (!p) return;
@@ -295,7 +300,10 @@
         else if (ev.event === 'tour_completed') {
           rec.completed.add(ev.session_id);
           closeStep(rec, ev.session_id, Date.parse(ev.created_at));
-          if (ev.duration_s != null) rec.durations.push(ev.duration_s);
+          if (ev.duration_s != null) {
+            if (ev.duration_s <= MAX_TOUR_S) rec.durations.push(ev.duration_s);
+            else rec.excludedDurations++;
+          }
           const day = dstr(new Date(ev.created_at));
           if (!byDay.has(day)) byDay.set(day, new Map());
           const dm = byDay.get(day);
@@ -386,7 +394,7 @@
                   <td>${r.completed.size}</td>
                   <td class="${rate != null && rate >= 0.5 ? 'rate-good' : rate != null ? 'rate-bad' : ''}">${fmtPct(rate)}</td>
                   <td>${rate != null ? fmtPct(1 - rate) : '—'}</td>
-                  <td>${fmtDur(avg(r.durations))}</td>
+                  <td>${fmtDur(avg(r.durations))}${r.excludedDurations ? `<span class="muted" title="${r.excludedDurations} completion${r.excludedDurations === 1 ? '' : 's'} excluded from avg/median — tab was left open past 30 min before finishing">*</span>` : ''}</td>
                   <td>${fmtDur(median(r.durations))}</td>
                 </tr>`;
               }).join('') : `<tr><td colspan="7" class="muted">No events in this date range yet.</td></tr>`}
