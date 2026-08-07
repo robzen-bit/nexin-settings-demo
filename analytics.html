@@ -333,6 +333,39 @@
       }
       return { perTour, byDay, genres, names };
     }
+
+    // "All Tours Combined" time isn't an average of the seven per-tour averages — it's the
+    // average TOTAL time for the subset of sessions that actually finished every single tour.
+    // A session's per-tour time is its first (earliest) completion of that tour; sessions
+    // missing any of the seven tours don't qualify. Same 30-min tab-left-open cutoff as
+    // elsewhere: a qualifying session with any one leg over that is excluded from the
+    // avg/median (counted separately) since one bad leg would otherwise blow up the total.
+    const MAX_TOUR_S = 1800;
+    function computeFullCompletionTimes(events) {
+      const tourIds = TOURS.map(t => t.id);
+      const sessionTourDur = new Map();
+      for (const ev of events) {
+        if (ev.event !== 'tour_completed' || ev.duration_s == null) continue;
+        if (!sessionTourDur.has(ev.session_id)) sessionTourDur.set(ev.session_id, new Map());
+        const m = sessionTourDur.get(ev.session_id);
+        if (!m.has(ev.tour_id)) m.set(ev.tour_id, ev.duration_s); // events arrive in ascending order — first wins
+      }
+      let totals = [], excluded = 0;
+      for (const m of sessionTourDur.values()) {
+        if (!tourIds.every(t => m.has(t))) continue;
+        const durs = tourIds.map(t => m.get(t));
+        if (durs.some(d => d > MAX_TOUR_S)) { excluded++; continue; }
+        totals.push(durs.reduce((a, b) => a + b, 0));
+      }
+      return { totals, excluded, qualifying: totals.length + excluded };
+    }
+    function fullCompletionTitle(fc) {
+      if (!fc.qualifying) return 'No visitors have completed every tour in this date range yet.';
+      const base = `Based on ${fc.totals.length} visitor${fc.totals.length === 1 ? '' : 's'} who completed all ${TOURS.length} tours — total time per person, not an average of the per-tour averages.`;
+      return fc.excluded
+        ? `${base} ${fc.excluded} more completed all tours but left a tab open past 30 min on at least one, so they're excluded from this figure.`
+        : base;
+    }
     const median = (a) => {
       if (!a.length) return null;
       const s = [...a].sort((x, y) => x - y);
@@ -349,15 +382,12 @@
 
       let totStartSessions = new Set(), totCompletions = 0, totAttempts = 0, totCompleted = 0;
       let best = null, worst = null;
-      let allDurations = [], allExcluded = 0;
       for (const id of tourIds) {
         const r = perTour.get(id);
         r.started.forEach(s => totStartSessions.add(s));
         totCompletions += r.completed.size;
         totAttempts += r.started.size;
         totCompleted += r.completed.size;
-        allDurations = allDurations.concat(r.durations);
-        allExcluded += r.excludedDurations;
         const rate = r.started.size ? r.completed.size / r.started.size : null;
         if (rate != null && r.started.size >= 3) {
           if (!best || rate > best.rate) best = { id, rate };
@@ -365,6 +395,7 @@
         }
       }
       const overallRate = totAttempts ? totCompleted / totAttempts : null;
+      const fullCompletion = computeFullCompletionTimes(state.events);
 
       const presets = [7, 30, 90, 0];
       const presetLbl = { 7: '7 days', 30: '30 days', 90: '90 days', 0: 'All time' };
@@ -407,8 +438,8 @@
                 <td>${totCompleted}</td>
                 <td class="${overallRate != null && overallRate >= 0.5 ? 'rate-good' : overallRate != null ? 'rate-bad' : ''}">${fmtPct(overallRate)}</td>
                 <td>${overallRate != null ? fmtPct(1 - overallRate) : '—'}</td>
-                <td>${fmtDur(avg(allDurations))}${allExcluded ? `<span class="muted" style="font-weight:400" title="${allExcluded} completion${allExcluded === 1 ? '' : 's'} excluded from avg/median — tab was left open past 30 min before finishing">*</span>` : ''}</td>
-                <td>${fmtDur(median(allDurations))}</td>
+                <td title="${fullCompletionTitle(fullCompletion)}">${fmtDur(avg(fullCompletion.totals))}${fullCompletion.qualifying ? `<span class="muted" style="font-weight:400">*</span>` : ''}</td>
+                <td title="${fullCompletionTitle(fullCompletion)}">${fmtDur(median(fullCompletion.totals))}</td>
               </tr>` : ''}
             </tbody>
           </table>
